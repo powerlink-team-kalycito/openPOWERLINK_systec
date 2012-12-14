@@ -76,11 +76,17 @@ ELSEIF(CFG_POWERLINK_EDRV STREQUAL "Fec")
     SET(MODULE_NAME "powerlinkfec")
     SET(MODULE_DEFS "${MODULE_DEFS} -DCONFIG_EDRV=0")
     SET(MODULE_SOURCE_FILES ${MODULE_SOURCE_FILES} ${POWERLINK_SOURCE_DIR}/Edrv/EdrvFec.c)
+ELSEIF(CFG_POWERLINK_EDRV STREQUAL "EmacPs")
+
+    SET(MODULE_NAME "powerlinkemac")
+    SET(MODULE_DEFS "${MODULE_DEFS} -DCONFIG_EDRV=267200")
+    # 267200 corresponds to Z7200 arch of Zynq family. (Z is represented by 26)
+    SET(MODULE_SOURCE_FILES ${MODULE_SOURCE_FILES} ${POWERLINK_SOURCE_DIR}/Edrv/EdrvEmacPs.c)
 
 ELSE(CFG_POWERLINK_EDRV STREQUAL "8139")
 
     message(FATAL_ERROR
-            "No valid ethernet driver (8139, 82573, 8255x, Fec) was specified in CFG_POWERLINK_EDRV")
+            "No valid ethernet driver (8139, 82573, 8255x, Fec, EmacPs) was specified in CFG_POWERLINK_EDRV")
 
 ENDIF(CFG_POWERLINK_EDRV STREQUAL "8139")
 

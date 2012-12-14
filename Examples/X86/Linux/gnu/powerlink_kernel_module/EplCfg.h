@@ -197,8 +197,10 @@
 #define EDRV_AUTO_RESPONSE_DELAY            TRUE
 #endif
 
-#if (CONFIG_EDRV == 8139) || (CONFIG_EDRV == 8255)
+#if (CONFIG_EDRV == 8139) || (CONFIG_EDRV == 8255) || (CONFIG_EDRV == 267200) 
 // Disable deferred release of rx-buffers until Edrv8139/Edrv8255x supports it
+// 267200 corresponds to Z7200 architecture of Zynq family 
+// (Z is represented by 26 as integer comparision is only possible)
 #define EPL_DLL_DISABLE_DEFERRED_RXFRAME_RELEASE    TRUE
 #endif
 

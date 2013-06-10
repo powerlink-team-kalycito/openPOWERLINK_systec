@@ -10,7 +10,6 @@ module to share the error objects between user and kernel part.
 
 \ingroup module_errhnducal
 *******************************************************************************/
-
 /*------------------------------------------------------------------------------
 Copyright (c) 2012, Bernecker+Rainer Industrie-Elektronik Ges.m.b.H. (B&R)
 All rights reserved.
@@ -84,7 +83,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 This structure implements the instance variable of the shared buffer
 implementation of the user error handler CAL moduel.
 */
-typedef struct {
+typedef struct
+{
     tShbInstance                shbInstance;            ///< Shared buffer instance for the used shared buffer
     tErrHndObjects              errorObjects;           ///< Error objects
 } tErrShbInstance;

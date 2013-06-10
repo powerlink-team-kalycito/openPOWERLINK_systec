@@ -43,10 +43,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <semaphore.h>
+#include <time.h>
 
 #include <EplInc.h>
 #include <pdo.h>
 #include <user/pdoucal.h>
+#include <errno.h>
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -141,14 +143,23 @@ The function waits for a sync event.
 tEplKernel pdoucal_waitSyncEvent(ULONG timeout_p)
 {
     int                 semRet;
+    struct timespec     currentTime;
+    struct timespec     semTimeout;
 
     if (timeout_p != 0)
     {
-        struct timespec     semTimeout;
-
-        semTimeout.tv_sec = 0;
-        semTimeout.tv_nsec = timeout_p * 1000;
-
+        if (timeout_p >= 1000000)
+        {
+            semTimeout.tv_sec = (timeout_p / 1000000);
+            semTimeout.tv_nsec = (timeout_p % 1000000) * 1000 ;
+        }
+        else
+        {
+            semTimeout.tv_sec = 0;
+            semTimeout.tv_nsec = timeout_p * 1000;
+        }
+        clock_gettime(CLOCK_REALTIME, &currentTime);
+        TIMESPECADD(&semTimeout, &currentTime);
         semRet = sem_timedwait(syncSem_l, &semTimeout);
     }
     else

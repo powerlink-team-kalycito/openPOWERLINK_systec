@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include <EplDll.h>
+#include <dllcal.h>
 #include <event.h>
 
 //------------------------------------------------------------------------------
@@ -80,8 +81,9 @@ tEplKernel dllkcal_getAsyncTxFrame(void* pFrame_p, UINT* pFrameSize_p,
 // only frames with registered AsndServiceIds are passed to CAL
 tEplKernel dllkcal_asyncFrameReceived(tEplFrameInfo* pFrameInfo_p);
 
-tEplKernel dllkcal_sendAsyncFrame(tEplFrameInfo* pFrameInfo_p,
-                                  tEplDllAsyncReqPriority priority_p);
+tEplKernel dllkcal_sendAsyncFrame(tEplFrameInfo* pFrameInfo_p, tEplDllAsyncReqPriority priority_p);
+
+tEplKernel dllkcal_writeAsyncFrame(tEplFrameInfo* pFrameInfo_p, tDllCalQueue dllQueue);
 
 tEplKernel dllkcal_clearAsyncBuffer(void);
 
@@ -97,7 +99,7 @@ tEplKernel dllkcal_issueRequest(tEplDllReqServiceId service_p, UINT nodeId_p,
                                 BYTE soaFlag1_p);
 
 tEplKernel dllkcal_getSoaRequest(tEplDllReqServiceId* pReqServiceId_p,
-                                 UINT* pNodeId_p, tEplSoaPayload* pSoaPayload_p);
+                                 UINT* pNodeId_p, tEplSoaPayload* pSoaPayload_p) SECTION_DLLKCAL_GETSOAREQ;
 
 tEplKernel dllkcal_setAsyncPendingRequests(UINT nodeId_p, tEplDllAsyncReqPriority asyncReqPrio_p,
                                            UINT count_p);

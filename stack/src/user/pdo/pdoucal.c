@@ -99,6 +99,11 @@ The function initializes the PDO user CAL module.
 //------------------------------------------------------------------------------
 tEplKernel pdoucal_init(tEplSyncCb pfnSyncCb_p)
 {
+    tEplKernel      ret;
+
+    if ((ret = pdoucal_openMem()) != kEplSuccessful)
+        return ret;
+
     return pdoucal_initSync(pfnSyncCb_p);
 }
 
@@ -115,6 +120,7 @@ The function cleans up the PDO user CAL module.
 //------------------------------------------------------------------------------
 tEplKernel pdoucal_exit(void)
 {
+    pdoucal_closeMem();
     pdoucal_exitSync();
     return kEplSuccessful;
 }
@@ -184,20 +190,26 @@ tEplKernel pdoucal_postConfigureChannel(tPdoChannelConf* pChannelConf_p)
 The function sends the PDO buffer setup to the kernel PDO module by posting
 a kEplEventTypePdokSetupPdoBuf event.
 
+\param  rxPdoMemSize_p          Size of RX PDO buffers.
+\param  txPdoMemSize_p          Size of TX PDO buffers.
+
 \return The function returns a tEplKernel error code.
 
 \ingroup module_pdoucal
 */
 //------------------------------------------------------------------------------
-tEplKernel pdoucal_postSetupPdoBuffers(void)
+tEplKernel pdoucal_postSetupPdoBuffers(size_t rxPdoMemSize_p, size_t txPdoMemSize_p)
 {
     tEplKernel      Ret = kEplSuccessful;
     tEplEvent       Event;
+    tPdoMemSize     pdoMemSize;
 
+    pdoMemSize.rxPdoMemSize = rxPdoMemSize_p;
+    pdoMemSize.txPdoMemSize = txPdoMemSize_p;
     Event.m_EventSink = kEplEventSinkPdokCal;
     Event.m_EventType = kEplEventTypePdokSetupPdoBuf;
-    Event.m_pArg = NULL;
-    Event.m_uiSize = 0;
+    Event.m_pArg = &pdoMemSize;
+    Event.m_uiSize = sizeof(tPdoMemSize);
     Ret = eventu_postEvent(&Event);
 
     return Ret;

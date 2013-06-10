@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stddef.h>
 
 #include <ctrl.h>
-#include <EplTgtConio.h>
+#include <EplTarget.h>
 #include <kernel/ctrlk.h>
 
 //============================================================================//
@@ -217,7 +217,7 @@ The function reads the heartbeat genereated by the kernel stack.
 //------------------------------------------------------------------------------
 UINT16 ctrlucal_getHeartbeat (void)
 {
-    return dummyHeartbeat_l++;
+    return ++dummyHeartbeat_l;
 }
 
 //------------------------------------------------------------------------------

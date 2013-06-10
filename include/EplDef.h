@@ -300,50 +300,18 @@
 #endif
 
 #ifndef EPL_VETH_NAME
-#define EPL_VETH_NAME       "epl"   // name of net device in Linux
-#endif
-
-#ifndef EPL_EVENT_KINT_QUEUE
-#define EPL_EVENT_KINT_QUEUE                EPL_QUEUE_SHB
-#endif
-
-#ifndef EPL_EVENT_K2U_QUEUE
-#define EPL_EVENT_K2U_QUEUE                 EPL_QUEUE_SHB
-#endif
-
-#ifndef EPL_EVENT_UINT_QUEUE
-#define EPL_EVENT_UINT_QUEUE                EPL_QUEUE_SHB
-#endif
-
-#ifndef EPL_EVENT_U2K_QUEUE
-#define EPL_EVENT_U2K_QUEUE                 EPL_QUEUE_SHB
+#define EPL_VETH_NAME       "plk"   // name of net device in Linux
 #endif
 
 #ifndef EPL_USE_SHAREDBUFF
 #define EPL_USE_SHAREDBUFF                  TRUE
 #endif
 
-#ifndef EPL_DLLCAL_TX_NMT_QUEUE
-#define EPL_DLLCAL_TX_NMT_QUEUE             EPL_QUEUE_SHB
+#ifndef CONFIG_DLLCAL_QUEUE
+#define CONFIG_DLLCAL_QUEUE                 EPL_QUEUE_SHB
 #endif
 
-#ifndef EPL_DLLCAL_TX_GEN_QUEUE
-#define EPL_DLLCAL_TX_GEN_QUEUE             EPL_QUEUE_SHB
-#endif
-
-#ifndef EPL_DLLCAL_TX_SYNC_QUEUE
-#define EPL_DLLCAL_TX_SYNC_QUEUE            EPL_QUEUE_SHB
-#endif
-
-#if ((EPL_EVENT_KINT_QUEUE == EPL_QUEUE_SHB) || \
-     (EPL_EVENT_K2U_QUEUE == EPL_QUEUE_SHB) || \
-     (EPL_EVENT_UINT_QUEUE == EPL_QUEUE_SHB) || \
-     (EPL_EVENT_U2K_QUEUE == EPL_QUEUE_SHB) || \
-     (EPL_DLLCAL_TX_NMT_QUEUE == EPL_QUEUE_SHB) || \
-     (EPL_DLLCAL_TX_GEN_QUEUE == EPL_QUEUE_SHB) || \
-     ((EPL_DLLCAL_TX_SYNC_QUEUE == EPL_QUEUE_SHB) && \
-      (EPL_DLL_PRES_CHAINING_MN != FALSE)) \
-    )
+#if (CONFIG_DLLCAL_QUEUE == EPL_QUEUE_SHB)
 #undef EPL_USE_SHAREDBUFF
 #define EPL_USE_SHAREDBUFF                  TRUE
 #endif
@@ -367,6 +335,34 @@
 
 #ifndef EDRV_AUTO_RESPONSE_DELAY
 #define EDRV_AUTO_RESPONSE_DELAY            FALSE
+#endif
+
+
+// definitions for usage of circular buffer library
+
+// Circular buffer instances used in openPOWERLINK
+#define CIRCBUF_USER_TO_KERNEL_QUEUE    0
+#define CIRCBUF_KERNEL_TO_USER_QUEUE    1
+#define CIRCBUF_KERNEL_INTERNAL_QUEUE   2
+#define CIRCBUF_USER_INTERNAL_QUEUE     3
+#define CIRCBUF_DLLCAL_TXGEN            4
+#define CIRCBUF_DLLCAL_TXNMT            5
+#define CIRCBUF_DLLCAL_TXSYNC           6
+
+#ifndef EVENT_SIZE_CIRCBUF_KERNEL_TO_USER
+#define EVENT_SIZE_CIRCBUF_KERNEL_TO_USER   32768   // default: 32 kByte
+#endif
+
+#ifndef EVENT_SIZE_CIRCBUF_USER_TO_KERNEL
+#define EVENT_SIZE_CIRCBUF_USER_TO_KERNEL   32768   // default: 32 kByte
+#endif
+
+#ifndef EVENT_SIZE_CIRCBUF_KERNEL_INTERNAL
+#define EVENT_SIZE_CIRCBUF_KERNEL_INTERNAL  32768   // default: 32 kByte
+#endif
+
+#ifndef EVENT_SIZE_CIRCBUF_USER_INTERNAL
+#define EVENT_SIZE_CIRCBUF_USER_INTERNAL    32768   // default: 32 kByte
 #endif
 
 /*

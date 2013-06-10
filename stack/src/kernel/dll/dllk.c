@@ -365,10 +365,10 @@ static tEplKernel EplDllkProcessNmtStateChange(tEplNmtState NewNmtState_p, tEplN
 static tEplKernel EplDllkProcessNmtEvent(tEplEvent * pEvent_p);
 
 // process the CycleFinish event
-static tEplKernel EplDllkProcessCycleFinish(tEplNmtState NmtState_p);
+static tEplKernel EplDllkProcessCycleFinish(tEplNmtState NmtState_p) SECTION_DLLK_PROCESS_CYCFIN;
 
 // process the Sync event
-static tEplKernel EplDllkProcessSync(tEplNmtState NmtState_p);
+static tEplKernel EplDllkProcessSync(tEplNmtState NmtState_p) SECTION_DLLK_PROCESS_SYNC;
 
 // process the FillTx event
 static tEplKernel EplDllkProcessFillTx(tEplDllAsyncReqPriority AsyncReqPriority_p, tEplNmtState NmtState_p);
@@ -1530,8 +1530,14 @@ tEplKernel      Ret = kEplSuccessful;
 unsigned int    uiHandle;
 unsigned int    uiFrameSize;
 BYTE            abMulticastMac[6];
+
+#if EPL_NMT_MAX_NODE_ID > 0
 unsigned int        uiIndex;
 tEplDllkNodeInfo*   pIntNodeInfo;
+#endif
+#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_NMT_MN)) == 0)
+    UNUSED_PARAMETER(NmtState_p);
+#endif
 
     // initialize flags for PRes and StatusRes (leave Flag 1 unchanged)
     EplDllkInstance_g.m_bMnFlag1 = 0;
@@ -2026,9 +2032,13 @@ static tEplKernel EplDllkProcessDestroy(tEplNmtState OldNmtState_p)
 {
 tEplKernel      Ret = kEplSuccessful;
 BYTE            abMulticastMac[6];
+#if EPL_NMT_MAX_NODE_ID > 0
 unsigned int    uiIndex;
+#endif
 #if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_NMT_MN)) != 0)
 unsigned int    uiHandle;
+#else
+    UNUSED_PARAMETER(OldNmtState_p);
 #endif
 
     // remove all filters from Edrv
@@ -3982,7 +3992,7 @@ tEplFrame*              pFrame;
 tEplFrameInfo           FrameInfo;
 tEplMsgType             MsgType;
 
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -5290,7 +5300,7 @@ tEplEvent       Event;
 tEplDllAsyncReqPriority Priority;
 tEplNmtState    NmtState;
 unsigned int    uiHandle = EPL_DLLK_TXFRAME_NMTREQ;
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -5393,7 +5403,7 @@ tEplEvent       Event;
 tEplDllAsyncReqPriority Priority;
 tEplNmtState    NmtState;
 unsigned int    uiHandle = EPL_DLLK_TXFRAME_NONEPL;
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -5461,7 +5471,7 @@ static void EplDllkCbTransmittedPreq(tEdrvTxBuffer * pTxBuffer_p)
 tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 unsigned int    uiHandle = EPL_DLLK_TXFRAME_PREQ;
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -5546,7 +5556,7 @@ static void EplDllkCbTransmittedSoa(tEdrvTxBuffer * pTxBuffer_p)
 tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 unsigned int    uiHandle = EPL_DLLK_TXFRAME_SOA;
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     UNUSED_PARAMETER(pTxBuffer_p);
 
@@ -5737,7 +5747,7 @@ static void EplDllkCbTransmittedSoc(tEdrvTxBuffer * pTxBuffer_p)
 tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 unsigned int    uiHandle = EPL_DLLK_TXFRAME_SOC;
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     UNUSED_PARAMETER(pTxBuffer_p);
 
@@ -5832,7 +5842,7 @@ tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 unsigned int    uiHandle = 0;
 DWORD           dwArg;
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     UNUSED_PARAMETER(pTxBuffer_p);
 
@@ -6612,7 +6622,7 @@ static tEplKernel PUBLIC EplDllkCbCnTimer(tEplTimerEventArg* pEventArg_p)
 tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -6712,7 +6722,7 @@ static tEplKernel PUBLIC EplDllkCbCnLossOfSync(void)
 tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -7209,7 +7219,7 @@ static tEplKernel PUBLIC EplDllkCbMnTimerCycle(tEplTimerEventArg* pEventArg_p)
 tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -7274,7 +7284,7 @@ tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 BYTE*           pbCnNodeId;
 
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -7354,7 +7364,7 @@ static tEplKernel PUBLIC EplDllkCbMnTimerResponse(tEplTimerEventArg* pEventArg_p
 tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
@@ -7509,15 +7519,12 @@ static tEplKernel EplDllkMnSendSoa(tEplNmtState NmtState_p,
 {
 tEplKernel      Ret = kEplSuccessful;
 tEdrvTxBuffer  *pTxBuffer = NULL;
-tEplFrame      *pTxFrame;
 
     *pDllStateProposed_p = kEplDllMsNonCyclic;
 
     pTxBuffer = &EplDllkInstance_g.m_pTxBuffer[EPL_DLLK_TXFRAME_SOA];
     if (pTxBuffer->m_pbBuffer != NULL)
     {   // SoA does exist
-        pTxFrame = (tEplFrame *) pTxBuffer->m_pbBuffer;
-
         Ret = EplDllkUpdateFrameSoa(pTxBuffer, NmtState_p, fEnableInvitation_p, EplDllkInstance_g.m_bCurLastSoaReq);
         if (Ret != kEplSuccessful)
         {
@@ -7884,7 +7891,7 @@ static tEplKernel PUBLIC EplDllkCbCnPResFallBackTimeout(void)
 tEplKernel      Ret = kEplSuccessful;
 tEplNmtState    NmtState;
 
-TGT_DLLK_DECLARE_FLAGS
+TGT_DLLK_DECLARE_FLAGS;
 
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 

@@ -242,17 +242,6 @@
     #define REENTRANT
     #define PUBLIC
 
-    #ifndef NDEBUG
-        #ifndef __KERNEL__
-            #include <stdio.h>              // prototype printf() (for TRACE)
-            #define TRACE(...)  printf(__VA_ARGS__)
-        #else
-            #define TRACE(...)  printk(__VA_ARGS__)
-        #endif
-    #else
-            #define TRACE(...)
-    #endif
-
     #define UNUSED_PARAMETER(par)   (void)par
 
 // ------------------ GNUC for VxWorks ---------------------------------------
@@ -286,13 +275,6 @@
 
     #define REENTRANT
     #define PUBLIC
-
-    #ifndef NDEBUG
-        #include <stdio.h>              // prototype printf() (for TRACE)
-        #define TRACE(...)  printf(__VA_ARGS__)
-    #else
-        #define TRACE(...)
-    #endif
 
     #define UNUSED_PARAMETER(par)   (void)par
 
@@ -328,13 +310,6 @@
     #define REENTRANT
     #define PUBLIC
 
-    #ifndef NDEBUG
-        #include <stdio.h>              // prototype printf() (for TRACE)
-        #define TRACE(...)  printf(__VA_ARGS__)
-    #else
-        #define TRACE(...)
-    #endif
-
     #define UNUSED_PARAMETER(par)   (void)par
 
     #if (DEV_SYSTEM == _DEV_NIOS2_)
@@ -346,6 +321,18 @@
         #endif
 
         #include <section-nios2.h>
+
+        //////////////////////////////////////////////////////////////////////
+        //FIXME: Find way for atomic exchange!!!
+        // NOTE: THIS IS NO ATOMIC EXCHANGE!!!
+        #include <alt_types.h>
+        #include <io.h>
+
+        #define ATOMIC_T    alt_u8
+        #define ATOMIC_EXCHANGE(address, newval, oldval) \
+                                oldval = IORD(address, 0); \
+                                IOWR(address, 0, newval)
+        //////////////////////////////////////////////////////////////////////
     #endif
 
     #if (DEV_SYSTEM == _DEV_MICROBLAZE_BIG_ \
@@ -391,20 +378,6 @@
       //#define QWORD long long int // MSVC .NET can use "long long int" too (like GNU)
         #define QWORD __int64
     #endif
-    #endif
-
-    #ifndef NDEBUG
-        #define TRACE(...) trace(__VA_ARGS__)
-        #ifdef __cplusplus
-            extern "C"
-            {
-        #endif
-            void trace (const char *fmt, ...);
-        #ifdef __cplusplus
-            }
-        #endif
-    #else
-        #define TRACE(...)
     #endif
 
     #define UNUSED_PARAMETER(par) (void)par
@@ -469,12 +442,6 @@
         #undef ASSERTMSG
     #endif
 
-    #ifndef NDEBUG
-        #define TRACE(...) printf(__VA_ARGS__)
-    #else
-        #define TRACE(...)
-    #endif
-
     #define UNUSED_PARAMETER(par)   (void)par
 
     #define __func__ __FUNCTION__
@@ -528,11 +495,7 @@
     #endif
 
     #ifndef DWORD
-        #if defined (__LP64__) || defined (_LP64)
-            #define DWORD unsigned int
-        #else
-            #define DWORD unsigned long int
-        #endif
+        #define DWORD unsigned int
     #endif
 
     #ifndef BOOL
@@ -598,6 +561,27 @@
 
     #define _TIME_OF_DAY_DEFINED_
 
+#endif
+
+/* some standard function pointer types */
+typedef void (*VOIDFUNCPTR)(void);
+typedef int (*INTFUNCPTR)(void);
+
+//---------------------------------------------------------------------------
+//  definition of TRACE
+//---------------------------------------------------------------------------
+#ifndef NDEBUG
+    #define TRACE(...) trace(__VA_ARGS__)
+    #ifdef __cplusplus
+        extern "C"
+        {
+    #endif
+        void trace (const char *fmt, ...);
+    #ifdef __cplusplus
+        }
+    #endif
+#else
+    #define TRACE(...)
 #endif
 
 //---------------------------------------------------------------------------

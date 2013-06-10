@@ -136,17 +136,19 @@ tEplKernel ctrlk_init(void)
     shbError = ShbInit();
     if (shbError != kShbOk)
     {
+        EPL_DBGLVL_ERROR_TRACE("ShbInit failed!\n");
         return kEplNoResource;
     }
 #endif
 
     if ((ret = ctrlkcal_init()) != kEplSuccessful)
     {
+        EPL_DBGLVL_ERROR_TRACE("ctrlkcal_init failed!\n");
         goto ExitCleanup;
     }
 
     // initialize heartbeat counter
-    instance_l.heartbeat = 0;
+    instance_l.heartbeat = 1;
 
     return kEplSuccessful;
 
@@ -199,7 +201,7 @@ BOOL ctrlk_process(void)
 
     if (ctrlkcal_getCmd(&cmd) != kEplSuccessful)
     {
-        TRACE ("%s: error getting command!\n", __func__);
+        EPL_DBGLVL_ERROR_TRACE ("%s: error getting command!\n", __func__);
         return FALSE;
     }
 
@@ -274,6 +276,8 @@ tEplKernel ctrlk_executeCmd(tCtrlCmdType cmd_p, tEplKernel* pRet_p, UINT16* pSta
         default:
             TRACE ("Unknown command\n");
             ret = kEplGeneralError;
+            status = kCtrlStatusUnavailable;
+            fExit = TRUE;
             break;
     }
 
@@ -309,6 +313,21 @@ void ctrlk_updateHeartbeat(void)
     ctrlkcal_updateHeartbeat(heartbeat);
 }
 
+//------------------------------------------------------------------------------
+/**
+\brief  Get heartbeat counter
+
+The function returns the heartbeat counter.
+
+\return     Heartbeat counter
+
+\ingroup module_ctrlk
+*/
+//------------------------------------------------------------------------------
+UINT16 ctrlk_getHeartbeat(void)
+{
+    return instance_l.heartbeat;
+}
 
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
@@ -367,6 +386,12 @@ static tEplKernel initStack(void)
         return ret;
 #endif
 
+    // initialize Virtual Ethernet Driver
+#if defined(CONFIG_INCLUDE_VETH)
+    if ((ret = VEthAddInstance(instance_l.initParam.aMacAddress)) != kEplSuccessful)
+    return ret;
+#endif
+
     ret = errhndk_init();
 
     return ret;
@@ -383,6 +408,11 @@ The function cleans up the kernel stack modules
 //------------------------------------------------------------------------------
 static tEplKernel shutdownStack(void)
 {
+
+#if defined(CONFIG_INCLUDE_VETH)
+    VEthDelInstance();
+#endif
+
 #if defined(CONFIG_INCLUDE_PDOK)
     pdok_exit();
 #endif

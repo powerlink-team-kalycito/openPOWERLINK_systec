@@ -611,7 +611,7 @@ reads the inputs and runs the control loop.
 tEplKernel PUBLIC AppCbSync(void)
 {
     tEplKernel          EplRet;
-    int                 i;
+    //int                 i;
 
     EplRet = api_processImageExchangeOut();
     if (EplRet != kEplSuccessful)
@@ -621,6 +621,10 @@ tEplKernel PUBLIC AppCbSync(void)
 
     uiCnt_g++;
 
+    nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01;
+    //nodeVar_g[0].m_uiInput = 0x01;
+    //printf(".");
+#if 0 // Default program for B&R CN
     nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[1].m_uiInput = pProcessImageOut_l->CN2_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[2].m_uiInput = pProcessImageOut_l->CN3_M00_Digital_Input_8_Bit_Byte_1;
@@ -690,7 +694,10 @@ tEplKernel PUBLIC AppCbSync(void)
     pProcessImageIn_l->CN10_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[9].m_uiLeds;
     pProcessImageIn_l->CN11_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[10].m_uiLeds;
     pProcessImageIn_l->CN12_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[11].m_uiLeds;
-
+#endif
+    //pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = nodeVar_g[0].m_uiLeds;
+    pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_03 = uiCnt_g;
+    pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01 ;
     EplRet = api_processImageExchangeIn();
 
     return EplRet;

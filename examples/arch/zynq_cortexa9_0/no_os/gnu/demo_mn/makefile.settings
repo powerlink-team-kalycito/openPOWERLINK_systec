@@ -1,0 +1,76 @@
+#  (c) Bernecker + Rainer Industrie-Elektronik Ges.m.b.H.
+#      A-5142 Eggelsberg, B&R Strasse 1
+#      www.br-automation.com
+#
+# Project       : POWERLINK Xilinx Examples
+# Module        : build system settings file
+# Autor         : mairt
+# Date          : 13.02.2012
+# File          : Makefile
+# contents      : Settings file for the build system
+################################################################################
+
+MNDK_DIR=../../../../../..
+##################################
+#Path to the openPOWERLINK root directory
+STACK_ROOT=../../../../../..
+
+##################################
+#Path to the XPS project
+XPS_DIR=${STACK_ROOT}/fpga/boards/xilinx/xilinx_z702/zynq_ap_pcp_intaxi-axi
+
+BSP_PATH=${MNDK_DIR}/standalone_bsp_zynq_intaxi-host-axi
+HW_SPEC=${MNDK_DIR}/hw_platform_zynq_intaxi-axi
+##################################
+# Board name: [zynq]
+BOARD_NAME=zynq
+
+##################################
+# Bus interface: [plb, axi]
+# Note: This sets correct endian and linker script
+BUS_INTERFACE=axi
+
+##################################
+# Processor name: [ps7_cortexa9_0]
+PROCESSOR_NAME=ps7_cortexa9_0
+
+##################################
+##################################
+# Processor features for Zynq: (For more information refer, gcc options for ARM processor)
+# CPU: [-mcpu = cortex-a9 (name of the target ARM processor)]
+# ARCH: [-march = armv7-a (name of the target ARM architecture)]
+# ABI (Application Binary Interface) : Procedure call standard for ARM architecture 
+# ABI: [aapcs = EABI (embedded ABI), apcs-gnu = OABI (old ABI, for armv4 cores), atpcs = Thumb ABI (16 bit)]
+# Stack Frame : [-mapcs-frame = Stack frame compliant with AAPCS, -mno-apcs-frame = default 
+PROC_FEATURES=-mcpu=cortex-a9 -mabi=aapcs -mapcs-frame -march=armv7-a -mlittle-endian
+
+##################################
+
+#PROC_FEATURES= -mcpu=v8.20.a -mno-xl-pattern-compare -mno-xl-barrel-shift -mxl-soft-mul -mxl-soft-div
+##################################
+#Debug Level
+# DBG_MODE = [_DEBUG=debug enabled, NDEBUG=debug disabled]
+DBG_MODE=_DEBUG
+
+# DEF_DEBUG_LVL = [
+# 0x00000100L DEBUG_LVL_09 (= DEBUG_LVL_CNAPI_FUNC)
+# 0x00000200L DEBUG_LVL_10 (= DEBUG_LVL_CNAPI_ERR)
+# 0x00000400L DEBUG_LVL_11 (= DEBUG_LVL_CNAPI_INFO)
+# 0x00000800L DEBUG_LVL_12 (= DEBUG_LVL_CNAPI_SPI)
+# 0x00001000L DEBUG_LVL_13 (= DEBUG_LVL_CNAPI_ASYNC_INFO)
+# 0x00002000L DEBUG_LVL_14 (= DEBUG_LVL_DEFAULT_OBD_ACC)
+# 0x00004000L DEBUG_LVL_15 (= DEBUG_LVL_FWUPDATE)
+# 0x00008000L DEBUG_LVL_16 (= DEBUG_LVL_CNAPI_PDO)
+# 0x00010000L DEBUG_LVL_17 (= DEBUG_LVL_CNAPI_EVENT)
+# 0x20000000L DEBUG_LVL_ASSERT
+# 0x40000000L DEBUG_LVL_ERROR
+# 0x80000000L DEBUG_LVL_ALWAYS ]
+DEF_DEBUG_LVL=0xEC000600L
+#DEF_DEBUG_LVL=0x40000000L
+
+##################################
+#Compile options
+# Note: This also influences the fill level of the internal memory
+#      (set this to -O3 to get the best speed)
+OPT_LEVEL=-O3
+

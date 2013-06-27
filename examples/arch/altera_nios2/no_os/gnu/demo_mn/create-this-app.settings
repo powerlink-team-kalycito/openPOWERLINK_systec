@@ -48,8 +48,8 @@ BSP_DIR=./bsp
 
 ##################################
 # Relative path to SOPC file
-#SOPC_DIR=${STACKROOT_DIR}/fpga/boards/altera/TERASIC_DE2-115/mn_dual_nios2/
-SOPC_DIR=${STACKROOT_DIR}/fpga/boards/altera/TERASIC_DE2-115/mn_par_host/
+SOPC_DIR=${STACKROOT_DIR}/fpga/boards/altera/TERASIC_DE2-115/mn_dual_nios2/
+#SOPC_DIR=${STACKROOT_DIR}/fpga/boards/altera/TERASIC_DE2-115/mn_par_host/
 
 ##################################
 # Include path
@@ -58,6 +58,27 @@ ${STACKROOT_DIR}/include \
 ${STACKROOT_DIR}/libs/hostif \
 ${STACKROOT_DIR}/objdicts/CiA302-4_MN \
 ${STACKROOT_DIR}/stack/src"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##################################
 # Source files
@@ -94,6 +115,8 @@ ${STACKROOT_DIR}/stack/src/user/nmt/statusu.c \
 ${STACKROOT_DIR}/stack/src/user/nmt/syncu.c \
 ${STACKROOT_DIR}/stack/src/user/obd/obd.c \
 ${STACKROOT_DIR}/stack/src/user/obd/obdcdc.c \
+
+
 ${STACKROOT_DIR}/stack/src/user/pdo/pdou.c \
 ${STACKROOT_DIR}/stack/src/user/pdo/pdoucal.c \
 ${STACKROOT_DIR}/stack/src/user/pdo/pdoucal-triplebufshm.c \

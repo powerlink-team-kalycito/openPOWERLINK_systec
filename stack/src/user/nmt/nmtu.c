@@ -472,7 +472,7 @@ tEplKernel  Ret;
                     DWORD           dwBasicEthernetTimeout;
                     tEplObdSize     ObdSize;
                     tEplTimerArg    TimerArg;
-
+                    	//printf("MSnotActive\n");
                         // create timer to switch automatically to BasicEthernet/PreOp1 if no other MN active in network
 
                         // check NMT_StartUp_U32.Bit13
@@ -495,6 +495,7 @@ tEplKernel  Ret;
                         if((dwBasicEthernetTimeout & EPL_NMTST_BASICETHERNET) == 0)
                         {   // NMT_StartUp_U32.Bit13 == 0
                             // new state PreOperational1
+                        	printf("Preop1\n");
                             TimerArg.m_Arg.m_dwVal = (DWORD) kEplNmtEventTimerMsPreOp1;
                         }
                         else

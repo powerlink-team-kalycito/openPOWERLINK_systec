@@ -42,10 +42,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include "lfqueue.h"
+#include "event.h" //TODO" CLeanup
+//#include <xil_cache.h>
 
 #include <stdlib.h>
 #include <string.h>
 
+//TODO clean
+#include "dllcal.h"
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -541,6 +545,9 @@ tQueueReturn lfq_entryEnqueue (tQueueInstance pInstance_p,
     tQueue *pQueue = (tQueue*)pInstance_p;
     UINT16 entryPayloadSize;
     tEntryHeader entryHeader;
+    //TODO: CLean UP Below
+
+
 
     if(pQueue == NULL || pData_p == NULL || size_p > QUEUE_MAX_PAYLOAD)
         return kQueueInvalidParameter;
@@ -562,7 +569,13 @@ tQueueReturn lfq_entryEnqueue (tQueueInstance pInstance_p,
         return kQueueAlignment;
 
     getHwQueueBufferHeader(pQueue);
-
+#ifdef __AP__
+  //  printf("EN AP get Local %x Hif %x B %x\n",pQueue->local.spaceIndices.bothIndices,
+    	//	pQueue->pQueueBuffer->header.spaceIndices.get,pQueue->pQueueBuffer);
+#elif __PCP__
+   // printf("EN PCP get Local %x Hif %x B %x\n",pQueue->local.spaceIndices.bothIndices,
+    		//pQueue->pQueueBuffer->header.spaceIndices.get,pQueue->pQueueBuffer);
+#endif
     entryPayloadSize = ALIGN32(size_p);
 
     if(!checkPayloadFitable(pQueue, entryPayloadSize))
@@ -576,7 +589,6 @@ tQueueReturn lfq_entryEnqueue (tQueueInstance pInstance_p,
     writeHeader(pQueue, &entryHeader);
 
     writeData(pQueue, pData_p, entryPayloadSize);
-
     /// new element is written
     pQueue->local.entryIndices.write += 1;
 
@@ -585,7 +597,13 @@ tQueueReturn lfq_entryEnqueue (tQueueInstance pInstance_p,
         return kQueueSuccessful;
 
     setHwQueueWrite(pQueue);
-
+#ifdef __AP__
+   // printf("AP Set Write Local %x Hif %x B %x\n",pQueue->local.spaceIndices.bothIndices,
+    	//	pQueue->pQueueBuffer->header.spaceIndices.set,pQueue->pQueueBuffer);
+#elif __PCP__
+    //printf("PCP Set Write Local %x Hif %x B %x\n",pQueue->local.spaceIndices.bothIndices,
+    	//	pQueue->pQueueBuffer->header.spaceIndices.set,pQueue->pQueueBuffer);
+#endif
     return kQueueSuccessful;
 }
 
@@ -632,10 +650,16 @@ tQueueReturn lfq_entryDequeue (tQueueInstance pInstance_p,
         return kQueueAlignment;
 
     getHwQueueBufferHeader(pQueue);
-
+#ifdef __AP__
+    //printf("DN AP get Local %x Hif %x B %x\n",pQueue->local.spaceIndices.bothIndices,
+    		//pQueue->pQueueBuffer->header.spaceIndices.get,pQueue->pQueueBuffer);
+#elif __PCP__
+   // printf("DN PCP get Local %x Hif %x B %x\n",pQueue->local.spaceIndices.bothIndices,
+    	//	pQueue->pQueueBuffer->header.spaceIndices.get,pQueue->pQueueBuffer);
+#endif
     if(checkQueueEmpty(pQueue))
         return kQueueEmpty;
-
+    //Xil_DCacheFlush(); //TODO: @Vinod Cleanup Cache flush
     readHeader(pQueue, &EntryHeader);
 
     if(!checkMagicValid(&EntryHeader))
@@ -652,9 +676,18 @@ tQueueReturn lfq_entryDequeue (tQueueInstance pInstance_p,
     pQueue->local.entryIndices.read += 1;
 
     setHwQueueRead(pQueue);
-
+#ifdef __AP__
+   // printf("AP Set Read Local %x Hif %x B %x\n",(u32)pQueue->local.spaceIndices.bothIndices,
+    	//	pQueue->pQueueBuffer->header.spaceIndices,pQueue->pQueueBuffer);
+#elif __PCP__
+  //  printf("PCP Set Read Local %x Hif %x B %x\n",(u32)pQueue->local.spaceIndices.bothIndices,
+  //  		pQueue->pQueueBuffer->header.spaceIndices,pQueue->pQueueBuffer);
+#endif
     /// return entry size
     *pSize_p = size;
+    //TODO: Clean Up
+
+
 
     return kQueueSuccessful;
 }
@@ -689,6 +722,16 @@ This ensures reading queue indices consistently.
 //------------------------------------------------------------------------------
 static void getHwQueueBufferHeader (tQueue *pQueue_p)
 {
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+	microblaze_invalidate_dcache_range((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#elif __arm__
+	Xil_DCacheInvalidateRange((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#endif
+
     pQueue_p->local.spaceIndices.bothIndices =
             HOSTIF_RD32(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.spaceIndices));
@@ -705,6 +748,7 @@ static void getHwQueueBufferHeader (tQueue *pQueue_p)
 
     pQueue_p->local.usedEntries = pQueue_p->local.entryIndices.write -
             pQueue_p->local.entryIndices.read;
+
 }
 
 //------------------------------------------------------------------------------
@@ -718,6 +762,15 @@ static void getHwQueueBufferHeader (tQueue *pQueue_p)
 //------------------------------------------------------------------------------
 static tQueueState getHwQueueState (tQueue *pQueue_p)
 {
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+	microblaze_invalidate_dcache_range((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#elif __arm__
+	Xil_DCacheInvalidateRange((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#endif
     return (tQueueState)HOSTIF_RD8(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.state));
 }
@@ -732,8 +785,18 @@ static tQueueState getHwQueueState (tQueue *pQueue_p)
 //------------------------------------------------------------------------------
 static void setHwQueueState (tQueue *pQueue_p, tQueueState State_p)
 {
+
     HOSTIF_WR8(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.state), (UINT8)State_p);
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+	microblaze_flush_dcache_range((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#elif __arm__
+	Xil_DCacheFlushRange((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -747,6 +810,8 @@ This function writes the local write indices to the shared memory.
 //------------------------------------------------------------------------------
 static void setHwQueueWrite (tQueue *pQueue_p)
 {
+
+
     HOSTIF_WR16(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.spaceIndices.set.write),
             pQueue_p->local.spaceIndices.write);
@@ -754,6 +819,17 @@ static void setHwQueueWrite (tQueue *pQueue_p)
     HOSTIF_WR16(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.entryIndices.set.write),
             pQueue_p->local.entryIndices.write);
+
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+	microblaze_flush_dcache_range((DWORD)pQueue_p->pQueueBuffer,sizeof(tQueueBufferHdr));
+#elif __arm__
+	Xil_DCacheFlushRange((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#endif
+
 }
 
 //------------------------------------------------------------------------------
@@ -767,6 +843,7 @@ This function writes the local read indices to the shared memory.
 //------------------------------------------------------------------------------
 static void setHwQueueRead (tQueue *pQueue_p)
 {
+
     HOSTIF_WR16(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.spaceIndices.set.read),
             pQueue_p->local.spaceIndices.read);
@@ -774,6 +851,16 @@ static void setHwQueueRead (tQueue *pQueue_p)
     HOSTIF_WR16(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.entryIndices.set.read),
             pQueue_p->local.entryIndices.read);
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+	microblaze_flush_dcache_range((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#elif __arm__
+	Xil_DCacheFlushRange((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#endif
+
 }
 
 //------------------------------------------------------------------------------
@@ -788,11 +875,21 @@ memory region.
 //------------------------------------------------------------------------------
 static void resetHwQueue (tQueue *pQueue_p)
 {
+
     HOSTIF_WR32(pQueue_p->pQueueBuffer, offsetof(tQueueBuffer,
             header.spaceIndices.reset), 0);
 
     HOSTIF_WR32(pQueue_p->pQueueBuffer, offsetof(tQueueBuffer,
             header.entryIndices.reset), 0);
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+	microblaze_flush_dcache_range((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#elif __arm__
+	Xil_DCacheFlushRange((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -890,6 +987,7 @@ static BOOL checkQueueEmpty (tQueue *pQueue_p)
 //------------------------------------------------------------------------------
 static void writeHeader (tQueue *pQueue_p, tEntryHeader *pHeader_p)
 {
+
     UINT16 offset = getOffsetInCirBuffer(pQueue_p,
             pQueue_p->local.spaceIndices.write);
 
@@ -910,6 +1008,7 @@ static void writeHeader (tQueue *pQueue_p, tEntryHeader *pHeader_p)
 //------------------------------------------------------------------------------
 static void writeData (tQueue *pQueue_p, UINT8 *pData_p, UINT16 size_p)
 {
+
     UINT16 offset = getOffsetInCirBuffer(pQueue_p,
             pQueue_p->local.spaceIndices.write);
 
@@ -933,15 +1032,50 @@ This function writes data from a source to a circular memory.
 static void writeCirMemory (tQueue *pQueue_p, UINT16 offset_p,
         UINT8 *pSrc_p, UINT16 srcSpan_p)
 {
+	tEplEvent*          pEplEvent; //TODO: clean
     UINT8 *pDst = (UINT8*)(&pQueue_p->pQueueBuffer->data);
     UINT16 part;
+    UINT8 flag =0;
+#if defined(__AP__)
+   // ULONG dataSize = srcSpan_p - sizeof(tEplEvent) ;
+   // printf(" En AP:nmt:%x Sink %x Size %d \n",((u32 *)pSrc_p)[0],((u32 *)pSrc_p)[1],srcSpan_p);
+#elif defined(__PCP1__)
+    //printf("EN PCP:nmt:%x Size %d\n",(u32)pSrc_p[4],srcSpan_p);
+#endif
 
+#ifdef __AP1__
+    //TODO: Cleanup
+    pEplEvent = (tEplEvent*) (pSrc_p);
+     if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
+     {	tDllCalIssueRequest*	pRequest;
+
+        	pRequest = (tDllCalIssueRequest *)(pDst + offset_p + sizeof(tEplEvent));
+        	printf("Eb %x-%x \n", pRequest->nodeId,pRequest);
+        	pRequest->nodeId = 0;
+        	flag = 1;
+     }
+#endif
     if(offset_p + srcSpan_p <= pQueue_p->queueBufferSpan)
     {
+
         memcpy(pDst + offset_p, pSrc_p, srcSpan_p);
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+
+	microblaze_flush_dcache_range((UINT32)(pDst + offset_p), srcSpan_p);
+#elif __arm__
+	Xil_DCacheFlushRange((UINT32)(pDst + offset_p), srcSpan_p);
+#endif
     }
     else
     {
+    	if(flag)
+    	    	{
+    	    		printf("Copy\n");
+    	    	}
         /// mind the circular nature of this buffer!
         part = pQueue_p->queueBufferSpan - offset_p;
 
@@ -950,7 +1084,58 @@ static void writeCirMemory (tQueue *pQueue_p, UINT16 offset_p,
 
         /// copy the rest starting at the buffer's head
         memcpy(pDst, pSrc_p + part, srcSpan_p - part);
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+
+	microblaze_flush_dcache_range((UINT32)(pDst + offset_p), part);
+	microblaze_flush_dcache_range((UINT32)(pDst), srcSpan_p - part);
+#elif __arm__
+	Xil_DCacheFlushRange((UINT32)(pDst + offset_p), part);
+	Xil_DCacheFlushRange((UINT32)(pDst), srcSpan_p - part);
+#endif
     }
+#ifdef __AP1__
+    //TODO: Cleanup
+    pEplEvent = (tEplEvent*) (pDst + offset_p);
+     if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
+     {	tDllCalIssueRequest*	pRequest;
+
+        	pRequest = (tDllCalIssueRequest *)(pDst + offset_p + sizeof(tEplEvent));
+        	//printf("Ea %x-%x \n", pRequest->nodeId,pRequest);
+
+     }
+#endif
+
+#ifdef __AP1__
+    //TODO: Cleanup
+    pEplEvent = (tEplEvent*) (pDst + offset_p);
+     if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
+     {	tDllCalIssueRequest*	pRequest;
+
+        	pRequest = (tDllCalIssueRequest *)(pDst + offset_p + sizeof(tEplEvent));
+        	printf("E %x-%x \n", pRequest->nodeId,pRequest);
+
+     }
+     pEplEvent = (tEplEvent*) (pSrc_p);
+          if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
+          {	tDllCalIssueRequest*	pRequest;
+
+             	pRequest = (tDllCalIssueRequest *)(pSrc_p + sizeof(tEplEvent));
+              // 	printf("ESrc %x-%x \n", pRequest->nodeId,pRequest);
+
+          }
+#endif
+#if defined(__AP__)
+   // ULONG dataSize = srcSpan_p - sizeof(tEplEvent) ;
+   // printf("Af AP:nmt:%x sink %x-%x\n",((u32 *)(pDst + offset_p ))[0],((u32 *)(pDst + offset_p ))[1],pQueue_p->pQueueBuffer);
+    //printf("Af AP:Write Offset %x b %x\n",(pDst + offset_p),pQueue_p->pQueueBuffer);
+#elif defined(__PCP1__)
+    //printf("Af PCP:nmt:%x-%x\n",(u32)pDst[offset_p + 4],pQueue_p->pQueueBuffer);
+    //printf("Af PCP:Write Offset %x b %x\n",(pDst + offset_p),pQueue_p->pQueueBuffer);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -985,6 +1170,7 @@ static void readHeader (tQueue *pQueue_p, tEntryHeader *pHeader_p)
 //------------------------------------------------------------------------------
 static void readData (tQueue *pQueue_p, UINT8 *pData_p, UINT16 size_p)
 {
+
     UINT16 offset = getOffsetInCirBuffer(pQueue_p,
             pQueue_p->local.spaceIndices.read);
 
@@ -1008,22 +1194,80 @@ This function reads data from a circular memory.
 static void readCirMemory (tQueue *pQueue_p, UINT16 offset_p,
         UINT8 *pDst_p, UINT16 dstSpan_p)
 {
+	tEplEvent*          pEplEvent; //TODO : clean
     UINT8 *pSrc = (UINT8*)(&pQueue_p->pQueueBuffer->data);
     UINT16 part;
 
+#if defined(__AP1__)
+   // printf(" Bef AP:nmt:%x Size %d \n",*(pSrc + offset_p),dstSpan_p);
+#elif defined(__PCP__)
+  //  printf("Bef PCP:nmt:%x Sink %x Size %d \n",((u32 *)(pSrc + offset_p))[0],((u32 *)(pSrc + offset_p))[1],dstSpan_p);
+#endif
+
     if(offset_p + dstSpan_p <= pQueue_p->queueBufferSpan)
     {
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+    microblaze_invalidate_dcache_range((UINT32)(pSrc + offset_p), dstSpan_p);
+#elif __arm__
+    Xil_DCacheInvalidateRange((UINT32)(pSrc + offset_p), dstSpan_p);
+#endif
         memcpy(pDst_p, pSrc + offset_p, dstSpan_p);
     }
     else
     {
+
         /// mind the circular nature of this buffer!
         part = pQueue_p->queueBufferSpan - offset_p;
-
+#if XPAR_MICROBLAZE_USE_DCACHE
+    /*
+     * before handing over the received packet to the stack
+     * invalidate the packet's memory range
+     */
+    microblaze_invalidate_dcache_range((UINT32)(pSrc + offset_p), part);
+    microblaze_invalidate_dcache_range((UINT32)(pSrc),dstSpan_p - part);
+#elif __arm__
+    Xil_DCacheInvalidateRange((UINT32)(pSrc + offset_p), part);
+    Xil_DCacheInvalidateRange((UINT32)(pSrc),dstSpan_p - part);
+#endif
         /// copy until the buffer's end
         memcpy(pDst_p, pSrc + offset_p, part);
 
         /// copy the rest starting at the buffer's head
         memcpy(pDst_p + part, pSrc, dstSpan_p - part);
     }
+
+#ifdef __PCP1__
+    //TODO: Cleanup
+#error
+    pEplEvent = (tEplEvent*) (pSrc + offset_p);
+     if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
+     {	tDllCalIssueRequest*	pRequest;
+
+        	pRequest = (tDllCalIssueRequest *)(tDllCalIssueRequest *)(pSrc + offset_p + sizeof(tEplEvent));;
+
+        	printf("ER %x-%x \n", pRequest->nodeId,pRequest);
+
+     }
+     pEplEvent = (tEplEvent*) (pDst_p);
+         if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
+         {	tDllCalIssueRequest*	pRequest;
+
+            	pRequest = (tDllCalIssueRequest *)(pDst_p + sizeof(tEplEvent));;
+            	printf("ERDst %x-%x \n", pRequest->nodeId,pRequest);
+
+         }
+
+#endif
+#if defined(__AP1__)
+   // printf(" DN AP:nmt:%x-%x \n",(u32 *)pDst_p)[0],pQueue_p->pQueueBuffer);
+   //printf("AP Read Offset %x B %x\n",(pSrc + offset_p),pQueue_p->pQueueBuffer);
+#elif defined(__PCP__)
+
+      // printf("DN PCP:nmt:%x Sink%x-%x\n",((u32 *)pDst_p)[0],((u32 *)pDst_p)[1],pQueue_p->pQueueBuffer);
+       //printf("PCP Read Offset %x B %x\n",(pSrc + offset_p),pQueue_p->pQueueBuffer);
+#endif
 }

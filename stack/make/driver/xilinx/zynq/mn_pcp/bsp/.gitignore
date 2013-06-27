@@ -1,0 +1,12 @@
+Makefile
+pcp
+*.log
+*.options
+*.mss
+
+*.flash
+*.log
+.project
+.cproject
+.sdkproject
+

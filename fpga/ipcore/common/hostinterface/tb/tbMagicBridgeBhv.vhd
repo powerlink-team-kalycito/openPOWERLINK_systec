@@ -44,10 +44,10 @@ use ieee.numeric_std.all;
 use work.global.all;
 use work.hostInterfacePkg.all;
 
-entity tbMagicBridge is
-end tbMagicBridge;
+entity tbMagicBridgeBhv is
+end tbMagicBridgeBhv;
 
-architecture Bhv of tbMagicBridge is
+architecture Bhv of tbMagicBridgeBhv is
 
 ---- Component declarations -----
 
@@ -94,7 +94,7 @@ end component;
 component magicBridge
   generic(
        gAddressSpaceCount : natural := 2;
-       gBaseAddressArray : tarraystd32 := x"0000_1000"&x"0000_2000"&x"0000_3000";
+       gBaseAddressArray : tarraystd32 := (x"0000_1000", x"0000_2000",x"0000_3000");
        gBridgeInAddressWidth : natural := 16;
        gBridgeOutAddressWidth : natural := 32
   );
@@ -118,7 +118,7 @@ constant cInAddressWidth : natural := 16;
 constant cOutAddressWidth : natural := 30;
 
 constant cAddressArray : tArrayStd32 :=
-x"0000_1000" & x"0000_2000" & x"0000_3000" & x"0000_3100";
+ (x"0000_1000", x"0000_2000", x"0000_3000", x"0000_3100");
 
 constant cAddressSpaceCount : natural := 3;
 constant cAddressSpaceCount_log2 : natural := LogDualis(cAddressSpaceCount);

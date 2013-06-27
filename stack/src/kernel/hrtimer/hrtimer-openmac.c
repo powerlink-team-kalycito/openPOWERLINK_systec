@@ -241,7 +241,7 @@ tEplKernel PUBLIC EplTimerHighReskAddInstance(void)
 tEplKernel      Ret;
 
     Ret = kEplSuccessful;
-
+printf("%s\n",__func__);
     EPL_MEMSET(&EplTimerHighReskInstance_l, 0, sizeof (EplTimerHighReskInstance_l));
 
     EplTimerHighReskCompareInterruptDisable();
@@ -256,7 +256,7 @@ tEplKernel      Ret;
 #elif defined(__MICROBLAZE__)
     {
         DWORD curIntEn = THRK_RD32(EPL_TIMER_INTC_BASE, XIN_IER_OFFSET);
-
+        enableInterruptMaster();
         XIntc_RegisterHandler(EPL_TIMER_INTC_BASE, HIGHRES_TIMER_IRQ,
                 (XInterruptHandler)EplTimerHighReskInterruptHandler, (void*)NULL);
         XIntc_EnableIntr(EPL_TIMER_INTC_BASE, HIGHRES_TIMER_IRQ_MASK | curIntEn);
@@ -418,6 +418,7 @@ DWORD                       dwTimeSteps;
     EplTimerHighReskSetCompareValue( EplTimerHighReskGetTimeValue() + dwTimeSteps);
 
     // enable timer
+   // printf("%s Int %d\n",__func__,dwTimeSteps);
     EplTimerHighReskCompareInterruptEnable();
 
 Exit:
@@ -521,17 +522,18 @@ static void EplTimerHighReskInterruptHandler (void* pArg_p
         )
 {
 
-    BENCHMARK_MOD_24_SET(4);
-
+    BENCHMARK_MOD_01_SET(4);
+    // printf("Cb\n");
     EplTimerHighReskSetCompareValue(0);
     EplTimerHighReskCompareInterruptDisable();
 
     if (EplTimerHighReskInstance_l.m_TimerInfo.m_pfnCallback != NULL)
     {
+    	//printf("Cb\n");
         EplTimerHighReskInstance_l.m_TimerInfo.m_pfnCallback(&EplTimerHighReskInstance_l.m_TimerInfo.m_EventArg);
     }
 
-    BENCHMARK_MOD_24_RESET(4);
+    BENCHMARK_MOD_01_RESET(4);
 
     return;
 

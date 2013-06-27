@@ -376,7 +376,9 @@ void ctrlucal_storeInitParam(tCtrlInitParam* pInitParam_p)
 
     if(pDst != NULL)
         EPL_MEMCPY(pDst, pInitParam_p, sizeof(tCtrlInitParam));
-
+#ifdef __arm__
+    Xil_DCacheFlushRange((UINT32)pDst, sizeof(tCtrlInitParam));
+#endif
     memInitParamFreeDynBuff();
 }
 
@@ -400,7 +402,9 @@ tEplKernel ctrlucal_readInitParam(tCtrlInitParam* pInitParam_p)
 
     if(pSrc == NULL)
         return kEplNoResource;
-
+#ifdef __arm__
+	Xil_DCacheInvalidateRange((UINT32)(pSrc), sizeof(tCtrlInitParam));
+#endif
     EPL_MEMCPY(pInitParam_p, pSrc, sizeof(tCtrlInitParam));
 
     memInitParamFreeDynBuff();

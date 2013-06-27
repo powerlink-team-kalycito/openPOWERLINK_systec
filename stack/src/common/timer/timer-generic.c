@@ -333,7 +333,7 @@ DWORD               dwTimeoutMs;
 tEplEvent           EplEvent;
 tEplTimerEventArg   TimerEventArg;
 tEplKernel          Ret;
-
+//printf("Timeru Cb\n");
 
     Ret      = kEplSuccessful;
 
@@ -365,7 +365,6 @@ tEplKernel          Ret;
         // call event function
         TimerEventArg.m_TimerHdl = (tEplTimerHdl) pTimerEntry;
         EPL_MEMCPY(&TimerEventArg.m_Arg, &pTimerEntry->m_TimerArg.m_Arg, sizeof (TimerEventArg.m_Arg));
-    
         EplEvent.m_EventSink = pTimerEntry->m_TimerArg.m_EventSink;
         EplEvent.m_EventType = kEplEventTypeTimer;
         EPL_MEMSET(&EplEvent.m_NetTime, 0x00, sizeof(tEplNetTime));
@@ -404,7 +403,6 @@ tTimerEntry*    pNewEntry;
 tTimerEntry**   ppEntry;
 tEplKernel      Ret;
 
-
     Ret = kEplSuccessful;
 
     // check pointer to handle
@@ -431,6 +429,7 @@ tEplKernel      Ret;
     if (pNewEntry == NULL)
     {   // sorry, no free entry
         Ret = kEplTimerNoTimerCreated;
+        printf("kEplTimerNoTimerCreated\n");
         goto Exit;
     }
 
@@ -530,13 +529,13 @@ tTimerEntry*    pTimerEntry;
 tTimerEntry**   ppEntry;
 tEplKernel      Ret;
 
-
     Ret         = kEplSuccessful;
 
     // check pointer to handle
     if(pTimerHdl_p == NULL)
     {
         Ret = kEplTimerInvalidHandle;
+
         goto Exit;
     }
 
@@ -544,6 +543,7 @@ tEplKernel      Ret;
     if (*pTimerHdl_p == 0)
     {
         Ret = kEplSuccessful;
+
         goto Exit;
     }
 
@@ -579,6 +579,7 @@ tEplKernel      Ret;
     *pTimerHdl_p = 0;
     
 Exit:
+
     return Ret;
 
 }

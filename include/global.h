@@ -77,6 +77,8 @@
 #define _DEV_BIT32_             0x00000300L     // 32 bit
 
 // compilers
+//TODO:@John Added here
+#define _DEV_GNUC_ARM_			0x00000023L
 #define _DEV_GNUC_MICROBLAZE_   0x00000020L     // Xilinx Microblaze GCC
 #define _DEV_GNUC_NIOS2_        0x0000001FL     // Altera Nios II GCC
 #define _DEV_GNUC_X86_          0x00000017L     // GNU for I386
@@ -103,6 +105,8 @@
 #define _DEV_VXWORKS_           (_DEV_BIT32_ | _DEV_LINUX_GCC_                | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_)
 #define _DEV_MICROBLAZE_BIG_    (_DEV_BIT32_ | _DEV_GNUC_MICROBLAZE   | _DEV_BIGEND_ | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_ | _DEV_ALIGNMENT_4_ )
 #define _DEV_MICROBLAZE_LITTLE_ (_DEV_BIT32_ | _DEV_GNUC_MICROBLAZE   | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_ | _DEV_ALIGNMENT_4_ )
+//TODO:@John Added here
+#define	_DEV_ARM_				(_DEV_BIT32_ | _DEV_GNUC_ARM_                 	| _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_)
 
 //---------------------------------------------------------------------------
 //  useful macros
@@ -170,6 +174,11 @@
     #elif defined (__VXWORKS__)
         #define TARGET_SYSTEM   _VXWORKS_
         #define DEV_SYSTEM      _DEV_VXWORKS_
+
+	#elif defined (__arm__) //TODO:@John: Added here
+		#define TARGET_SYSTEM	_NO_OS_
+		#define DEV_SYSTEM      _DEV_ARM_
+
 
     #else
         #error 'ERROR: TARGET_SYSTEM / DEV_SYSTEM not found!'
@@ -338,6 +347,26 @@
     #if (DEV_SYSTEM == _DEV_MICROBLAZE_BIG_ \
         || DEV_SYSTEM == _DEV_MICROBLAZE_LITTLE_)
         #include <section-microblaze.h>
+    #endif
+
+	//FIXME:@Vinod: Atomic Functions copied
+	#if ( (DEV_SYSTEM == _DEV_ARM_) \
+		  || (DEV_SYSTEM == _DEV_MICROBLAZE_BIG_) \
+          || (DEV_SYSTEM == _DEV_MICROBLAZE_LITTLE_)\
+		)
+        #include <section-arm.h>
+		//////////////////////////////////////////////////////////////////////
+        //FIXME: Find way for atomic exchange!!!
+        // NOTE: THIS IS NO ATOMIC EXCHANGE!!!
+        //#include <alt_types.h>
+        #include <xil_io.h>
+
+        #define ATOMIC_T    unsigned char
+        #define ATOMIC_EXCHANGE(address, newval, oldval) \
+                                oldval = Xil_In32(address); \
+                                Xil_Out32(address, newval)
+        //////////////////////////////////////////////////////////////////////
+
     #endif
 
 // ------------------ WIN32 ---------------------------------------------
@@ -571,7 +600,8 @@ typedef int (*INTFUNCPTR)(void);
 //  definition of TRACE
 //---------------------------------------------------------------------------
 #ifndef NDEBUG
-    #define TRACE(...) trace(__VA_ARGS__)
+    //#define TRACE(...) trace(__VA_ARGS__) //VPA
+    #define TRACE(...) printf(__VA_ARGS__)
     #ifdef __cplusplus
         extern "C"
         {

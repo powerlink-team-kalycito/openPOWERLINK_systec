@@ -520,7 +520,7 @@ BYTE            abFilterMask[31],
 #endif
 
     //wait some time (phy may not be ready...)
-    EDRV_USLEEP(1*1000*1000);
+    EDRV_USLEEP(1*100*1000);//TODO:@John Reduced the time ?
 
 Exit:
     return Ret;
@@ -860,7 +860,7 @@ tEplKernel EdrvSendTxMsg              (tEdrvTxBuffer * pBuffer_p)
 tEplKernel          Ret = kEplSuccessful;
 ometh_packet_typ*   pPacket = NULL;
 unsigned long       ulTxLength;
-
+BENCHMARK_MOD_01_SET(1);
     pPacket = GET_TYPE_BASE(ometh_packet_typ, data, pBuffer_p->m_pbBuffer);
 
     pPacket->length = pBuffer_p->m_uiTxMsgLen;
@@ -921,7 +921,7 @@ Exit:
     {
         BENCHMARK_MOD_01_TOGGLE(7);
     }
-
+    BENCHMARK_MOD_01_RESET(1);
     return Ret;
 }
 
@@ -1367,7 +1367,7 @@ tEdrvRxBuffer       rxBuffer;
 unsigned int        uiIndex;
 #endif
 tEplTgtTimeStamp    TimeStamp;
-
+BENCHMARK_MOD_01_TOGGLE(6);
     rxBuffer.m_BufferInFrame = kEdrvBufferLastInFrame;
     rxBuffer.m_pbBuffer = (BYTE *) &pPacket->data;
     rxBuffer.m_uiRxMsgLen = pPacket->length;
@@ -1397,7 +1397,7 @@ tEplTgtTimeStamp    TimeStamp;
         BENCHMARK_MOD_01_RESET(5);
     }
 #endif
-
+    BENCHMARK_MOD_01_TOGGLE(6);
     return 0;
 }
 

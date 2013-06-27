@@ -98,6 +98,7 @@
 #elif EDRV_PKT_LOC == EDRV_PKT_LOC_TX_INT_RX_EXT
     #define EDRV_PKT_BASE           (void *)XPAR_AXI_POWERLINK_0_S_AXI_MAC_PKT_BASEADDR
     #define EDRV_PKT_SPAN                   XPAR_AXI_POWERLINK_0_MAC_PKT_SIZE
+	//#define EDRV_PKT_SPAN                   10240 //TODO: Review
 #endif
 
 // DEFINES FOR Interrupt Controller

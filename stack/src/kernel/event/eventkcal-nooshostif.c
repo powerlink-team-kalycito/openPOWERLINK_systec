@@ -176,7 +176,7 @@ This function posts a event to the kernel queue.
 tEplKernel eventkcal_postKernelEvent (tEplEvent *pEvent_p)
 {
     tEplKernel      ret = kEplSuccessful;
-
+    //printf("kernelevent:%d\n",pEvent_p->m_EventSink); //TODO:Cleanup
     EplTgtEnableGlobalInterrupt(FALSE);
 
     ret = eventk_process(pEvent_p);

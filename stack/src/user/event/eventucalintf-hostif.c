@@ -225,7 +225,7 @@ tEplKernel eventucal_postEventHostif (tEventQueue eventQueue_p, tEplEvent *pEven
     DWORD               aPostBuffer[(sizeof(tEplEvent) + EPL_MAX_EVENT_ARG_SIZE)/4];
     BYTE*               pPostBuffer = aPostBuffer;
     ULONG               dataSize;
-
+    void *				temp;
     if (eventQueue_p > kEventQueueNum)
         return kEplInvalidInstanceParam;
 
@@ -234,9 +234,14 @@ tEplKernel eventucal_postEventHostif (tEventQueue eventQueue_p, tEplEvent *pEven
 
     // initialize data size to mandatory part
     dataSize = sizeof(tEplEvent);
-
+   // temp = (void *) pEvent_p;
     // copy event into post buffer
+    //printf("Sinku %x-%x-%x\n",(pEvent_p->m_EventSink),&(pEvent_p->m_EventSink), offsetof(tEplEvent, m_EventSink));
+    //printf("Sinku %x-%x\n",*(u8*)(temp + offsetof(tEplEvent, m_EventSink)), (temp + offsetof(tEplEvent, m_EventSink)));
     EPL_MEMCPY(pPostBuffer, pEvent_p, dataSize);
+    //printf("SinkBuff %x-%x-%x-%x\n",*(u8*)(pPostBuffer + offsetof(tEplEvent, m_EventSink)), ((u8 *)pPostBuffer)[0],((u8 *)pPostBuffer)[1],((u8 *)pPostBuffer)[2]);
+    // copy argument data if present
+
 
     // copy argument data if present
     if(pEvent_p->m_pArg != NULL)

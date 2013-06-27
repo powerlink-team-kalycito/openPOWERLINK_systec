@@ -1165,6 +1165,7 @@ tEplNmtState        NmtState;
     pIntNodeInfo = EplDllkGetNodeInfo(pNodeInfo_p->m_uiNodeId);
     if (pIntNodeInfo == NULL)
     {   // no node info structure available
+    	printf("1*****************************\n");
         Ret = kEplDllNoNodeInfo;
         goto Exit;
     }
@@ -1228,6 +1229,7 @@ tEplNmtState        NmtState;
     pIntNodeInfo = EplDllkGetNodeInfo(pNodeOpParam_p->m_uiNodeId);
     if (pIntNodeInfo == NULL)
     {   // no node info structure available
+    	printf("2*****************************\n");
         Ret = kEplDllNoNodeInfo;
         goto Exit;
     }
@@ -1338,6 +1340,7 @@ tEplNmtState        NmtState;
     pIntNodeInfo = EplDllkGetNodeInfo(pNodeOpParam_p->m_uiNodeId);
     if (pIntNodeInfo == NULL)
     {   // no node info structure available
+    	printf("3*****************************\n");
         Ret = kEplDllNoNodeInfo;
         goto Exit;
     }
@@ -1422,8 +1425,10 @@ tEplKernel          Ret = kEplSuccessful;
 tEplDllkNodeInfo*   pNodeInfo;
 
     pNodeInfo = EplDllkGetNodeInfo(uiNodeId_p);
+    printf("%d\n",uiNodeId_p);
     if (pNodeInfo == NULL)
     {   // no node info structure available
+    	printf("4*****************************\n");
         Ret = kEplDllNoNodeInfo;
         goto Exit;
     }
@@ -1488,6 +1493,7 @@ tEplDllkNodeInfo*   pNodeInfo;
     pNodeInfo = EplDllkGetNodeInfo(uiNodeId_p);
     if (pNodeInfo == NULL)
     {   // no node info structure available
+    	printf("5*****************************\n");
         Ret = kEplDllNoNodeInfo;
         goto Exit;
     }
@@ -2682,10 +2688,13 @@ tEplFrame*      pTxFrame;
 tEdrvTxBuffer*  pTxBuffer;
 tEplFrameInfo   FrameInfo;
 unsigned int    uiNextTxBufferOffset = EplDllkInstance_g.m_bCurTxBufferOffsetCycle ^ 1;
-
+BENCHMARK_MOD_02_SET(3);
     if (EplDllkInstance_g.m_pfnCbSync != NULL)
     {
+    	BENCHMARK_MOD_02_TOGGLE(7);
         Ret = EplDllkInstance_g.m_pfnCbSync();
+        BENCHMARK_MOD_02_TOGGLE(7);
+
         if (Ret == kEplReject)
         {
             fReadyFlag = FALSE;
@@ -2855,7 +2864,9 @@ unsigned int    uiNextTxBufferOffset = EplDllkInstance_g.m_bCurTxBufferOffsetCyc
 
         // $$$ d.k. fEnableInvitation_p = ((NmtState_p != kEplNmtMsPreOperational1) || (EplDllkInstance_g.m_uiCycleCount >= EPL_C_DLL_PREOP1_START_CYCLES))
         //          currently, EplDllkProcessSync is not called in PreOp1
+        BENCHMARK_MOD_02_RESET(3);
         Ret = EplDllkUpdateFrameSoa(pTxBuffer, NmtState_p, TRUE, EplDllkInstance_g.m_bSyncLastSoaReq);
+        BENCHMARK_MOD_02_SET(3);
         EplDllkInstance_g.m_ppTxBufferList[uiIndex] = pTxBuffer;
         //store SoA index
         uiSoaIndex = uiIndex;
@@ -2971,8 +2982,9 @@ unsigned int    uiNextTxBufferOffset = EplDllkInstance_g.m_bCurTxBufferOffsetCyc
         // set last list element to NULL
         EplDllkInstance_g.m_ppTxBufferList[uiIndex] = NULL;
         uiIndex++;
-
+        BENCHMARK_MOD_02_RESET(3);
         Ret = EdrvCyclicSetNextTxBufferList(EplDllkInstance_g.m_ppTxBufferList, uiIndex);
+        BENCHMARK_MOD_02_SET(3);
 #endif
     }
     else
@@ -2993,15 +3005,18 @@ unsigned int    uiNextTxBufferOffset = EplDllkInstance_g.m_bCurTxBufferOffsetCyc
             // process TPDO
             FrameInfo.m_pFrame = pTxFrame;
             FrameInfo.m_uiFrameSize = pTxBuffer->m_uiTxMsgLen;
+            BENCHMARK_MOD_02_RESET(3);
             Ret = EplDllkProcessTpdo(&FrameInfo, fReadyFlag);
+            BENCHMARK_MOD_02_SET(3);
             if (Ret != kEplSuccessful)
             {
                 goto Exit;
             }
 
 //                        BENCHMARK_MOD_02_TOGGLE(7);
-
+            BENCHMARK_MOD_02_RESET(3);
             Ret = EplDllkUpdateFramePres(pTxBuffer, NmtState_p);
+            BENCHMARK_MOD_02_SET(3);
             if (Ret != kEplSuccessful)
             {
                 goto Exit;
@@ -3012,7 +3027,7 @@ unsigned int    uiNextTxBufferOffset = EplDllkInstance_g.m_bCurTxBufferOffsetCyc
         }
 
     }
-
+    BENCHMARK_MOD_02_RESET(3);
 Exit:
     return Ret;
 }
@@ -4374,6 +4389,7 @@ tEplDllkNodeInfo*   pIntNodeInfo = NULL;
         pIntNodeInfo = EplDllkGetNodeInfo(uiNodeId);
         if (pIntNodeInfo == NULL)
         {   // no node info structure available
+        	printf("6*****************************\n");
             Ret = kEplDllNoNodeInfo;
             goto Exit;
         }
@@ -5167,6 +5183,7 @@ unsigned int    uiNodeId;
                     pIntNodeInfo = EplDllkGetNodeInfo(uiNodeId);
                     if (pIntNodeInfo == NULL)
                     {   // no node info structure available
+                    	printf("7*****************************\n");
                         Ret = kEplDllNoNodeInfo;
                         goto Exit;
                     }
@@ -7285,7 +7302,7 @@ tEplNmtState    NmtState;
 BYTE*           pbCnNodeId;
 
 TGT_DLLK_DECLARE_FLAGS;
-
+BENCHMARK_MOD_02_TOGGLE(7);
     TGT_DLLK_ENTER_CRITICAL_SECTION();
 
     NmtState = EplDllkInstance_g.m_NmtState;
@@ -7338,7 +7355,7 @@ Exit:
     }
 
     TGT_DLLK_LEAVE_CRITICAL_SECTION();
-
+    BENCHMARK_MOD_02_TOGGLE(7);
     return Ret;
 }
 #endif
@@ -7464,6 +7481,7 @@ tEplDllkNodeInfo*   pNodeInfo;
             pNodeInfo = EplDllkGetNodeInfo(EplDllkInstance_g.m_auiLastTargetNodeId[bCurReq_p]);
             if (pNodeInfo == NULL)
             {   // no node info structure available
+            	printf("8*****************************\n");
                 Ret = kEplDllNoNodeInfo;
                 goto Exit;
             }

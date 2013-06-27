@@ -85,6 +85,8 @@
 // applications needs to use one common library function (e.g. memcpy()). So
 // you can set (or change) it here.
 
+#include <global.h>//TODO:@JOHN Added here
+
 #if (TARGET_SYSTEM == _WIN32_)
 
     #define _WIN32_WINDOWS 0x0401
@@ -141,6 +143,7 @@
     #include <stdlib.h>
     #include <stdio.h>
     #include <string.h>
+	#include <EplInc.h>//TODO:@JOHN Added here
 
     #ifndef NDEBUG
         #define PRINTF(...)                 printf(__VA_ARGS__)

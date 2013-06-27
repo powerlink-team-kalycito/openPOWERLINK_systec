@@ -401,6 +401,7 @@ tEplKernel dllucal_issueRequest(tEplDllReqServiceId service_p, UINT nodeId_p,
             issueReq.soaFlag1 = soaFlag1_p;
             event.m_pArg = &issueReq;
             event.m_uiSize = sizeof (issueReq);
+           // printf("U: %d\n",issueReq.nodeId);
             ret = eventu_postEvent(&event);
             break;
 

@@ -329,7 +329,7 @@ tEplKernel  Ret = kEplSuccessful;
 unsigned int    uiNextTxBufferList;
 
     uiNextTxBufferList = EdrvCyclicInstance_l.m_uiCurTxBufferList ^ EdrvCyclicInstance_l.m_uiMaxTxBufferCount;
-
+//printf("Set\n");
     // check if next list is free
     if (EdrvCyclicInstance_l.m_paTxBufferList[uiNextTxBufferList] != NULL)
     {
@@ -570,6 +570,7 @@ int                i; //used for for loop
 
     if (EdrvCyclicInstance_l.m_paTxBufferList[EdrvCyclicInstance_l.m_uiCurTxBufferEntry] == NULL)
     {
+    	printf("Cb Error\n");
         Ret = kEplEdrvCurTxListEmpty;
         goto Exit;
     }
@@ -730,15 +731,19 @@ DWORD            udwNextTimerIrqNs = EdrvCyclicInstance_l.m_dwCycleLenUs * 1000U
     //loop through TX buffer list
     while ((pTxBuffer = EdrvCyclicInstance_l.m_paTxBufferList[EdrvCyclicInstance_l.m_uiCurTxBufferEntry]) != NULL)
     {
+
         //compare TX buffer time offset with next offset (considers IPG and last packet length)
         //note: otherwise openMAC is confused if time-trig TX starts within other time-trig TX!
         if( (fFirstPkt == FALSE) && (udwNextOffNs > pTxBuffer->m_dwTimeOffsetNs) )
         {
+        	//BENCHMARK_MOD_01_SET(0);
             udwAbsTime += OMETH_NS_2_TICKS(udwNextOffNs); //accumulate offset
+            //BENCHMARK_MOD_01_RESET(0);
         }
         else
-        {
+        {	//BENCHMARK_MOD_01_SET(2);
             udwAbsTime += OMETH_NS_2_TICKS(pTxBuffer->m_dwTimeOffsetNs); //accumulate offset
+            //BENCHMARK_MOD_01_RESET(2);
         }
         fFirstPkt = FALSE; //first packet is surely out...
 
@@ -755,6 +760,7 @@ DWORD            udwNextTimerIrqNs = EdrvCyclicInstance_l.m_dwCycleLenUs * 1000U
         pTxBuffer->m_dwTimeOffsetAbsTk = udwAbsTime | 1; //lowest bit enables time triggered send
 
         Ret = EdrvSendTxMsg(pTxBuffer);
+
         if (Ret != kEplSuccessful)
         {
             goto Exit;
@@ -780,6 +786,7 @@ DWORD            udwNextTimerIrqNs = EdrvCyclicInstance_l.m_dwCycleLenUs * 1000U
 
         //switch to next TX buffer
         EdrvCyclicInstance_l.m_uiCurTxBufferEntry++;
+
     }
 
     //set up next timer interrupt

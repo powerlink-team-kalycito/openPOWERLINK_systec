@@ -253,6 +253,7 @@ tEplKernel dllkcal_process(tEplEvent* pEvent_p)
 #if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_NMT_MN)) != 0)
         case kEplEventTypeDllkIssueReq:
             pIssueReq = (tDllCalIssueRequest*) pEvent_p->m_pArg;
+           // printf("K %d\n",pIssueReq->nodeId);
             ret = dllkcal_issueRequest(pIssueReq->service, pIssueReq->nodeId,
                                        pIssueReq->soaFlag1);
             break;

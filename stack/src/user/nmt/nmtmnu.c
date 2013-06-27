@@ -1309,6 +1309,7 @@ tEplKernel      Ret;
         // timer event
         case kEplEventTypeTimer:
         {
+        	//printf("Timeru Event\n");
         tEplTimerEventArg*  pTimerEventArg = (tEplTimerEventArg*)pEvent_p->m_pArg;
         unsigned int        uiNodeId;
 

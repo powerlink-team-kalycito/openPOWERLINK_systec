@@ -34,8 +34,8 @@ OBJDIR=obj
 CC=arm-xilinx-eabi-gcc
 #mb-gcc
 AR=arm-xilinx-eabi-ar
-	SIZE=arm-xilinx-eabi-size
-	PROC=ARM_xilinx
+SIZE=arm-xilinx-eabi-size
+PROC=ARM_xilinx
 #mb-ar
 CP=cp
 RM=rm -rf
@@ -224,7 +224,7 @@ builddir:
 
 $(OBJDIR)/%.o: %.c $(BSP_PATH)/$(PROCESSOR_NAME)
 	@echo Building file: $<
-	@echo Invoking: MicroBlaze gcc compiler
+	@echo Invoking: ARM gcc compiler
 	$(CC) -c ${OPT_LEVEL} $(CFLAGS) $(CPPFLAGS) $< $(OUTPUT_OPTION)
 	@echo Finished building: $<
 	@echo ' '
@@ -232,14 +232,14 @@ $(OBJDIR)/%.o: %.c $(BSP_PATH)/$(PROCESSOR_NAME)
 # extra rule for usleep to set opt level to zero
 $(OBJDIR)/xilinx_usleep.o: xilinx_usleep.c xilinx_usleep.h $(BSP_PATH)/$(PROCESSOR_NAME)
 	@echo Building file: $<
-	@echo Invoking: MicroBlaze gcc compiler
+	@echo Invoking: ARM gcc compiler
 	$(CC) -c -O0 $(CFLAGS) $(CPPFLAGS) $< ${OUTPUT_OPTION}
 	@echo Finished building: $<
 	@echo ' '
 
 ${EXECUTABLE}.elf: $(BSP_PATH)/$(PROCESSOR_NAME) ${OBJ} ${LSSCRIPT}
 	@echo Building target: $@
-	@echo Invoking: MicroBlaze gcc linker
+	@echo Invoking: ARM gcc linker
 #	$(AR) cr $(APP_DIR)/lib/libmn.a ${OBJ}
 #	$(CC) $(LDFLAGS)  -o ${EXECUTABLE}.elf  $(LIBSPATH)
 #	$(CC) $(LDFLAGS) $(LIBSPATH) obj/demo_main.o ${LIBS} -o ${EXECUTABLE}.elf
@@ -250,7 +250,7 @@ ${EXECUTABLE}.elf: $(BSP_PATH)/$(PROCESSOR_NAME) ${OBJ} ${LSSCRIPT}
 	@echo ' '
 
 ${EXECUTABLE}.size: ${EXECUTABLE}.elf
-	@echo Invoking: MicroBlaze Print Size
+	@echo Invoking: ARM Print Size
 	$(SIZE) ${EXECUTABLE}.elf  |tee "${EXECUTABLE}.size"
 	@echo Finished building: $@
 	@echo ' '
@@ -263,7 +263,7 @@ ${EXECUTABLE}.elfcheck: ${EXECUTABLE}.elf
 
 ${EXECUTABLE}.srec: ${EXECUTABLE}.elf
 	@echo Invoking: mb-objcopy
-	mb-objcopy $(OBJCPYFLAGS) ${EXECUTABLE}.elf ${EXECUTABLE}.srec
+	arm-xilinx-eabi-objcopy $(OBJCPYFLAGS) ${EXECUTABLE}.elf ${EXECUTABLE}.srec
 	@echo Finished building: $@
 	@echo ' '
 

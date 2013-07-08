@@ -45,7 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <EplTarget.h>
 
 #include "xap.h"
-
+#include "Benchmark.h"
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -90,7 +90,7 @@ const BYTE abMacAddr[] = {0x00, 0x12, 0x34, 0x56, 0x78, NODEID};
 // local vars
 //------------------------------------------------------------------------------
 static unsigned int uiNodeId_g = EPL_C_ADR_INVALID;
-static unsigned int uiCycleLen_g = 1000;
+static unsigned int uiCycleLen_g = 600;
 static unsigned int uiCurCycleLen_g = 0;
 static BOOL fShutdown = FALSE;
 
@@ -624,10 +624,13 @@ reads the inputs and runs the control loop.
 tEplKernel PUBLIC AppCbSync(void)
 {
     tEplKernel          EplRet;
-    //int                 i;
-    char test[10];
-    memset(test,0xFF,10);
+    int                 i;
+  //  char test[10];
+  //  memset(test,0xFF,10);
+    BENCHMARK_MOD_32_SET(0);
+    BENCHMARK_MOD_32_SET(1);
     EplRet = api_processImageExchangeOut();
+    BENCHMARK_MOD_32_RESET(1);
     if (EplRet != kEplSuccessful)
     {
         return EplRet;
@@ -710,13 +713,14 @@ tEplKernel PUBLIC AppCbSync(void)
     pProcessImageIn_l->CN12_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[11].m_uiLeds;
 #endif
     //pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = nodeVar_g[0].m_uiLeds;
-    pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_03 = uiCnt_g;
-    pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01 ;
-   memcpy(pProcessImageIn_l,test,10);
-   memset(test,0xFA,10);
-   memcpy(pProcessImageOut_l,test,10);
-
+    pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = uiCnt_g;
+   // pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01 ;
+  // memcpy(pProcessImageIn_l,test,10);
+ //  memset(test,0xFA,10);
+  // memcpy(pProcessImageOut_l,test,10);
+    BENCHMARK_MOD_32_SET(1);
     EplRet = api_processImageExchangeIn();
-
+    BENCHMARK_MOD_32_RESET(1);
+    BENCHMARK_MOD_32_RESET(0);
     return EplRet;
 }

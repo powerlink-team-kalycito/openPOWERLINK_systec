@@ -122,7 +122,7 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p);
 
 /// irq handling
 #define HOSTIF_IRQ_REG(cb, arg)     \
-		target_RegisterHandler(HOSTIF_IRQ, cb, arg)
+		SysComp_initSyncInterrupt(HOSTIF_IRQ, cb, arg)
     //alt_ic_isr_register(HOSTIF_IRQ_IC_ID, HOSTIF_IRQ, cb, arg, NULL)
 
 #define HOSTIF_IRQ_ENABLE()         \

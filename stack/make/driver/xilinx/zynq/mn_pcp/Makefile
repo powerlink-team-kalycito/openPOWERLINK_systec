@@ -61,7 +61,6 @@ BITSTREAM= download
 INCLUDES=-I${APP_DIR} \
 -I${STACK_ROOT}/include \
 -I${STACK_ROOT}/libs/omethlib \
--I${STACK_ROOT}/libs/sharedbuff \
 -I${STACK_ROOT}/libs/hostif \
 -I${STACK_ROOT}/stack/include/target/openmac \
 -I${STACK_ROOT}/stack/src \
@@ -74,9 +73,7 @@ INCLUDES=-I${APP_DIR} \
 ##################################
 # Source files
 
-SRCFILES=daemon.c \
-$ systemComponents.c \
-${STACK_ROOT}/libs/hostif/hostiflib_microblaze.c \
+SRCFILES=${STACK_ROOT}/libs/hostif/hostiflib_microblaze.c \
 ${STACK_ROOT}/libs/hostif/hostiflib.c \
 ${STACK_ROOT}/libs/hostif/hostiflib_l.c \
 ${STACK_ROOT}/libs/hostif/lfqueue.c \
@@ -85,6 +82,9 @@ ${STACK_ROOT}/libs/omethlib/omethlib.c \
 ${STACK_ROOT}/libs/omethlib/omethlibint.c \
 ${STACK_ROOT}/libs/omethlib/omethlib_phycfg_generic.c \
 ${STACK_ROOT}/libs/trace/trace-printf.c \
+${STACK_ROOT}/stack/src/arch/xilinx_microblaze/xilinx_irq.c \
+${STACK_ROOT}/stack/src/arch/xilinx_microblaze/xilinx_usleep.c \
+${STACK_ROOT}/stack/src/arch/xilinx_microblaze/target-microblaze.c \
 ${STACK_ROOT}/stack/src/common/dll/dllcal-hostif.c \
 ${STACK_ROOT}/stack/src/common/event/event.c \
 ${STACK_ROOT}/stack/src/common/errstring.c \
@@ -106,9 +106,20 @@ ${STACK_ROOT}/stack/src/kernel/pdo/pdokcal.c \
 ${STACK_ROOT}/stack/src/kernel/pdo/pdokcal-triplebufshm.c \
 ${STACK_ROOT}/stack/src/kernel/pdo/pdokcalmem-hostif.c \
 ${STACK_ROOT}/stack/src/kernel/pdo/pdokcalsync-hostif.c \
-${STACK_ROOT}/stack/src/arch/xilinx_microblaze/xilinx_irq.c \
-${STACK_ROOT}/stack/src/arch/xilinx_microblaze/xilinx_usleep.c \
-${STACK_ROOT}/stack/src/arch/xilinx_microblaze/target-microblaze.c
+${APP_DIR}/daemon.c \
+${APP_DIR}/systemComponents.c 
+
+#####################################
+#Dependencies
+DEPS = ${APP_DIR}/EplCfg.h \
+${APP_DIR}/systemComponents.h \
+${STACK_ROOT}/include \
+${STACK_ROOT}/libs/hostif \
+${STACK_ROOT}/libs/sharedbuff \
+${STACK_ROOT}/stack/include/target/openmac \
+${STACK_ROOT}/stack/src \
+${STACK_ROOT}/objdicts/CiA302-4_MN \
+$(BSP_PATH)/${PROCESSOR_NAME}
 
 LIBRARIES = libxil.a
 
@@ -195,7 +206,7 @@ application: builddir ${EXECUTABLE}.elf ${EXECUTABLE}.size ${EXECUTABLE}.elfchec
 builddir:
 	$(shell mkdir $(OBJDIR))
 
-$(OBJDIR)/%.o: %.c $(BSP_PATH)/$(PROCESSOR_NAME)
+$(OBJDIR)/%.o: %.c $(DEPS)
 	@echo Building file: $<
 	@echo Invoking: MicroBlaze gcc compiler
 	$(CC) -c ${OPT_LEVEL} $(CFLAGS) $(CPPFLAGS) $< $(OUTPUT_OPTION)

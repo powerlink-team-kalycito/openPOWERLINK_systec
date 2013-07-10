@@ -53,3 +53,24 @@ void ARM_ZYNQ_WR_8DIRECT(void* base,void* offset,u8 byte)
 	Xil_Out8(Address, byte);
 	Xil_DCacheFlushRange(Address,1);
 }
+
+volatile void* xil_uncached_malloc (size_t size)
+{
+  void* ptr;
+
+  ptr = malloc (size);
+
+  Xil_DCacheFlushRange((unsigned int)ptr, size);
+
+  return ptr ? (volatile void*) (((u32) ptr) | ARM_BYPASS_DCACHE_MASK) : NULL;
+}
+
+
+/*
+ * Free a block of uncached memory.
+ */
+
+void xil_uncached_free (volatile void* ptr)
+{
+  free ((void*) (((u32) ptr) & ~ARM_BYPASS_DCACHE_MASK));
+}

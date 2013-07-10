@@ -1,6 +1,6 @@
 /**
 ********************************************************************************
-\file       Zynq_ARM_CortexA9/src/systemComponents.c
+\file       systemComponents.c
 
 \brief      Module which contains processor specific definitions
             (Zynq-ARM version)
@@ -19,9 +19,11 @@ subject to the License Agreement located at the end of this file below.
 
 #include "xil_cache.h"
 #include "xil_types.h"
-#include "xscugic.h"
 #include "xil_io.h"
 #include "xil_exception.h"
+#include "hostiflib_arm.h"
+#include "EplTarget.h"
+#include <unistd.h>
 
 #ifdef CN_API_USING_SPI
 #include "xspi.h"
@@ -72,13 +74,11 @@ void SysComp_initPeripheral(void)
     Xil_Out32(FPGA_RST_CNTRL,0);
     Xil_Out32(SLCR_LOCK, SLCR_LOCK_VAL);
 
-    //TODO: Enable Cache
-    //Xil_ICacheEnable();
-	//Xil_DCacheEnable();
+   Xil_ICacheEnable();
+   Xil_DCacheEnable();
+  //Xil_DCacheDisable();//TODO: @John Enable Cache
+   //Xil_ICacheDisable();
 
-	Xil_DCacheDisable();
-	Xil_ICacheDisable();
-        
 #ifdef CN_API_USING_SPI
 	//TODO: To integrate SPI functionality later!
 #endif
@@ -129,7 +129,7 @@ will be enabled.
 \retval OK                      on success
 \retval ERROR                   if interrupt couldn't be connected
 *******************************************************************************/
-int SysComp_initSyncInterrupt(void (*callbackFunc)(void*))
+int SysComp_initSyncInterrupt(int Int_p,Xil_InterruptHandler callbackFunc_p,void* Arg_p)
 {
 
 #ifdef _USE_HIGH_PRIO_
@@ -139,11 +139,9 @@ int SysComp_initSyncInterrupt(void (*callbackFunc)(void*))
 #endif
 
 	//register sync irq handler
-    XScuGic_Connect(&sGicInstance_l, SYNC_IRQ_NUM,
-            (Xil_InterruptHandler)callbackFunc, 0);
-
-    //enable the sync interrupt
-    XScuGic_Enable(&sGicInstance_l, SYNC_IRQ_NUM);
+    XScuGic_RegisterHandler(ARM_IRQ_IC_BASE, Int_p,	callbackFunc_p, Arg_p);
+   	XScuGic_EnableIntr(ARM_IRQ_IC_DIST_BASE, Int_p);
+   //enable the sync interrupt
 
     return OK;
 }
@@ -156,7 +154,9 @@ SysComp_enableSyncInterrupt() enables the synchronous interrupt.
 *******************************************************************************/
 inline void SysComp_enableSyncInterrupt(void)
 {
-    XScuGic_Enable(&sGicInstance_l, SYNC_IRQ_NUM);
+#ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_SYNCIRQ_VEC_ID
+   XScuGic_Enable(&sGicInstance_l, SYNC_IRQ_NUM);
+#endif
 }
 
 /**
@@ -167,8 +167,10 @@ SysComp_disableSyncInterrupt() disable the synchronous interrupt.
 *******************************************************************************/
 inline void SysComp_disableSyncInterrupt(void)
 {
+#ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_SYNCIRQ_VEC_ID
 	XScuGic_Disable(&sGicInstance_l, SYNC_IRQ_NUM);
 	//TODO: Check if we have to disconnect handler
+#endif
 }
 /**
 ********************************************************************************
@@ -191,14 +193,16 @@ int SysComp_initAsyncInterrupt(void (*callbackFunc)(void*))
 	XScuGic_SetPriorityTriggerType(&sGicInstance_l, SYNC_INTR_ID, 
 								ASYNC_INTR_PRIORITY, TRIGGER_VALUE);
 #endif
+
+#ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_VEC_ID
 	/* register interrupt handler */
     XScuGic_Connect(&sGicInstance_l, ASYNC_IRQ_NUM,
             (Xil_InterruptHandler)callbackFunc, 0);
 
-    //enable the sync interrupt
-    XScuGic_Enable(&sGicInstance_l, ASYNC_IRQ_NUM);
-
-    return OK;
+   //enable the sync interrupt
+   XScuGic_Enable(&sGicInstance_l, ASYNC_IRQ_NUM);
+#endif
+   return OK;
 }
 
 /**
@@ -209,7 +213,9 @@ SysComp_enableSyncInterrupt() enables the synchronous interrupt.
 *******************************************************************************/
 inline void SysComp_enableAsyncInterrupt(void)
 {
-    XScuGic_Enable(&sGicInstance_l, ASYNC_IRQ_NUM);
+#ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_VEC_ID
+   XScuGic_Enable(&sGicInstance_l, ASYNC_IRQ_NUM);
+#endif
 }
 
 /**
@@ -220,9 +226,10 @@ SysComp_disableSyncInterrupt() disable the synchronous interrupt.
 *******************************************************************************/
 inline void SysComp_disableAsyncInterrupt(void)
 {
-    
+#ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_VEC_ID
 	XScuGic_Disable(&sGicInstance_l, ASYNC_IRQ_NUM);
 	//TODO: Check if we have to disconnect handler
+#endif
 }
 
 #ifdef CN_API_USING_SPI

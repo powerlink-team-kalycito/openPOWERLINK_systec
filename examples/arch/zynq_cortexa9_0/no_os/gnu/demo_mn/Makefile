@@ -61,24 +61,27 @@ BITSTREAM= download
 # Include directory
 INCLUDES=-I${APP_DIR} \
 -I${STACK_ROOT}/include \
--I${STACK_ROOT}/libs/omethlib \
--I${STACK_ROOT}/libs/sharedbuff \
 -I${STACK_ROOT}/libs/hostif \
+-I${STACK_ROOT}/libs/sharedbuff \
 -I${STACK_ROOT}/stack/include/target/openmac \
--I${STACK_ROOT}/stack/src/ \
--I${STACK_ROOT}/stack/src/arch/xilinx_arm \
--I${STACK_ROOT}/examples/arch/zynq_cortexa9_0/no_os/gnu/demo_mn \
--I${STACK_ROOT}/stack/make/lib/libpowerlink_user \
+-I${STACK_ROOT}/stack/src \
 -I${STACK_ROOT}/objdicts/CiA302-4_MN \
--I${PROCESSOR_NAME}/include \
--I$(BSP_PATH)/ps7_cortexa9_0/include
+-I$(BSP_PATH)/${PROCESSOR_NAME}/include
+
+DEPS = ${APP_DIR}/EplCfg.h \
+${APP_DIR}/systemComponents.h \
+${STACK_ROOT}/include \
+${STACK_ROOT}/libs/hostif \
+${STACK_ROOT}/libs/sharedbuff \
+${STACK_ROOT}/stack/include/target/openmac \
+${STACK_ROOT}/stack/src \
+${STACK_ROOT}/objdicts/CiA302-4_MN \
+$(BSP_PATH)/${PROCESSOR_NAME}
 
 ##################################
 # Source files
 
-SRCFILES=${APP_DIR}/demo_main.c \
-${STACK_ROOT}/libs/hostif/hostiflib_arm_cache.c \
-${STACK_ROOT}/libs/hostif/hostiflib_arm.c \
+SRCFILES=${STACK_ROOT}/libs/hostif/hostiflib_arm.c \
 ${STACK_ROOT}/libs/hostif/hostiflib.c \
 ${STACK_ROOT}/libs/hostif/hostiflib_l.c \
 ${STACK_ROOT}/libs/hostif/lfqueue.c \
@@ -102,7 +105,6 @@ ${STACK_ROOT}/stack/src/user/errhnd/errhnducal-hostif.c \
 ${STACK_ROOT}/stack/src/user/event/eventu.c \
 ${STACK_ROOT}/stack/src/user/event/eventucal-nooshostif.c \
 ${STACK_ROOT}/stack/src/user/event/eventucalintf-hostif.c \
-${STACK_ROOT}/stack/src/user/nmt/nmtucal.c \
 ${STACK_ROOT}/stack/src/user/nmt/identu.c \
 ${STACK_ROOT}/stack/src/user/nmt/nmtcnu.c \
 ${STACK_ROOT}/stack/src/user/nmt/nmtmnu.c \
@@ -112,15 +114,18 @@ ${STACK_ROOT}/stack/src/user/nmt/syncu.c \
 ${STACK_ROOT}/stack/src/user/obd/obd.c \
 ${STACK_ROOT}/stack/src/user/obd/obdcdc.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdou.c \
-${STACK_ROOT}/stack/src/user/pdo/pdoucal.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdoucal-triplebufshm.c \
+${STACK_ROOT}/stack/src/user/pdo/pdoucal.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdoucalmem-hostif.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdoucalsync-hostif.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-asndu.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-asysequ.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-comu.c \
 ${STACK_ROOT}/stack/src/user/cfmu.c \
-${STACK_ROOT}/stack/src/user/ledu.c 
+${STACK_ROOT}/stack/src/user/ledu.c \
+${APP_DIR}/systemComponents.c \
+${APP_DIR}/demo_main.c 
+
 
 
 #${STACK_ROOT}/stack/src/user/event/eventucal.c \ ## Splited this file ## Not Present in updated design
@@ -222,7 +227,7 @@ application: builddir ${EXECUTABLE}.elf ${EXECUTABLE}.size ${EXECUTABLE}.elfchec
 builddir:
 	$(shell mkdir $(OBJDIR))
 
-$(OBJDIR)/%.o: %.c $(BSP_PATH)/$(PROCESSOR_NAME)
+$(OBJDIR)/%.o: %.c $(DEPS)
 	@echo Building file: $<
 	@echo Invoking: ARM gcc compiler
 	$(CC) -c ${OPT_LEVEL} $(CFLAGS) $(CPPFLAGS) $< $(OUTPUT_OPTION)

@@ -21,14 +21,19 @@ subject to the License Agreement located at the end of this file below.
 #include "xparameters.h"
 #include "xparameters_ps.h"
 
-#include "cnApiGlobal.h"
-#include "cnApiCfg.h"
 
+#include "global.h"
+//#include "EplCfg.h"
+#include "Epl.h"
 #include <string.h>
 #include <stdio.h>
-
+#include "xscugic.h"
 /******************************************************************************/
 /* defines */
+#define OK                  (0)   // No error.
+
+#define ERR                 (-1)  // There is error.
+
 #define SLCR_LOCK			0xF8000004 /**< SLCR Write Protection Lock */
 #define SLCR_UNLOCK			0xF8000008 /**< SLCR Write Protection Unlock */
 #define AFI_WRCHAN_CTRL2 	0xF800A014
@@ -105,6 +110,12 @@ subject to the License Agreement located at the end of this file below.
 	#define INPORT_AP_BASE_ADDRESS		XPAR_AP_INPUT_BASEADDR
 #endif
 
+#ifdef XPAR_PS7_SCUGIC_0_BASEADDR
+	#define	ARM_IRQ_IC_BASE				XPAR_PS7_SCUGIC_0_BASEADDR
+#endif
+#ifdef XPAR_PS7_SCUGIC_0_DIST_BASEADDR
+	#define	ARM_IRQ_IC_DIST_BASE		XPAR_PS7_SCUGIC_0_DIST_BASEADDR
+#endif
 /******************************************************************************/
 /* typedefs */
 
@@ -123,7 +134,7 @@ inline void SysComp_enableInterrupts(void);
 inline void SysComp_disableInterrupts(void);
 void SysComp_freeProcessorCache(void);
 
-int SysComp_initSyncInterrupt(void (*callbackFunc)(void*));
+int SysComp_initSyncInterrupt(int Int_p,Xil_InterruptHandler callbackFunc_p,void* Arg_p);
 int SysComp_initAsyncInterrupt(void (*callbackFunc)(void*));
 
 inline void SysComp_enableSyncInterrupt(void);

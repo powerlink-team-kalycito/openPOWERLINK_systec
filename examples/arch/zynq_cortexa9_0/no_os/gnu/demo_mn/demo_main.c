@@ -115,7 +115,7 @@ typedef struct
 static int                  iUsedNodeIds_g[] =
 {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-        11, 12,
+        11, 12, 13, 14, 15,
         0
 
 };
@@ -638,7 +638,7 @@ tEplKernel PUBLIC AppCbSync(void)
 
     uiCnt_g++;
 
-    nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01;
+    nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M01_X20DI9371_DigitalInput01;
     //nodeVar_g[0].m_uiInput = 0x01;
     //printf(".");
 #if 0 // Default program for B&R CN
@@ -654,7 +654,7 @@ tEplKernel PUBLIC AppCbSync(void)
     nodeVar_g[9].m_uiInput = pProcessImageOut_l->CN10_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[10].m_uiInput = pProcessImageOut_l->CN11_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[11].m_uiInput = pProcessImageOut_l->CN12_M00_Digital_Input_8_Bit_Byte_1;
-
+#endif
     for (i = 0; (i < MAX_NODES) && (iUsedNodeIds_g[i] != 0); i++)
     {
         /* Running Leds */
@@ -699,22 +699,23 @@ tEplKernel PUBLIC AppCbSync(void)
         }
     }
 
-    pProcessImageIn_l->CN1_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[0].m_uiLeds;
-    pProcessImageIn_l->CN2_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[1].m_uiLeds;
-    pProcessImageIn_l->CN3_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[2].m_uiLeds;
-    pProcessImageIn_l->CN4_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[3].m_uiLeds;
-    pProcessImageIn_l->CN5_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[4].m_uiLeds;
-    pProcessImageIn_l->CN6_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[5].m_uiLeds;
-    pProcessImageIn_l->CN7_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[6].m_uiLeds;
-    pProcessImageIn_l->CN8_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[7].m_uiLeds;
-    pProcessImageIn_l->CN9_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[8].m_uiLeds;
-    pProcessImageIn_l->CN10_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[9].m_uiLeds;
-    pProcessImageIn_l->CN11_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[10].m_uiLeds;
-    pProcessImageIn_l->CN12_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[11].m_uiLeds;
-#endif
+    pProcessImageIn_l->CN1_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[0].m_uiLeds;
+    pProcessImageIn_l->CN2_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[1].m_uiLeds;
+    pProcessImageIn_l->CN3_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[2].m_uiLeds;
+    pProcessImageIn_l->CN3_M05_X20DO9322_DigitalOutput01_Byte = nodeVar_g[3].m_uiLeds;
+    pProcessImageIn_l->CN3_M06_X20DO9322_DigitalOutput01_Byte = nodeVar_g[4].m_uiLeds;
+    pProcessImageIn_l->CN4_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[5].m_uiLeds;
+    pProcessImageIn_l->CN5_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[6].m_uiLeds;
+ //   pProcessImageIn_l->CN6_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[7].m_uiLeds;
+    pProcessImageIn_l->CN8_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[8].m_uiLeds;
+    pProcessImageIn_l->CN11_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[9].m_uiLeds;
+    pProcessImageIn_l->CN14_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[0].m_uiLeds;
+    pProcessImageIn_l->CN1_M02_X20DO9322_DigitalOutput01 = 1;
+
     //pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = nodeVar_g[0].m_uiLeds;
-    pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = uiCnt_g;
-   // pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01 ;
+   // pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = uiCnt_g;
+  // pProcessImageIn_l->CN14_M00_Digital_Ouput_32_Bit_DWORD_06 = uiCnt_g;
+    // pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01 ;
   // memcpy(pProcessImageIn_l,test,10);
  //  memset(test,0xFA,10);
   // memcpy(pProcessImageOut_l,test,10);

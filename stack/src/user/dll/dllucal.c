@@ -203,6 +203,7 @@ tEplKernel dllucal_process(tEplEvent * pEvent_p)
         msgType = (tEplMsgType)AmiGetByteFromLe(&frameInfo.m_pFrame->m_le_bMessageType);
         if (msgType != kEplMsgTypeAsnd)
         {
+        	printf("A1 %x\n",msgType);
             ret = kEplInvalidOperation;
             goto Exit;
         }
@@ -218,6 +219,7 @@ tEplKernel dllucal_process(tEplEvent * pEvent_p)
     }
     else
     {
+    	printf("AI2 %x\n",pEvent_p->m_EventType);
         ret = kEplInvalidEvent;
     }
 

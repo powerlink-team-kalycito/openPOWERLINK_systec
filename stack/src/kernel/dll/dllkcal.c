@@ -297,6 +297,7 @@ tEplKernel dllkcal_process(tEplEvent* pEvent_p)
             break;
 
         default:
+        	printf("PI1\n");
             ret = kEplInvalidEvent;
             break;
     }
@@ -418,9 +419,15 @@ tEplKernel dllkcal_asyncFrameReceived(tEplFrameInfo* pFrameInfo_p)
     event.m_EventType = kEplEventTypeAsndRx;
     event.m_pArg = pFrameInfo_p->m_pFrame;
     event.m_uiSize = pFrameInfo_p->m_uiFrameSize;
-    BENCHMARK_MOD_02_TOGGLE(3);
+
+    if(pFrameInfo_p->m_pFrame->m_le_bMessageType == 0 )
+    {
+    	printf("NoNEPL :Type %x \n",pFrameInfo_p->m_pFrame->m_be_wEtherType);
+    }
+    //
+   // BENCHMARK_MOD_02_TOGGLE(3);
     ret = eventk_postEvent(&event);
-    BENCHMARK_MOD_02_TOGGLE(3);
+    //BENCHMARK_MOD_02_TOGGLE(3);
     if (ret != kEplSuccessful)
     {
         instance_l.statistics.curRxFrameCount++;

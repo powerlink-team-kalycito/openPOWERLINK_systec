@@ -70,7 +70,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // const defines
 //------------------------------------------------------------------------------
 #define NODEID      0xF0                //=> MN
-#define CYCLE_LEN   500                // us
+#define CYCLE_LEN   250                // us
 #define IP_ADDR     0xc0a86401          // 192.168.100.1
 #define SUBNET_MASK 0xFFFFFF00          // 255.255.255.0
 #define HOSTNAME    "openPOWERLINK Stack    "
@@ -82,6 +82,9 @@ const BYTE abMacAddr[] = {0x00, 0x12, 0x34, 0x56, 0x78, NODEID};
 #define APP_LED_MASK_1          (1 << (APP_LED_COUNT_1 - 1))
 #define MAX_NODES               255
 
+//#define	SDO_TEST
+#define SDO_WRITE_TEST_COUNT	5000
+#define SDO_READ_TEST_COUNT		10000
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -90,7 +93,7 @@ const BYTE abMacAddr[] = {0x00, 0x12, 0x34, 0x56, 0x78, NODEID};
 // local vars
 //------------------------------------------------------------------------------
 static unsigned int uiNodeId_g = EPL_C_ADR_INVALID;
-static unsigned int uiCycleLen_g = 600;
+static unsigned int uiCycleLen_g = 500;
 static unsigned int uiCurCycleLen_g = 0;
 static BOOL fShutdown = FALSE;
 
@@ -121,7 +124,11 @@ static int                  iUsedNodeIds_g[] =
 };
 static unsigned int         uiCnt_g;
 static APP_NODE_VAR_T       nodeVar_g[MAX_NODES];
-
+static unsigned int			dw_le_CycleLen_g;
+static unsigned int			dw_SdoHandle_l;
+static unsigned int			dw_SdoHandle_l_1;
+static WORD 				data1;
+static WORD 				data2;
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
@@ -130,6 +137,11 @@ tEplKernel PUBLIC AppCbEvent(tEplApiEventType EventType_p,
         tEplApiEventArg* pEventArg_p, void GENERIC* pUserArg_p);
 tEplKernel PUBLIC AppCbSync(void);
 tEplKernel PUBLIC AppInit(void);
+
+#ifdef SDO_TEST
+void PUBLIC AppSdoTestWrite(void);
+void PUBLIC AppSdoTestRead(void);
+#endif
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -152,6 +164,7 @@ int  main (void)
     static tEplApiInitParam     EplApiInitParam;
     char*                       sHostname = HOSTNAME;
     int                         checkStack = 0;
+    int							SendSdo = 0;
 
   //  alt_icache_flush_all();
 
@@ -284,6 +297,17 @@ int  main (void)
                 fShutdown = TRUE;
             }
         }
+#ifdef SDO_TEST
+        if(SendSdo++ == SDO_WRITE_TEST_COUNT)
+        {
+        	AppSdoTestWrite();
+        }
+        else if(SendSdo++ >= SDO_READ_TEST_COUNT)
+        {
+        	SendSdo = 0;
+        	AppSdoTestRead();
+        }
+#endif
     }
 
 ExitShutdown:
@@ -571,6 +595,14 @@ tEplKernel PUBLIC AppCbEvent (tEplApiEventType EventType_p,
             break;
         }
 #endif
+        case kEplApiEventSdo:
+        		{
+
+        			printf("(%s) SDO CallBack: Node ID 0x%x Object 0x%x SubIndex 0x%x BytesDownloaded 0x%x\n",__func__,pEventArg_p->m_Sdo.m_uiNodeId,pEventArg_p->m_Sdo.m_uiTargetIndex,pEventArg_p->m_Sdo.m_uiTargetSubIndex,pEventArg_p->m_Sdo.m_uiTransferredByte);
+        			//printf("(%s) SdoComConHld %x SdoComConState %x SdoAccessType %x \n",__func__,(UINT)AmiGetDwordFromBe(&pUserEvent_l->m_dwSdoComConHdl),pUserEvent_l->m_bSdoComConState,pUserEvent_l->m_bSdoAccessType);
+        			printf("value : %d\n",data2 );
+        		     break;
+        		}
 
         default:
             break;
@@ -699,7 +731,7 @@ tEplKernel PUBLIC AppCbSync(void)
         }
     }
 
-    pProcessImageIn_l->CN1_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[0].m_uiLeds;
+   pProcessImageIn_l->CN1_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[0].m_uiLeds;
     pProcessImageIn_l->CN2_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[1].m_uiLeds;
     pProcessImageIn_l->CN3_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[2].m_uiLeds;
     pProcessImageIn_l->CN3_M05_X20DO9322_DigitalOutput01_Byte = nodeVar_g[3].m_uiLeds;
@@ -725,3 +757,45 @@ tEplKernel PUBLIC AppCbSync(void)
     BENCHMARK_MOD_32_RESET(0);
     return EplRet;
 }
+#ifdef SDO_TEST
+void PUBLIC AppSdoTestWrite(void)
+{
+	int							uisize,i;
+	tEplKernel			EplRet;
+
+
+	data1++;
+if(data1 == 255)
+{
+	data1 =0;
+}
+	//uisize = 4;
+	//EplRet = EplApiReadObject(&dw_SdoHandle_l, 1, 0x1006, 0x00, &dw_le_CycleLen_g, &uisize, kEplSdoTypeUdp, NULL);
+	//if (EplRet != kEplSuccessful)
+
+	//EplRet = EplApiReadObject(&dw_SdoHandle_l, 1, 0x1006, 0x00, &dw_le_CycleLen_g, &uisize, kEplSdoTypeAsnd, NULL);
+	//if (EplRet != kEplSuccessful)
+	//{   // local OD access failed
+	   	//break;
+	//}
+	uisize = 1;
+    EplRet = EplApiWriteObject(&dw_SdoHandle_l, 1, 0x6200, 0x01, &data1, uisize, kEplSdoTypeAsnd, NULL);
+    if (EplRet != kEplSuccessful)
+    {   // local OD access failed
+	   //break;
+    }
+
+}
+
+void PUBLIC AppSdoTestRead(void)
+{
+	int							uisize;
+	tEplKernel			EplRet;
+	uisize = 1;
+	EplRet = EplApiReadObject(&dw_SdoHandle_l_1, 1, 0x6200, 0x01, &data2, &uisize, kEplSdoTypeAsnd, NULL);
+	if (EplRet != kEplSuccessful)
+	{   // local OD access failed
+	    //break;
+    }
+}
+#endif

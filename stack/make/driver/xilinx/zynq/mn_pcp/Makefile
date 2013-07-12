@@ -17,37 +17,62 @@ VERSION = 0.3
 
 include makefile.settings
 
+##################################
+# Directory structure
 APP_DIR=.
-OBJDICT_DIR=${STACK_ROOT}/ObjDicts/CiA401_CN
-EDRV_DIR=${STACK_ROOT}/Edrv/openmac
-TARGET_DIR=${STACK_ROOT}/Target/xilinx_microblaze/no_os/gnu/generic
-
-IP_CORE_REPO=${STACK_ROOT}/fpga/ipcore/xilinx
-
-#HW_SPEC=$(XPS_DIR)/SDK/SDK_Export/hw
-#BSP_PATH=$(APP_DIR)/bsp
 
 OBJDIR=obj
+
+##################################
+#translate dual_processor variable
+ifeq ($(DUAL_PROCESSOR),yes)
+	DESIGN=dual
+else
+	DESIGN=single
+endif
+
 ##################################
 # Specific for Zynq to enable prints
 ifeq ($(BOARD_NAME),zynq)
 	MACROS+= -D__ZYNQ__
 endif
+
 ##################################
 #general compile defines
-CC=mb-gcc
-AR=mb-ar
+
+ifeq ($(PROCESSOR_NAME),ps7_cortexa9_0)
+	CC=arm-xilinx-eabi-gcc
+	AR=arm-xilinx-eabi-ar
+	SIZE=arm-xilinx-eabi-size
+	COPY=arm-xilinx-eabi-objcopy
+	PROC=ARM_xilinx
+else
+	CC=mb-gcc
+	AR=mb-ar
+	SIZE=mb-size
+	COPY=mb-objcopy
+	PROC=MicroBlaze
+endif
 CP=cp
-RM=rm -rf
+RM=rm
+PERL=xilperl
 EXECUTABLE=mn_pcp
 
-LSSCRIPT=lscript_$(BOARD_NAME)_$(BUS_INTERFACE).ld
-MSS_FILE=system_$(BOARD_NAME)_$(BUS_INTERFACE).mss
-MACROS+=-D${DBG_MODE} -DDEF_DEBUG_LVL=${DEF_DEBUG_LVL} -D__PCP__
-CFLAGS=-g3 -Wall -fmessage-length=0 $(PROC_FEATURES) ${MACROS} -fno-short-enums
+LSSCRIPT=lscript_$(BOARD_NAME)_$(BUS_INTERFACE)_$(DESIGN).ld
+MACROS+=-D${DBG_MODE} -DDEF_DEBUG_LVL=${DEF_DEBUG_LVL}
+CFLAGS=$(DEBUG_FLAG) -Wall -fmessage-length=0 ${MACROS}
 CPPFLAGS=-MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)"
-LDFLAGS=-Wl,-T -Wl,${LSSCRIPT} $(PROC_FEATURES) -Wl,-Map,${EXECUTABLE}.map
+LDFLAGS=-Wl,-T -Wl,${LSSCRIPT} -Wl,-Map,${EXECUTABLE}.map
 
+ifeq ($(PROCESSOR_NAME),ps7_cortexa9_0)
+	CFLAGS+= $(PROC_FEATURES_ARM)
+	LDFLAGS+= $(PROC_FEATURES_ARM)
+else
+	CFLAGS+= $(PROC_FEATURES_MB)
+	LDFLAGS+= $(PROC_FEATURES_MB)
+endif
+
+##################################
 # Flash defines
 FLASH_IMAGE_NAME= flash_image
 BOOTLOADER_NAME= mem_bootloader
@@ -67,12 +92,8 @@ INCLUDES=-I${APP_DIR} \
 -I${STACK_ROOT}/stack/src/arch/xilinx_microblaze \
 -I${BSP_PATH}/${PROCESSOR_NAME}/include 
 
-
-#-I${PROCESSOR_NAME}/include \
-#-I${APP_DIR}/bsp/pcp/include \
 ##################################
 # Source files
-
 SRCFILES=${STACK_ROOT}/libs/hostif/hostiflib_microblaze.c \
 ${STACK_ROOT}/libs/hostif/hostiflib.c \
 ${STACK_ROOT}/libs/hostif/hostiflib_l.c \
@@ -110,8 +131,9 @@ ${APP_DIR}/daemon.c \
 ${APP_DIR}/systemComponents.c 
 
 #####################################
-#Dependencies
+# Dependencies
 DEPS = ${APP_DIR}/EplCfg.h \
+${APP_DIR}/makefile.settings \
 ${APP_DIR}/systemComponents.h \
 ${STACK_ROOT}/include \
 ${STACK_ROOT}/libs/hostif \
@@ -127,7 +149,7 @@ VPATH=$(sort $(patsubst " ", :, $(dir $(SRCFILES))))
 
 
 ###################################
-# set Optimization level makro
+# set Optimization level macro
 ifeq ($(OPT_LEVEL),-O0)
 	MACROS+= -DXIL_NO_OPT_LEVEL
 endif
@@ -146,18 +168,21 @@ endif
 
 ###################################
 # set endian according to bus interface
+ifeq ($(PROCESSOR_NAME),pcp)
 ifeq ($(BUS_INTERFACE),axi)
-	PROC_FEATURES+= -mlittle-endian
+	CFLAGS+= -mlittle-endian
+	LDFLAGS+= -mlittle-endian
 	SRCFILES+= ${STACK_ROOT}/libs/ami/amiarm.c
 else
-	PROC_FEATURES+= -mbig-endian
+	CFLAGS+= -mbig-endian
+	LDFLAGS+= -mbig-endian
 	SRCFILES+= ${STACK_ROOT}/libs/ami/amibe.c
+endif
 endif
 
 ###################################
 # libraries
 LIBSPATH=-L$(BSP_PATH)/${PROCESSOR_NAME}/lib
-
 ###################################
 # objects
 OBJ = $(addprefix $(OBJDIR)/,$(notdir $(patsubst %.c, %.o, $(SRCFILES))))
@@ -171,21 +196,19 @@ CFLAGS += ${INCLUDES}
 header:
 	@echo ""
 	@echo "================================================================================"
-	@echo " AP-PCP - Build System (Xilinx)"
+	@echo " Host-PCP - Build System (Xilinx)"
 	@echo "================================================================================"
 	@echo ""
 	@echo " Copyright (c) 2012 B&R"
 	@echo " Version $(VERSION)"
 	@echo "================================================================================"
 	@echo ""
-	@echo "Write 'make all' to generate the bitstream and Direct I/O software example"
+	@echo "Write 'make all' to generate the mn_pcp example"
 	@echo ""
-	@echo "Write 'make application' to generate the Direct I/O software example"
+	@echo "Write 'make application' to generate the mn_pcp example"
 	@echo "Write 'make bitstream' to generate the bitstream"
 	@echo ""
-	@echo "Write 'make download-all' to download the bitstream and the .elf file to the target"
-	@echo "Write 'make download-bits' to download the bitstream to the target"
-	@echo "Write 'make download-elf' to download the .elf file to the target"
+	@echo "Write 'make build-sd' to create BOOT.BIN file "
 	@echo ""
 	@echo "Write 'make clean_sw' to clean the application"
 	@echo "Write 'make clean_hw' to clean the bitstream"
@@ -224,13 +247,13 @@ $(OBJDIR)/xilinx_usleep.o: xilinx_usleep.c xilinx_usleep.h $(BSP_PATH)/$(PROCESS
 ${EXECUTABLE}.elf: $(BSP_PATH)/$(PROCESSOR_NAME) ${OBJ} ${LSSCRIPT}
 	@echo Building target: $@
 	@echo Invoking: MicroBlaze gcc linker
-	$(CC) $(LDFLAGS) $(LIBSPATH) ${OBJ} -o ${EXECUTABLE}.elf
+	$(CC) $(LDFLAGS) $(LIBSPATH) ${OBJ} $(LIBS) -o ${EXECUTABLE}.elf
 	@echo Finished building target: $@
 	@echo ' '
 
 ${EXECUTABLE}.size: ${EXECUTABLE}.elf
 	@echo Invoking: MicroBlaze Print Size
-	mb-size ${EXECUTABLE}.elf  |tee "${EXECUTABLE}.size"
+	$(SIZE) ${EXECUTABLE}.elf  |tee "${EXECUTABLE}.size"
 	@echo Finished building: $@
 	@echo ' '
 
@@ -241,8 +264,8 @@ ${EXECUTABLE}.elfcheck: ${EXECUTABLE}.elf
 	@echo ' '
 
 ${EXECUTABLE}.srec: ${EXECUTABLE}.elf
-	@echo Invoking: mb-objcopy
-	mb-objcopy $(OBJCPYFLAGS) ${EXECUTABLE}.elf ${EXECUTABLE}.srec
+	@echo Invoking: Microblaze objcopy
+	$(COPY) $(OBJCPYFLAGS) ${EXECUTABLE}.elf ${EXECUTABLE}.srec
 	@echo Finished building: $@
 	@echo ' '
 
@@ -265,7 +288,7 @@ clean_all: clean_sw clean_hw
 clean_sw:
 	-@echo "Cleaning software parts..."
 	@touch $(EXECUTABLE)
-	-${RM} -rf $(EXECUTABLE).* $(OBJ) $(OBJD) $(PROCESSOR_NAME)
+	-${RM} -rf $(EXECUTABLE).* $(OBJ) $(OBJD)
 	-@echo ' '
 
 .PHONY: clean_hw
@@ -306,6 +329,8 @@ download-bits: $(XPS_DIR)/system.make
 .PHONY: download-elf
 download-elf: application
 	xmd -hw $(HW_SPEC)/system.xml -tcl download-elf.tcl
+	
+	
 ####################################################
 # SD_IMAGE
 ####################################################

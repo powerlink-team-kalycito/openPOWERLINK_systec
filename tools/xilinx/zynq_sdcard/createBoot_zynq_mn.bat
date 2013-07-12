@@ -1,3 +1,4 @@
+rm BOOT.BIN *.elf *.bit mn_pcp.bin
 cp ../../../fpga/boards/xilinx/xilinx_z702/Zynq_ap_pcp_intaxi-axi/implementation/system.bit .
 cp ../../../Workspace/zynq_fsbl_dualProcessor/Debug/zynq_fsbl_dualProcessor.elf .
 cp ../../../examples/arch/zynq_cortexa9_0/no_os/gnu/demo_mn/demo_mn.elf .

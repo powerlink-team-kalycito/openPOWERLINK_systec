@@ -17,38 +17,55 @@ VERSION = 0.3
 
 include makefile.settings
 
+##################################
+# Directory structure
 APP_DIR=.
-OBJDICT_DIR=${STACK_ROOT}/ObjDicts/CiA302-4_MN
-EDRV_DIR=${STACK_ROOT}/stack/src/kernel/edrv
-TARGET_DIR=${STACK_ROOT}/examples/arch/zynq_cortexa9_0/no_os/gnu/demo_mn
-
-IP_CORE_REPO=${STACK_ROOT}/fpga/ipcore/xilinx
-
-#HW_SPEC=$(XPS_DIR)/SDK/SDK_Export/hw
-#BSP_PATH=$(APP_DIR)/bsp
-
 OBJDIR=obj
 
 ##################################
+#translate dual_processor variable
+ifeq ($(DUAL_PROCESSOR),yes)
+	DESIGN=dual
+else
+	DESIGN=single
+endif
+
+##################################
 #general compile defines
-CC=arm-xilinx-eabi-gcc
-#mb-gcc
-AR=arm-xilinx-eabi-ar
-SIZE=arm-xilinx-eabi-size
-PROC=ARM_xilinx
-#mb-ar
+
+ifeq ($(PROCESSOR_NAME),ps7_cortexa9_0)
+	CC=arm-xilinx-eabi-gcc
+	AR=arm-xilinx-eabi-ar
+	SIZE=arm-xilinx-eabi-size
+	COPY=arm-xilinx-eabi-objcopy
+	PROC=ARM_xilinx
+else
+	CC=mb-gcc
+	AR=mb-ar
+	SIZE=mb-size
+	COPY=mb-objcopy
+	PROC=MicroBlaze
+endif
 CP=cp
-RM=rm -rf
+RM=rm
+PERL=xilperl
+
 EXECUTABLE=demo_mn
-
-LSSCRIPT=lscript_$(BOARD_NAME)_$(BUS_INTERFACE)_dual.ld
-MSS_FILE=system.mss
-#_$(BOARD_NAME)_$(BUS_INTERFACE).mss
-MACROS=-D${DBG_MODE} -DDEF_DEBUG_LVL=${DEF_DEBUG_LVL} -D__AP__ 
-CFLAGS=$(DEBUG_FLAG) -Wall -fmessage-length=0 $(PROC_FEATURES) ${MACROS} -fno-short-enums
+LSSCRIPT=lscript_$(BOARD_NAME)_$(BUS_INTERFACE)_$(DESIGN).ld
+MACROS+=-D${DBG_MODE} -DDEF_DEBUG_LVL=${DEF_DEBUG_LVL} 
+CFLAGS=$(DEBUG_FLAG) -Wall -fmessage-length=0 ${MACROS} -D_AP_
 CPPFLAGS=-MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)"
-LDFLAGS=-Wl,-T -Wl,${LSSCRIPT} $(PROC_FEATURES) -Wl,-Map,${EXECUTABLE}.map
+LDFLAGS=-Wl,-T -Wl,${LSSCRIPT} -Wl,-Map,${EXECUTABLE}.map
 
+ifeq ($(PROCESSOR_NAME),ps7_cortexa9_0)
+	CFLAGS+= $(PROC_FEATURES_ARM)
+	LDFLAGS+= $(PROC_FEATURES_ARM)
+else
+	CFLAGS+= $(PROC_FEATURES_MB)
+	LDFLAGS+= $(PROC_FEATURES_MB)
+endif
+
+#################################
 # Flash defines
 FLASH_IMAGE_NAME= flash_image
 BOOTLOADER_NAME= mem_bootloader
@@ -68,7 +85,10 @@ INCLUDES=-I${APP_DIR} \
 -I${STACK_ROOT}/objdicts/CiA302-4_MN \
 -I$(BSP_PATH)/${PROCESSOR_NAME}/include
 
+##################################
+# Dependencies 
 DEPS = ${APP_DIR}/EplCfg.h \
+${APP_DIR}/makefile.settings \
 ${APP_DIR}/systemComponents.h \
 ${STACK_ROOT}/include \
 ${STACK_ROOT}/libs/hostif \
@@ -81,7 +101,8 @@ $(BSP_PATH)/${PROCESSOR_NAME}
 ##################################
 # Source files
 
-SRCFILES=${STACK_ROOT}/libs/hostif/hostiflib_arm.c \
+SRCFILES=${STACK_ROOT}/libs/ami/amiarm.c \
+${STACK_ROOT}/libs/hostif/hostiflib_arm.c \
 ${STACK_ROOT}/libs/hostif/hostiflib.c \
 ${STACK_ROOT}/libs/hostif/hostiflib_l.c \
 ${STACK_ROOT}/libs/hostif/lfqueue.c \
@@ -126,24 +147,12 @@ ${STACK_ROOT}/stack/src/user/ledu.c \
 ${APP_DIR}/systemComponents.c \
 ${APP_DIR}/demo_main.c 
 
-
-
-#${STACK_ROOT}/stack/src/user/event/eventucal.c \ ## Splited this file ## Not Present in updated design
-#${STACK_ROOT}/stack/src/user/event/eventucal-direct.c \ ## Not Present in updated design
-#${STACK_ROOT}/stack/src/user/event/eventucal-hostif.c \
-#${STACK_ROOT}/stack/src/user/sdo/sdo-udpu.c \
-#${STACK_ROOT}/stack/src/user/obd/obdu.c \
-#${STACK_ROOT}/stack/src/user/obducal.c \
-#${STACK_ROOT}/stack/src/user/pdo/pdoucal-hostif.c \
-#${STACK_ROOT}/libs/ami/amiarm.c 
-
 LIBRARIES = libxil.a
 
 VPATH=$(sort $(patsubst " ", :, $(dir $(SRCFILES))))
 
-
 ###################################
-# set Optimization level makro
+# set Optimization level macro
 ifeq ($(OPT_LEVEL),-O0)
 	MACROS+= -DXIL_NO_OPT_LEVEL
 endif
@@ -162,22 +171,24 @@ endif
 
 ###################################
 # set endian according to bus interface
+ifeq ($(PROCESSOR_NAME),pcp)
 ifeq ($(BUS_INTERFACE),axi)
-	PROC_FEATURES+= -mlittle-endian
+	CFLAGS+= -mlittle-endian
+	LDFLAGS+= -mlittle-endian
 	SRCFILES+= ${STACK_ROOT}/libs/ami/amiarm.c
 else
-	PROC_FEATURES+= -mbig-endian
+	CFLAGS+= -mbig-endian
+	LDFLAGS+= -mbig-endian
 	SRCFILES+= ${STACK_ROOT}/libs/ami/amibe.c
+endif
 endif
 
 ###################################
 # libraries
-LIBCNAPI_NAME =mn
 LIBSPATH=-L$(BSP_PATH)/${PROCESSOR_NAME}/lib 
-#-L$(APP_DIR)/lib
-LIBS=-Wl,--start-group,-lxil,-lc -W1,--end-group
 
-#LIBS=-Wl,--start-group,-lxil,-lc,-l$(LIBCNAPI_NAME), -W1,--end-group
+# Note: ARM gcc reports undefined reference unless nested
+LIBS=-Wl,--start-group,-lxil,-lc -W1,--end-group
 
 ###################################
 # objects
@@ -192,7 +203,7 @@ CFLAGS += ${INCLUDES}
 header:
 	@echo ""
 	@echo "================================================================================"
-	@echo " AP-PCP - Build System (Xilinx)"
+	@echo " Host-PCP - Build System (Xilinx)"
 	@echo "================================================================================"
 	@echo ""
 	@echo " Copyright (c) 2012 B&R"
@@ -245,12 +256,7 @@ $(OBJDIR)/xilinx_usleep.o: xilinx_usleep.c xilinx_usleep.h $(BSP_PATH)/$(PROCESS
 ${EXECUTABLE}.elf: $(BSP_PATH)/$(PROCESSOR_NAME) ${OBJ} ${LSSCRIPT}
 	@echo Building target: $@
 	@echo Invoking: ARM gcc linker
-#	$(AR) cr $(APP_DIR)/lib/libmn.a ${OBJ}
-#	$(CC) $(LDFLAGS)  -o ${EXECUTABLE}.elf  $(LIBSPATH)
-#	$(CC) $(LDFLAGS) $(LIBSPATH) obj/demo_main.o ${LIBS} -o ${EXECUTABLE}.elf
 	$(CC) $(LDFLAGS) $(LIBSPATH) ${OBJ} ${LIBS} -o ${EXECUTABLE}.elf	
-
-#	$(CC) $(LDFLAGS) $(LIBSPATH) ${OBJ} ${LIBS} -o ${EXECUTABLE}.elf
 	@echo Finished building target: $@
 	@echo ' '
 
@@ -267,8 +273,8 @@ ${EXECUTABLE}.elfcheck: ${EXECUTABLE}.elf
 	@echo ' '
 
 ${EXECUTABLE}.srec: ${EXECUTABLE}.elf
-	@echo Invoking: mb-objcopy
-	arm-xilinx-eabi-objcopy $(OBJCPYFLAGS) ${EXECUTABLE}.elf ${EXECUTABLE}.srec
+	@echo Invoking: ARM objcopy
+	$(COPY) $(OBJCPYFLAGS) ${EXECUTABLE}.elf ${EXECUTABLE}.srec
 	@echo Finished building: $@
 	@echo ' '
 
@@ -292,6 +298,7 @@ clean_sw:
 	-@echo "Cleaning software parts..."
 	@touch $(EXECUTABLE)
 	-${RM} -rf $(EXECUTABLE).* $(OBJ) $(OBJD) $(PROCESSOR_NAME)
+	-$(MAKE) -C $(BSP_PATH) clean
 	-@echo ' '
 
 .PHONY: clean_hw

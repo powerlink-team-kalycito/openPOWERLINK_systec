@@ -1425,6 +1425,7 @@ tEplApiEventType    EventType;
         // at present, there are no other events for this module
         default:
         {
+        	printf("AI1\n");
             Ret = kEplInvalidEvent;
             break;
         }

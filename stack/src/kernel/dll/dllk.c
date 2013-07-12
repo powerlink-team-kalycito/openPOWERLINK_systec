@@ -813,6 +813,7 @@ tEplNmtState    NmtState;
         default:
         {
             Ret = kEplInvalidEvent;
+            printf("PI2\n");
             ASSERTMSG(Ret != kEplInvalidEvent, "EplDllkProcess(): unhandled event type!\n");
             break;
         }
@@ -1158,7 +1159,8 @@ tEplNmtState        NmtState;
     if ((NmtState > kEplNmtGsResetConfiguration)
         && (pNodeInfo_p->m_uiNodeId != EplDllkInstance_g.m_DllConfigParam.m_uiNodeId))
     {   // configuration updates are only allowed in reset states
-        Ret = kEplInvalidOperation;
+		printf("P1\n");
+    	Ret = kEplInvalidOperation;
         goto Exit;
     }
 
@@ -1425,7 +1427,6 @@ tEplKernel          Ret = kEplSuccessful;
 tEplDllkNodeInfo*   pNodeInfo;
 
     pNodeInfo = EplDllkGetNodeInfo(uiNodeId_p);
-    printf("%d\n",uiNodeId_p);
     if (pNodeInfo == NULL)
     {   // no node info structure available
     	printf("4*****************************\n");
@@ -2688,12 +2689,12 @@ tEplFrame*      pTxFrame;
 tEdrvTxBuffer*  pTxBuffer;
 tEplFrameInfo   FrameInfo;
 unsigned int    uiNextTxBufferOffset = EplDllkInstance_g.m_bCurTxBufferOffsetCycle ^ 1;
-BENCHMARK_MOD_02_SET(3);
+//BENCHMARK_MOD_02_SET(3);
     if (EplDllkInstance_g.m_pfnCbSync != NULL)
     {
-    	BENCHMARK_MOD_02_TOGGLE(3);
+    	//BENCHMARK_MOD_02_TOGGLE(3);
         Ret = EplDllkInstance_g.m_pfnCbSync();
-        BENCHMARK_MOD_02_TOGGLE(3);
+        //BENCHMARK_MOD_02_TOGGLE(3);
 
         if (Ret == kEplReject)
         {
@@ -3029,7 +3030,7 @@ BENCHMARK_MOD_02_SET(3);
     }
 
 Exit:
-	BENCHMARK_MOD_02_RESET(3);
+	//BENCHMARK_MOD_02_RESET(3);
     return Ret;
 }
 //---------------------------------------------------------------------------
@@ -5270,7 +5271,7 @@ unsigned int    uiNodeId;
         if (EplDllkInstance_g.m_aAsndFilter[uiAsndServiceId] == kEplDllAsndFilterAny)
         {   // ASnd service ID is registered
             // forward frame via async receive FIFO to userspace
-            Ret = dllkcal_asyncFrameReceived(pFrameInfo_p);
+        	Ret = dllkcal_asyncFrameReceived(pFrameInfo_p);
             if (Ret != kEplSuccessful)
             {
                 goto Exit;
@@ -5284,7 +5285,7 @@ unsigned int    uiNodeId;
                 || (uiNodeId == EPL_C_ADR_BROADCAST))
             {   // ASnd frame is intended for us
                 // forward frame via async receive FIFO to userspace
-                Ret = dllkcal_asyncFrameReceived(pFrameInfo_p);
+            	Ret = dllkcal_asyncFrameReceived(pFrameInfo_p);
                 if (Ret != kEplSuccessful)
                 {
                     goto Exit;
@@ -7750,7 +7751,6 @@ tEplFrameInfo   FrameInfo;
                 FrameInfo.m_pFrame = pFrame;
                 FrameInfo.m_uiFrameSize = 18;   // empty non existing ASnd frame
                 // forward frame via async receive FIFO to userspace
-
                 Ret = dllkcal_asyncFrameReceived(&FrameInfo);
 
             }

@@ -227,6 +227,7 @@ unsigned int    uiAsndServiceId;
     MsgType = (tEplMsgType)AmiGetByteFromLe(&pFrameInfo_p->m_pFrame->m_le_bMessageType);
     if (MsgType != kEplMsgTypeAsnd)
     {
+    	printf("A2\n");
         Ret = kEplInvalidOperation; // $$$ kEplDllInvalidFrame
         goto Exit;
     }

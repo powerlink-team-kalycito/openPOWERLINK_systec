@@ -21,9 +21,9 @@ int hostiflib_RegisterHandler (u32 BaseAddress, int InterruptId,
 }
 void hostif_FlushDCacheRange(u32 dwAddr_p,u16 span_p)
 {
-	BENCHMARK_MOD_02_SET(2);
+	//BENCHMARK_MOD_02_SET(2);
 	microblaze_flush_dcache_range(dwAddr_p, span_p);
-	BENCHMARK_MOD_02_RESET(2);
+	//BENCHMARK_MOD_02_RESET(2);
 }
 
 void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p)

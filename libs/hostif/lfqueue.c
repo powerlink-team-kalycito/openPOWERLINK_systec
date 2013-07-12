@@ -51,6 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //TODO clean
 #include "dllcal.h"
 
+
 #include <Benchmark.h> // TODO: Review
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
@@ -666,7 +667,11 @@ tQueueReturn lfq_entryDequeue (tQueueInstance pInstance_p,
     readHeader(pQueue, &EntryHeader);
 
     if(!checkMagicValid(&EntryHeader))
-        return kQueueInvalidEntry;
+    {
+    	printf("Magic %x",EntryHeader.magic);
+    	return kQueueInvalidEntry;
+    }
+
 
     size = ALIGN32(EntryHeader.payloadSize);
 
@@ -796,13 +801,6 @@ static void setHwQueueWrite (tQueue *pQueue_p)
     HOSTIF_WR16(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.entryIndices.set.write),
             pQueue_p->local.entryIndices.write);
-
-#if (HOSTIF_USE_DCACHE != FALSE)
-
-    hostif_FlushDCacheRange((DWORD)pQueue_p->pQueueBuffer,sizeof(tQueueBufferHdr));
-
-#endif
-
 }
 
 //------------------------------------------------------------------------------
@@ -824,12 +822,6 @@ static void setHwQueueRead (tQueue *pQueue_p)
     HOSTIF_WR16(pQueue_p->pQueueBuffer,
             offsetof(tQueueBuffer, header.entryIndices.set.read),
             pQueue_p->local.entryIndices.read);
-#if (HOSTIF_USE_DCACHE != FALSE)
-
-    hostif_FlushDCacheRange((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
-
-#endif
-
 }
 
 //------------------------------------------------------------------------------
@@ -850,10 +842,7 @@ static void resetHwQueue (tQueue *pQueue_p)
 
     HOSTIF_WR32(pQueue_p->pQueueBuffer, offsetof(tQueueBuffer,
             header.entryIndices.reset), 0);
-#if (HOSTIF_USE_DCACHE != FALSE)
 
-    hostif_FlushDCacheRange((DWORD)pQueue_p->pQueueBuffer, sizeof(tQueueBufferHdr));
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1023,7 +1012,7 @@ static void writeCirMemory (tQueue *pQueue_p, UINT16 offset_p,
     if(offset_p + srcSpan_p <= pQueue_p->queueBufferSpan)
     {
 
-        memcpy(pDst + offset_p, pSrc_p, srcSpan_p);
+        memcpy((pDst + offset_p), pSrc_p, srcSpan_p);
 #if (HOSTIF_USE_DCACHE != FALSE)
 
         hostif_FlushDCacheRange((UINT32)(pDst + offset_p), srcSpan_p);
@@ -1032,54 +1021,22 @@ static void writeCirMemory (tQueue *pQueue_p, UINT16 offset_p,
     }
     else
     {
-    	if(flag)
-    	    	{
-    	    		printf("Copy\n");
-    	    	}
+
         /// mind the circular nature of this buffer!
         part = pQueue_p->queueBufferSpan - offset_p;
 
         /// copy to the buffer's end
-        memcpy(pDst + offset_p, pSrc_p, part);
+        memcpy((pDst + offset_p), pSrc_p, part);
 
         /// copy the rest starting at the buffer's head
-        memcpy(pDst, pSrc_p + part, srcSpan_p - part);
+        memcpy(pDst, (pSrc_p + part), srcSpan_p - part);
 #if (HOSTIF_USE_DCACHE != FALSE)
         hostif_FlushDCacheRange((UINT32)(pDst + offset_p), part);
         hostif_FlushDCacheRange((UINT32)(pDst), srcSpan_p - part);
 #endif
     }
-#ifdef __AP1__
-    //TODO: Cleanup
-    pEplEvent = (tEplEvent*) (pDst + offset_p);
-     if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
-     {	tDllCalIssueRequest*	pRequest;
 
-        	pRequest = (tDllCalIssueRequest *)(pDst + offset_p + sizeof(tEplEvent));
-        	//printf("Ea %x-%x \n", pRequest->nodeId,pRequest);
 
-     }
-#endif
-
-#ifdef __AP1__
-    //TODO: Cleanup
-    pEplEvent = (tEplEvent*) (pDst + offset_p);
-     if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
-     {	tDllCalIssueRequest*	pRequest;
-
-        	pRequest = (tDllCalIssueRequest *)(pDst + offset_p + sizeof(tEplEvent));
-        	printf("E %x-%x \n", pRequest->nodeId,pRequest);
-
-     }
-     pEplEvent = (tEplEvent*) (pSrc_p);
-          if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
-          {	tDllCalIssueRequest*	pRequest;
-
-             	pRequest = (tDllCalIssueRequest *)(pSrc_p + sizeof(tEplEvent));
-              // 	printf("ESrc %x-%x \n", pRequest->nodeId,pRequest);
-
-          }
-#endif
 #if defined(__AP__)
    // ULONG dataSize = srcSpan_p - sizeof(tEplEvent) ;
    // printf("Af AP:nmt:%x sink %x-%x\n",((u32 *)(pDst + offset_p ))[0],((u32 *)(pDst + offset_p ))[1],pQueue_p->pQueueBuffer);
@@ -1150,8 +1107,8 @@ static void readCirMemory (tQueue *pQueue_p, UINT16 offset_p,
     UINT8 *pSrc = (UINT8*)(&pQueue_p->pQueueBuffer->data);
     UINT16 part;
 
-#if defined(__AP1__)
-   // printf(" Bef AP:nmt:%x Size %d \n",*(pSrc + offset_p),dstSpan_p);
+#if defined(__AP__)
+   // printf(" Bef AP: Size %d \n",*(pSrc + offset_p),dstSpan_p);
 #elif defined(__PCP__)
   //  printf("Bef PCP:nmt:%x Sink %x Size %d \n",((u32 *)(pSrc + offset_p))[0],((u32 *)(pSrc + offset_p))[1],dstSpan_p);
 #endif
@@ -1161,7 +1118,8 @@ static void readCirMemory (tQueue *pQueue_p, UINT16 offset_p,
 #if (HOSTIF_USE_DCACHE != FALSE)
        	hostif_InvalidateDCacheRange((UINT32)(pSrc + offset_p), dstSpan_p);
 #endif
-        memcpy(pDst_p, pSrc + offset_p, dstSpan_p);
+        memcpy(pDst_p, (pSrc + offset_p), dstSpan_p);
+
     }
     else
     {
@@ -1175,34 +1133,13 @@ static void readCirMemory (tQueue *pQueue_p, UINT16 offset_p,
 
 #endif
         /// copy until the buffer's end
-        memcpy(pDst_p, pSrc + offset_p, part);
+        memcpy(pDst_p, (pSrc + offset_p), part);
 
         /// copy the rest starting at the buffer's head
-        memcpy(pDst_p + part, pSrc, dstSpan_p - part);
+        memcpy((pDst_p + part), pSrc, dstSpan_p - part);
     }
 
-#ifdef __PCP1__
-    //TODO: Cleanup
-#error
-    pEplEvent = (tEplEvent*) (pSrc + offset_p);
-     if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
-     {	tDllCalIssueRequest*	pRequest;
 
-        	pRequest = (tDllCalIssueRequest *)(tDllCalIssueRequest *)(pSrc + offset_p + sizeof(tEplEvent));;
-
-        	printf("ER %x-%x \n", pRequest->nodeId,pRequest);
-
-     }
-     pEplEvent = (tEplEvent*) (pDst_p);
-         if(pEplEvent->m_EventType == kEplEventTypeDllkIssueReq)
-         {	tDllCalIssueRequest*	pRequest;
-
-            	pRequest = (tDllCalIssueRequest *)(pDst_p + sizeof(tEplEvent));;
-            	printf("ERDst %x-%x \n", pRequest->nodeId,pRequest);
-
-         }
-
-#endif
 #if defined(__AP1__)
    // printf(" DN AP:nmt:%x-%x \n",(u32 *)pDst_p)[0],pQueue_p->pQueueBuffer);
    //printf("AP Read Offset %x B %x\n",(pSrc + offset_p),pQueue_p->pQueueBuffer);
@@ -1212,3 +1149,4 @@ static void readCirMemory (tQueue *pQueue_p, UINT16 offset_p,
        //printf("PCP Read Offset %x B %x\n",(pSrc + offset_p),pQueue_p->pQueueBuffer);
 #endif
 }
+

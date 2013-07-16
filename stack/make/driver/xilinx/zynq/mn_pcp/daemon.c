@@ -4,7 +4,7 @@
 
 \brief  POWERLINK FPGA Master daemon for Pcp (kernel part)
 
-This is the daemon for the Pcp (kernel part) of the Xilinx Zynq Microblaze 
+This is the daemon for the Pcp (Microblaze part) of the Xilinx Zynq
 master demo application.
 
 \ingroup module_daemon
@@ -103,13 +103,14 @@ Calls the POWERLINK initialization and background task
 int main (void)
 {
     tEplKernel Ret;
-    //Gaurav
-    int i;
-    unsigned char *ucPtr;
 
+    Ret = target_init();
+    if(kEplSuccessful != Ret)
+    {
+    	PRINTF("Target Initialization Failed\n\n");
+    	return Ret;
+    }
 
-    //TODO: Enable Cache
-    target_init();
     while(1)
     {
         PRINTF("\n");

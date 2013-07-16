@@ -112,9 +112,9 @@ The function allocates the input and output process images
 tEplKernel PUBLIC api_processImageAlloc(UINT sizeProcessImageIn_p, UINT sizeProcessImageOut_p)
 {
     tEplKernel      ret = kEplSuccessful;
-    //TODO:Cleanup
-   // TRACE("%s(): Alloc(%u, %u)\n", __func__, sizeProcessImageIn_p,
-   //                                sizeProcessImageOut_p);
+
+    TRACE("%s(): Alloc(%u, %u)\n", __func__, sizeProcessImageIn_p,
+                                   sizeProcessImageOut_p);
 
     if ((instance_l.m_In.m_pImage != NULL)|| (instance_l.m_Out.m_pImage != NULL))
     {
@@ -138,9 +138,9 @@ tEplKernel PUBLIC api_processImageAlloc(UINT sizeProcessImageIn_p, UINT sizeProc
     }
     instance_l.m_Out.m_uiSize = sizeProcessImageOut_p;
 
-  //  TRACE("%s: Alloc(%p, %u, %p, %u)\n", __func__,
-  //        instance_l.m_In.m_pImage,  instance_l.m_In.m_uiSize,
-  //        instance_l.m_Out.m_pImage, instance_l.m_Out.m_uiSize);
+    TRACE("%s: Alloc(%p, %u, %p, %u)\n", __func__,
+          instance_l.m_In.m_pImage,  instance_l.m_In.m_uiSize,
+          instance_l.m_Out.m_pImage, instance_l.m_Out.m_uiSize);
 
 
 Exit:

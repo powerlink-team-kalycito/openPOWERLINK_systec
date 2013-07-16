@@ -74,14 +74,10 @@ void SysComp_initPeripheral(void)
     Xil_Out32(FPGA_RST_CNTRL,0);
     Xil_Out32(SLCR_LOCK, SLCR_LOCK_VAL);
 
-   Xil_ICacheEnable();
-   Xil_DCacheEnable();
-  //Xil_DCacheDisable();//TODO: @John Enable Cache
-   //Xil_ICacheDisable();
+    Xil_ICacheEnable();
+    Xil_DCacheEnable();
 
-#ifdef CN_API_USING_SPI
-	//TODO: To integrate SPI functionality later!
-#endif
+    // Initialize Interrupts
 	SysComp_InitInterrupts();
 
 }
@@ -123,7 +119,9 @@ SysComp_initSyncInterrupt() initializes the synchronous interrupt. The timing pa
 will be initialized, the interrupt handler will be connected and the interrupt
 will be enabled.
 
+\param  Int_p                    Interrupt ID of the sync interrupt
 \param  callbackFunc             The callback of the sync interrupt
+\param  Arg_p                    argument to be passed while calling callback
 
 \return int
 \retval OK                      on success
@@ -140,8 +138,9 @@ int SysComp_initSyncInterrupt(int Int_p,Xil_InterruptHandler callbackFunc_p,void
 
 	//register sync irq handler
     XScuGic_RegisterHandler(ARM_IRQ_IC_BASE, Int_p,	callbackFunc_p, Arg_p);
-   	XScuGic_EnableIntr(ARM_IRQ_IC_DIST_BASE, Int_p);
-   //enable the sync interrupt
+    //enable the sync interrupt
+    XScuGic_EnableIntr(ARM_IRQ_IC_DIST_BASE, Int_p);
+
 
     return OK;
 }

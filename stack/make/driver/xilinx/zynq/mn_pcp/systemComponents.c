@@ -7,7 +7,9 @@
 
 Provides all functions which are platform dependent for the application of the
 directIO example.
-
+\ingroup module_daemon
+*******************************************************************************/
+/*------------------------------------------------------------------------------
 Copyright (c) 2012, Bernecker+Rainer Industrie-Elektronik Ges.m.b.H. (B&R)
 Copyright (c) 2012, SYSTEC electronik GmbH
 Copyright (c) 2012, Kalycito Infotech Private Ltd.
@@ -34,14 +36,13 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************/
+------------------------------------------------------------------------------*/
 
 
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
 #include "systemComponents.h"
-
 #include "xgpio_l.h"
 #include "mb_interface.h"
 #include "xilinx_irq.h"
@@ -61,7 +62,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // global function prototypes
 //------------------------------------------------------------------------------
-#ifdef __ZYNQ__ ////TODO: check Marco at makefile Its shouldn't be ndef
+#ifdef __ZYNQ__
 	void outbyte(char c)
 	{
 		XUartChanged_SendByte(UART_BASE, c);

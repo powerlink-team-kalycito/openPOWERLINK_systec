@@ -42,8 +42,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <kernel/eventk.h>
 
-#include "Benchmark.h" //TODO :Review
-
 #if (EPL_DLL_PRES_CHAINING_MN != FALSE) && (CONFIG_DLLCAL_QUEUE == EPL_QUEUE_DIRECT)
 #error "DLLCal module does not support direct calls with PRC MN"
 #endif
@@ -255,7 +253,6 @@ tEplKernel dllkcal_process(tEplEvent* pEvent_p)
 #if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_NMT_MN)) != 0)
         case kEplEventTypeDllkIssueReq:
             pIssueReq = (tDllCalIssueRequest*) pEvent_p->m_pArg;
-           // printf("K %d\n",pIssueReq->nodeId);
             ret = dllkcal_issueRequest(pIssueReq->service, pIssueReq->nodeId,
                                        pIssueReq->soaFlag1);
             break;
@@ -297,7 +294,6 @@ tEplKernel dllkcal_process(tEplEvent* pEvent_p)
             break;
 
         default:
-        	printf("PI1\n");
             ret = kEplInvalidEvent;
             break;
     }
@@ -420,14 +416,7 @@ tEplKernel dllkcal_asyncFrameReceived(tEplFrameInfo* pFrameInfo_p)
     event.m_pArg = pFrameInfo_p->m_pFrame;
     event.m_uiSize = pFrameInfo_p->m_uiFrameSize;
 
-    if(pFrameInfo_p->m_pFrame->m_le_bMessageType == 0 )
-    {
-    	printf("NoNEPL :Type %x \n",pFrameInfo_p->m_pFrame->m_be_wEtherType);
-    }
-    //
-   // BENCHMARK_MOD_02_TOGGLE(3);
     ret = eventk_postEvent(&event);
-    //BENCHMARK_MOD_02_TOGGLE(3);
     if (ret != kEplSuccessful)
     {
         instance_l.statistics.curRxFrameCount++;

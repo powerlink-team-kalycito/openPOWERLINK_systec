@@ -2,9 +2,9 @@
 ********************************************************************************
 \file   demo_main.c
 
-\brief  Demo application for Altera FPGA MN
+\brief  Demo application for Xilinx Zynq FPGA MN
 
-This is a demo application for Altera FPGA MN.
+This is a demo application for Xilinx Zynq FPGA MN.
 
 \ingroup module_demo
 *******************************************************************************/
@@ -43,9 +43,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Epl.h>
 #include <EplTarget.h>
-
 #include "xap.h"
-#include "Benchmark.h"
+
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -93,7 +92,7 @@ const BYTE abMacAddr[] = {0x00, 0x12, 0x34, 0x56, 0x78, NODEID};
 // local vars
 //------------------------------------------------------------------------------
 static unsigned int uiNodeId_g = EPL_C_ADR_INVALID;
-static unsigned int uiCycleLen_g = 500;
+static unsigned int uiCycleLen_g = 5000;
 static unsigned int uiCurCycleLen_g = 0;
 static BOOL fShutdown = FALSE;
 
@@ -164,12 +163,11 @@ int  main (void)
     static tEplApiInitParam     EplApiInitParam;
     char*                       sHostname = HOSTNAME;
     int                         checkStack = 0;
+#ifdef SDO_TEST
     int							SendSdo = 0;
+#endif
 
-  //  alt_icache_flush_all();
-
-
-    //Xil_DCacheFlush();//TODO:@John
+    // Initialize target
     EplRet = target_init();
 
     if(EplRet != kEplSuccessful)
@@ -177,7 +175,6 @@ int  main (void)
     	printf("Could not initialize the hardware!\n");
     	goto Exit;
     }
-	//target_msleep(1000); // wait 1 s, so you can see the LEDs
 	
     printf("----------------------------------------------------\n");
     printf("openPOWERLINK FPGA MN DEMO application\n");
@@ -255,8 +252,8 @@ int  main (void)
     }
     //TODO: CleanUp
     printf("Initializing process image...\n");
- //   printf("Size of input process image: %ld\n", sizeof(PI_IN));
- //   printf("Size of output process image: %ld\n", sizeof (PI_OUT));
+    printf("Size of input process image: %ld\n", sizeof(PI_IN));
+    printf("Size of output process image: %ld\n", sizeof (PI_OUT));
     EplRet = api_processImageAlloc(sizeof(PI_IN), sizeof(PI_OUT));
     if (EplRet != kEplSuccessful)
     {
@@ -273,14 +270,12 @@ int  main (void)
     }
 
     // start processing
-    //printf("stt\n"); //TODO:Cleanup
     printf ("Initializing EplApiExecNmtCommand --> kEplNmtEventSwReset...\n");
     EplRet = EplApiExecNmtCommand(kEplNmtEventSwReset);
     if (EplRet != kEplSuccessful)
     {
         goto ExitShutdown;
     }
-    printf("[Host] EplApiExecNmtCommand -> kEplNmtEventSwReset Done \n");
     fShutdown = FALSE;
 
     while(!fShutdown)
@@ -293,10 +288,11 @@ int  main (void)
             checkStack = 0;
             if(!api_checkKernelStack())
             {
-                printf("[Host]Kernel is dead!\n");
+                printf(" Kernel is dead!\n");
                 fShutdown = TRUE;
             }
         }
+
 #ifdef SDO_TEST
         if(SendSdo++ == SDO_WRITE_TEST_COUNT)
         {
@@ -595,15 +591,15 @@ tEplKernel PUBLIC AppCbEvent (tEplApiEventType EventType_p,
             break;
         }
 #endif
+#ifdef SDO_TEST
         case kEplApiEventSdo:
-        		{
-
-        			printf("(%s) SDO CallBack: Node ID 0x%x Object 0x%x SubIndex 0x%x BytesDownloaded 0x%x\n",__func__,pEventArg_p->m_Sdo.m_uiNodeId,pEventArg_p->m_Sdo.m_uiTargetIndex,pEventArg_p->m_Sdo.m_uiTargetSubIndex,pEventArg_p->m_Sdo.m_uiTransferredByte);
-        			//printf("(%s) SdoComConHld %x SdoComConState %x SdoAccessType %x \n",__func__,(UINT)AmiGetDwordFromBe(&pUserEvent_l->m_dwSdoComConHdl),pUserEvent_l->m_bSdoComConState,pUserEvent_l->m_bSdoAccessType);
-        			printf("value : %d\n",data2 );
-        		     break;
-        		}
-
+        {
+             printf("(%s) SDO CallBack: Node ID 0x%x Object 0x%x SubIndex 0x%x BytesDownloaded 0x%x",__func__,pEventArg_p->m_Sdo.m_uiNodeId,pEventArg_p->m_Sdo.m_uiTargetIndex,pEventArg_p->m_Sdo.m_uiTargetSubIndex,pEventArg_p->m_Sdo.m_uiTransferredByte);
+             printf("(%s) SdoComConHld %x SdoComConState %x SdoAccessType %x \n",__func__,(UINT)AmiGetDwordFromBe(&pUserEvent_l->m_dwSdoComConHdl),pUserEvent_l->m_bSdoComConState,pUserEvent_l->m_bSdoAccessType);
+             printf("value : %d\n",data2 );
+             break;
+        }
+#endif
         default:
             break;
     }
@@ -657,12 +653,7 @@ tEplKernel PUBLIC AppCbSync(void)
 {
     tEplKernel          EplRet;
     int                 i;
-  //  char test[10];
-  //  memset(test,0xFF,10);
-    BENCHMARK_MOD_32_SET(0);
-    BENCHMARK_MOD_32_SET(1);
     EplRet = api_processImageExchangeOut();
-    BENCHMARK_MOD_32_RESET(1);
     if (EplRet != kEplSuccessful)
     {
         return EplRet;
@@ -671,8 +662,6 @@ tEplKernel PUBLIC AppCbSync(void)
     uiCnt_g++;
 
     nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M01_X20DI9371_DigitalInput01;
-    //nodeVar_g[0].m_uiInput = 0x01;
-    //printf(".");
 #if 0 // Default program for B&R CN
     nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[1].m_uiInput = pProcessImageOut_l->CN2_M00_Digital_Input_8_Bit_Byte_1;
@@ -748,20 +737,14 @@ tEplKernel PUBLIC AppCbSync(void)
    // pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = uiCnt_g;
   // pProcessImageIn_l->CN14_M00_Digital_Ouput_32_Bit_DWORD_06 = uiCnt_g;
     // pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01 ;
-  // memcpy(pProcessImageIn_l,test,10);
- //  memset(test,0xFA,10);
-  // memcpy(pProcessImageOut_l,test,10);
-    BENCHMARK_MOD_32_SET(1);
-    EplRet = api_processImageExchangeIn();
-    BENCHMARK_MOD_32_RESET(1);
-    BENCHMARK_MOD_32_RESET(0);
-    return EplRet;
+     EplRet = api_processImageExchangeIn();
+     return EplRet;
 }
 #ifdef SDO_TEST
 void PUBLIC AppSdoTestWrite(void)
 {
-	int							uisize,i;
-	tEplKernel			EplRet;
+    int             uisize,i;
+    tEplKernel      EplRet;
 
 
 	data1++;

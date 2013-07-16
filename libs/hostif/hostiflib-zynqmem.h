@@ -5,14 +5,7 @@
 \brief      Hostif interface memory offsets and size 
 
 This module contains of platform specific definitions.
-
-Copyright © 2011 BERNECKER + RAINER, AUSTRIA, 5142 EGGELSBERG, B&R STRASSE 1
-All rights reserved. All use of this software and documentation is
-subject to the License Agreement located at the end of this file below.
-
 *******************************************************************************/
-
-/*******************************************************************************/
 
 
 #ifndef __HOSTIF_MEM_H__
@@ -24,10 +17,10 @@ subject to the License Agreement located at the end of this file below.
 
 
 /* VERSION */
-#define HOSTIF_VERSION_MAJOR 0
-#define HOSTIF_VERSION_MINOR 0
-#define HOSTIF_VERSION_REVISION 1
-#define HOSTIF_VERSION_COUNT 44
+#define HOSTIF_VERSION_MAJOR            0
+#define HOSTIF_VERSION_MINOR            0
+#define HOSTIF_VERSION_REVISION         1
+#define HOSTIF_VERSION_COUNT            44
 
 /* BASE */
 #define HOSTIF_BASE_DYNBUF0			NULL
@@ -57,4 +50,8 @@ subject to the License Agreement located at the end of this file below.
 #define HOSTIF_SIZE_TPDO 1024
 #define HOSTIF_SIZE_RPDO 10240
 
+
+#define HOSTIF_SC_INFO_OFFS_MAGIC         0x0000U
+#define HOSTIF_SC_INFO_OFFS_VERSION       0x0004U
+#define HOSTIF_SC_INFO_OFFS_CMD           0x0204U
 #endif

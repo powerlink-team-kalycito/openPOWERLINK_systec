@@ -43,11 +43,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-#include "EplTarget.h"
-//#include <global.h>
+#include <global.h>
 #include <xscugic.h>
 #include <xtime_l.h>
-#include "hostiflib_arm.h"
 #include "systemComponents.h"
 #include "xil_cache.h"
 #include "xil_types.h"
@@ -56,6 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "xil_exception.h"
 #include <unistd.h>
 
+#include "hostiflib_arm.h"
 
 //------------------------------------------------------------------------------
 // const defines
@@ -77,59 +76,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // const defines
 //------------------------------------------------------------------------------
 #define TGTCONIO_MS_IN_US(x)    (x*1000U)
-/**
-\name Status/Control Sub-Register Offsets
-The offsets of the sub-registers of the status control register
-*/
-/**@{*/
-#define HOSTIF_SC_INFO_OFFS_ARM             0x0000U ///< Information
-#define HOSTIF_SC_RES0_OFFS_ARM             0x0100U ///< reserved
-#define HOSTIF_SC_CONT_OFFS_ARM             0x0200U ///< Control
-#define HOSTIF_SC_SYNC_OFFS_ARM             0x0300U ///< Synchronization
-#define HOSTIF_SC_DYNB_OFFS_ARM             0x0400U ///< Dynamic buffer
-#define HOSTIF_SC_RES1_OFFS_ARM             0x0500U ///< reserved
-#define HOSTIF_SC_RES2_OFFS_ARM             0x0600U ///< reserved
-#define HOSTIF_SC_RES3_OFFS_ARM             0x0700U ///< reserved
-#define HOSTIF_SC_HIGH_ADDR_ARM             0x07FFU ///< high address
-/**@}*/
 
+#define HOSTIF_MAGIC            0x504C4B00
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
 
-/**
-\brief Status/Control - Information
-
-The information sub-registers enable to identify a correctly working hardware.
-*/
-typedef struct sScInfo
-{
-    volatile UINT32     magic;      ///< Magic Word (="PLK\0")
-    volatile UINT32     version;    ///< Version fields
-    volatile UINT32     bootBase;   ///< Boot base address
-    volatile UINT32     initBase;   ///< Init base address
-} tScInfo_arm;
-
-//TODO: Review
-/** 
-\brief Status/Control - Control
-
-The control sub-registers provide basic Pcp-to-Host communication features.
-*/
-typedef struct sScCont
-{
-    volatile UINT16     bridgeEnable; ///< enable the bridge logic
-    volatile UINT16     RESERVED0;   ///< reserved
-    volatile UINT16     command;     ///< command word
-    volatile UINT16     state;       ///< state word
-    volatile UINT16     ret;      ///< return word
-    volatile UINT16     heartbeat;   ///< heart beat word
-    volatile UINT8      nodeId;      ///< node id
-    volatile UINT8      RESERVED2;   ///< reserved
-    volatile UINT16     RESERVED3;   ///< reserved
-    volatile UINT16     ledControl;  ///< led control
-    volatile UINT16     RESERVED4;   ///< reserved
-} tScCont_arm;
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
@@ -159,17 +111,11 @@ DWORD PUBLIC EplTgtGetTickCountMs(void)
     DWORD dwTicks;
     XTime* ticks;
     /*Uses global timer functions*/
-    /*Global timer has some prescaler values set for the timers*/
-    u32 Config = ARM_ZYNQ_RD_32DIRECT((void*)GLOBAL_TMR_BASEADDR, (void*)GTIMER_CONTROL_OFFSET);
-    u8 Prescale = (u8)(Config >> 8);
-    /*We are using the private timer frequency to convert the timer count to ms scale*/
-    /*Get the private timer prescale*/
-    //u8 Prescale_Private = XScuTimer_GetControlReg(0x0);
 
-    XTime_GetTime(ticks);//TODO:@John see if global timer usage is ok. replace the hard coded frequency with some macro from xparameters
+    XTime_GetTime(ticks);
     /*Select the lower 32 bit of the timer value*/
     dwTicks = (DWORD)(((2000 * (*ticks))/XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ));
-    //TODO:@John substitute the constant '2' with the ratio of the prescalar values for the timers or Set an IRQ*/
+
     return dwTicks;
 }
 
@@ -217,9 +163,9 @@ BYTE EplTgtIsInterruptContext (void)
     // For now, the global interrupt enable flag is checked.
 
 	// Read the distributor state
-	u32 Distributor_state = ARM_ZYNQ_RD_32DIRECT((void*)XPAR_PS7_SCUGIC_0_DIST_BASEADDR , (void*)XSCUGIC_DIST_EN_OFFSET);
+	u32 Distributor_state = Xil_In32(XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET);
 		// Read the DP (Distributor) and CP (CPU interface) state
-	u32 CPUif_state = ARM_ZYNQ_RD_32DIRECT((void*)XPAR_SCUGIC_0_CPU_BASEADDR ,(void*) XSCUGIC_CONTROL_OFFSET);
+	u32 CPUif_state = Xil_In32(XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET);
 
 	if(Distributor_state && CPUif_state)
 	{
@@ -255,20 +201,16 @@ openPOWERLINK stack.
 //------------------------------------------------------------------------------
 tEplKernel target_init(void)
 {
-	u32 version = 0;
+u32 version = 0;
 #if defined(__arm__)
-	HOSTIF_WR32((u8*)HOSTIF_HOST_BASE + HOSTIF_SC_INFO_OFFS_ARM,
-	            offsetof(tScInfo_arm, magic), 0x504C4B00);
-    version = ((HOSTIF_VERSION_COUNT) | (HOSTIF_VERSION_REVISION<<8) | (HOSTIF_VERSION_MINOR<<16) | (HOSTIF_VERSION_MAJOR<<24));
-    HOSTIF_WR32((u8*)HOSTIF_HOST_BASE + HOSTIF_SC_INFO_OFFS_ARM,
-    	            offsetof(tScInfo_arm, version),(u32)version);
-    HOSTIF_WR16((u8*)HOSTIF_HOST_BASE  + HOSTIF_SC_CONT_OFFS_ARM,
-                offsetof(tScCont_arm, command), 0);
+    HOSTIF_WR32((u8*)HOSTIF_HOST_BASE,HOSTIF_SC_INFO_OFFS_MAGIC,HOSTIF_MAGIC);
+    version = ((HOSTIF_VERSION_COUNT) | (HOSTIF_VERSION_REVISION<<8) | \
+               (HOSTIF_VERSION_MINOR<<16) | (HOSTIF_VERSION_MAJOR<<24));
+    HOSTIF_WR32((u8*)HOSTIF_HOST_BASE,HOSTIF_SC_INFO_OFFS_VERSION,version);
+    HOSTIF_WR16((u8*)HOSTIF_HOST_BASE,HOSTIF_SC_INFO_OFFS_CMD, 0);
     Xil_DCacheFlush();
-    //target_msleep(1000);
-    //Xil_DCacheFlush();
-	/*Release MB!*/
-	SysComp_initPeripheral();
+    SysComp_initPeripheral();
+
     return kEplSuccessful;
 #else
     // Add Here any other platform specific code

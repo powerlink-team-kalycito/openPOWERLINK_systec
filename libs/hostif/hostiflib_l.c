@@ -41,7 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include "hostiflib_l.h"
-#include "hostiflib.h" //TODO: Review
 #include "hostiflib_target.h"
 
 
@@ -315,10 +314,8 @@ void hostif_writeInitBase (UINT8 *pHostifScBase_p, UINT32 val_p)
 //------------------------------------------------------------------------------
 UINT16 hostif_readBridgeEnable (UINT8 *pHostifScBase_p)
 {
-
     return HOSTIF_RD16(pHostifScBase_p + HOSTIF_SC_CONT_OFFS,
             offsetof(tScCont, bridgeEnable));
-
 }
 
 //------------------------------------------------------------------------------
@@ -550,7 +547,6 @@ void hostif_writeIrqEnable (UINT8 *pHostifScBase_p, UINT16 val_p)
 {
     HOSTIF_WR16(pHostifScBase_p + HOSTIF_SC_SYNC_OFFS,
             offsetof(tScSync, irqEnable), val_p);
-
 }
 
 //------------------------------------------------------------------------------
@@ -769,7 +765,6 @@ UINT32 hostif_readDynBufPcpTxNmtQ (UINT8 *pHostifScBase_p)
 //------------------------------------------------------------------------------
 void hostif_writeDynBufPcpTxNmtQ (UINT8 *pHostifScBase_p, UINT32 addr_p)
 {
-	//printf("Add is 0x%x\n",addr_p); //TODO:Clean
     HOSTIF_WR32(pHostifScBase_p + HOSTIF_SC_DYNB_OFFS,
             offsetof(tScDynB, Pcp.txNmtQAddr), addr_p);
 }
@@ -790,7 +785,6 @@ UINT32 hostif_readDynBufPcpTxGenQ (UINT8 *pHostifScBase_p)
 {
     return HOSTIF_RD32(pHostifScBase_p + HOSTIF_SC_DYNB_OFFS,
             offsetof(tScDynB, Pcp.txGenQAddr));
-
 }
 
 //------------------------------------------------------------------------------

@@ -364,7 +364,6 @@
         // NOTE: THIS IS NO ATOMIC EXCHANGE!!!
         //#include <alt_types.h>
         #include <xil_io.h>
-
         #define ATOMIC_T    unsigned char
         #define ATOMIC_EXCHANGE(address, newval, oldval) \
                                 oldval = Xil_In8(address); \
@@ -604,8 +603,7 @@ typedef int (*INTFUNCPTR)(void);
 //  definition of TRACE
 //---------------------------------------------------------------------------
 #ifndef NDEBUG
-    //#define TRACE(...) trace(__VA_ARGS__) //VPA
-    #define TRACE(...) printf(__VA_ARGS__)
+    #define TRACE(...) trace(__VA_ARGS__)
     #ifdef __cplusplus
         extern "C"
         {

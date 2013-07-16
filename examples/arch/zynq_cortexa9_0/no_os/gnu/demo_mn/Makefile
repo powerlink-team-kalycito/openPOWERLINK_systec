@@ -88,6 +88,7 @@ INCLUDES=-I${APP_DIR} \
 ##################################
 # Dependencies 
 DEPS = ${APP_DIR}/EplCfg.h \
+${APP_DIR}/mnobd.txt \
 ${APP_DIR}/makefile.settings \
 ${APP_DIR}/systemComponents.h \
 ${STACK_ROOT}/include \

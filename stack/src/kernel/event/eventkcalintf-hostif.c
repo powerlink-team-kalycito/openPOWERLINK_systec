@@ -46,10 +46,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <hostiflib.h>
 
-//TODO : Clean
-#include "dllcal.h"
-
-#include <Benchmark.h> // TODO: Review
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -226,7 +222,6 @@ tEplKernel eventkcal_postEventHostif (tEventQueue eventQueue_p, tEplEvent *pEven
     BYTE*               pPostBuffer = aPostBuffer;
     ULONG               dataSize;
 
-    //BENCHMARK_MOD_02_SET(2);
     if (eventQueue_p > kEventQueueNum)
         return kEplInvalidInstanceParam;
 
@@ -237,9 +232,7 @@ tEplKernel eventkcal_postEventHostif (tEventQueue eventQueue_p, tEplEvent *pEven
     dataSize = sizeof(tEplEvent);
 
     // copy event into post buffer
-
     EPL_MEMCPY(pPostBuffer, pEvent_p, dataSize);
-
 
     // copy argument data if present
     if(pEvent_p->m_pArg != NULL)
@@ -248,11 +241,8 @@ tEplKernel eventkcal_postEventHostif (tEventQueue eventQueue_p, tEplEvent *pEven
         // add optional argument data size
         dataSize += pEvent_p->m_uiSize;
     }
-   // BENCHMARK_MOD_02_RESET(2);
-   // printf("%s",__func__);
 
     hifRet = hostif_queueInsert(instance_l[eventQueue_p], pPostBuffer, dataSize);
-
     if(hifRet != kHostifSuccessful)
     {
         ret = kEplEventPostError;
@@ -260,7 +250,6 @@ tEplKernel eventkcal_postEventHostif (tEventQueue eventQueue_p, tEplEvent *pEven
     }
 
 Exit:
-//BENCHMARK_MOD_02_RESET(2);
     return ret;
 }
 
@@ -296,22 +285,17 @@ tEplKernel eventkcal_processEventHostif(tEventQueue eventQueue_p)
     hifRet = hostif_queueExtract(instance_l[eventQueue_p], pRxBuffer, &dataSize);
     if(hifRet != kHostifSuccessful)
     {
-    	printf("1\n");
         eventk_postError(kEplEventSourceEventk, kEplEventReadError,
                          sizeof (hifRet), &hifRet);
         goto Exit;
     }
-    //printf("%x %x \n",((u32 *)pRxBuffer)[0],((u32 *)pRxBuffer)[1]);
+
     pEplEvent = (tEplEvent *) pRxBuffer;
-   // printf("%x %x \n",(pRxBuffer + offsetof(tEplEvent,m_EventType)),(pRxBuffer + offsetof(tEplEvent,m_EventSink)));
-   //printf("%s Type :%x Sink %x-%x\n",__func__,((pEplEvent->m_EventType)),((pEplEvent->m_EventSink)), offsetof(tEplEvent, m_EventSink));
-  //  printf("%d %d %d",sizeof(tEplEvent),sizeof(tEplEventType),sizeof(tEplEventSink));
     pEplEvent->m_uiSize = (UINT)dataSize - sizeof(tEplEvent);
     if(pEplEvent->m_uiSize > 0)
         pEplEvent->m_pArg = &pRxBuffer[sizeof(tEplEvent)];
     else
         pEplEvent->m_pArg = NULL;
-
 
     ret = eventk_process(pEplEvent);
 

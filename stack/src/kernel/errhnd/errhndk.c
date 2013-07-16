@@ -936,7 +936,7 @@ static tEplKernel postHistoryEntryEvent(tEplErrHistoryEntry* pHistoryEntry_p)
 {
     tEplKernel              ret;
     tEplEvent               event;
-    //printf("%s\n",__func__);
+
     event.m_EventSink = kEplEventSinkApi;
     event.m_EventType = kEplEventTypeHistoryEntry;
     event.m_uiSize = sizeof (*pHistoryEntry_p);

@@ -435,7 +435,6 @@ tEplKernel pdou_copyTxPdoFromPi (void)
 
         // send PDO data to kernel layer
         ret = pdoucal_setTxPdo(channelId, pPdo, pPdoChannel->pdoSize);
-
     }
 
     return ret;
@@ -1077,7 +1076,6 @@ static tEplKernel getMaxPdoSize(BYTE nodeId_p, BOOL fTxPdo_p,
     else
     {
         *pMaxPdoSize_p = maxPdoSize;
-       // printf("PDOSIZE %x\n",maxPdoSize);
     }
     return ret;
 }
@@ -1373,7 +1371,6 @@ static tEplKernel setupMappingObjects(tPdoMappObject* pMappObject_p,
         if (curPdoSize > maxPdoSize_p)
         {   // mapping exceeds object size
             *pAbortCode_p = EPL_SDOAC_PDO_LENGTH_EXCEEDED;
-            //printf("%d %d\n",curPdoSize,maxPdoSize_p);
             ret = kEplPdoLengthExceeded;
             goto Exit;
         }
@@ -1451,7 +1448,6 @@ static tEplKernel copyVarToPdo(BYTE* pPayload_p, tPdoMappObject* pMappObject_p)
         default:
             // read value from object
             EPL_MEMCPY (pPayload_p, pVar, PDO_MAPPOBJECT_GET_BYTESIZE(pMappObject_p));
-
             break;
 
         //-----------------------------------------------
@@ -1461,7 +1457,6 @@ static tEplKernel copyVarToPdo(BYTE* pPayload_p, tPdoMappObject* pMappObject_p)
         case kEplObdTypInt8:
         case kEplObdTypUInt8:
             AmiSetByteToLe(pPayload_p, *((BYTE*)pVar));
-
             break;
 
         // 16 bit values
@@ -1551,7 +1546,6 @@ static tEplKernel copyVarFromPdo(BYTE* pPayload_p, tPdoMappObject* pMappObject_p
         default:
             // read value from object
             EPL_MEMCPY (pVar, pPayload_p, PDO_MAPPOBJECT_GET_BYTESIZE(pMappObject_p));
-
             break;
 
         //-----------------------------------------------

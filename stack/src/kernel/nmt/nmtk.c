@@ -315,7 +315,7 @@ tEplNmtState            OldNmtState;
 tEplNmtEvent            NmtEvent;
 tEplEvent               Event;
 tEplEventNmtStateChange NmtStateChange;
-//printf("Calling:%x\n",*((tEplNmtEvent*)pEvent_p->m_pArg)); //TODO:Clean up
+
     // check for all API function if instance is valid
     EPL_MCO_CHECK_INSTANCE_STATE ();
 
@@ -331,7 +331,6 @@ tEplEventNmtStateChange NmtStateChange;
 
         case kEplEventTypeTimer:
         {
-        	//printf("Timer Event\n");
             NmtEvent = (tEplNmtEvent)((tEplTimerEventArg*)pEvent_p->m_pArg)->m_Arg.m_dwVal;
             break;
         }
@@ -534,7 +533,6 @@ tEplEventNmtStateChange NmtStateChange;
 
                 case kEplNmtEventEnterMsNotActive:
                 {   // Node should be MN (NMT_MT1)
-                	//printf("MsNotActive\n");
                     #if(((EPL_MODULE_INTEGRATION) & (EPL_MODULE_NMT_MN)) == 0)
                         // no MN functionality
                         // TODO: -create error E_NMT_BA1_NO_MN_SUPPORT
@@ -1098,7 +1096,6 @@ tEplEventNmtStateChange NmtStateChange;
         // -> if no EPL traffic go to next state
         case kEplNmtMsNotActive:
         {
-        	//printf("Event In MsActive\n");
             #if(((EPL_MODULE_INTEGRATION) & (EPL_MODULE_NMT_MN)) == 0)
                 // no MN functionality
                 // TODO: -create error E_NMT_BA1_NO_MN_SUPPORT

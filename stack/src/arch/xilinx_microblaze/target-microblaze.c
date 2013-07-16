@@ -1,8 +1,8 @@
 /**
 ********************************************************************************
-\file   target-arm.c
+\file   target-microblaze.c
 
-\brief  target specific functions for ARM on Zynq without OS
+\brief  target specific functions for Microblaze
 
 This target depending module provides several functions that are necessary for
 systems without shared buffer and any OS.
@@ -36,23 +36,17 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ------------------------------------------------------------------------------*/
-/*
- *  Created on: May 17, 2013       Author: Gaurav Kumar Singh
- */
-
 
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
 #include "global.h"
-#include "Benchmark.h"
-
 #include "xparameters.h"
 #include "xilinx_irq.h"
 #include "xil_cache.h"
 #include "xilinx_usleep.h"
 #include <Epl.h>
-
+#include "systemComponents.h"
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
@@ -160,12 +154,8 @@ openPOWERLINK stack.
 //------------------------------------------------------------------------------
 tEplKernel target_init(void)
 {
-	//Xil_DCacheDisable();
-	//Xil_ICacheDisable();
-	Xil_DCacheEnable();
-	Xil_ICacheEnable();
-	enableInterrupts();
-	enableInterruptMaster();
+	SysComp_initPeripheral();
+	SysComp_enableInterrupts();
     return kEplSuccessful;
 }
 //------------------------------------------------------------------------------

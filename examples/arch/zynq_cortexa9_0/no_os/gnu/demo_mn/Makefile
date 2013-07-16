@@ -25,9 +25,9 @@ OBJDIR=obj
 ##################################
 #translate dual_processor variable
 ifeq ($(DUAL_PROCESSOR),yes)
-	DESIGN=dual
+    DESIGN=dual
 else
-	DESIGN=single
+    DESIGN=single
 endif
 
 ##################################

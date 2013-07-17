@@ -92,7 +92,7 @@ const BYTE abMacAddr[] = {0x00, 0x12, 0x34, 0x56, 0x78, NODEID};
 // local vars
 //------------------------------------------------------------------------------
 static unsigned int uiNodeId_g = EPL_C_ADR_INVALID;
-static unsigned int uiCycleLen_g = 5000;
+static unsigned int uiCycleLen_g = 500;
 static unsigned int uiCurCycleLen_g = 0;
 static BOOL fShutdown = FALSE;
 
@@ -123,11 +123,11 @@ static int                  iUsedNodeIds_g[] =
 };
 static unsigned int         uiCnt_g;
 static APP_NODE_VAR_T       nodeVar_g[MAX_NODES];
-static unsigned int			dw_le_CycleLen_g;
-static unsigned int			dw_SdoHandle_l;
-static unsigned int			dw_SdoHandle_l_1;
-static WORD 				data1;
-static WORD 				data2;
+static unsigned int         dw_le_CycleLen_g;
+static unsigned int         dw_SdoHandle_l;
+static unsigned int         dw_SdoHandle_l_1;
+static WORD                 data1;
+static WORD                 data2;
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------

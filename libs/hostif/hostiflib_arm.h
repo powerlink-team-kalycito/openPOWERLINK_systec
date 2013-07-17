@@ -84,7 +84,7 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p);
 
 #endif
 
-#define HOSTIF_USE_DCACHE 	TRUE
+#define HOSTIF_SYNC_DCACHE 	TRUE
 
 /// cache
 #define HOSTIF_MAKE_NONCACHEABLE(ptr)       (void*)(ptr)

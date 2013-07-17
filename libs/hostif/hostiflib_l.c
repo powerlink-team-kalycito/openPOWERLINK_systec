@@ -679,7 +679,7 @@ address is limited by the address width of the bridge master.
 //------------------------------------------------------------------------------
 UINT32 hostif_readDynBufHost (UINT8 *pHostifScBase_p, UINT8 num_p)
 {
-    return HOSTIF_RD32(pHostifScBase_p + HOSTIF_SC_DYNB_OFFS_AP, 
+    return HOSTIF_RD32(pHostifScBase_p + HOSTIF_SC_DYNB_OFFS,
             offsetof(tScDynB, Host.aDynBuf[num_p]));
 }
 
@@ -697,7 +697,7 @@ UINT32 hostif_readDynBufHost (UINT8 *pHostifScBase_p, UINT8 num_p)
 void hostif_writeDynBufHost (UINT8 *pHostifScBase_p, UINT8 num_p, UINT32 addr_p)
 {
     //TODO: Review
-    HOSTIF_WR32(pHostifScBase_p + HOSTIF_SC_DYNB_OFFS_AP,
+    HOSTIF_WR32(pHostifScBase_p + HOSTIF_SC_DYNB_OFFS,
             offsetof(tScDynB, Host.aDynBuf[num_p]), addr_p);
 }
 

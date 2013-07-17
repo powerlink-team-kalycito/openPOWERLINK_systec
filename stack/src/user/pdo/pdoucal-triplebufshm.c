@@ -52,6 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pdo.h>
 #include <user/pdoucal.h>
 #include "xil_cache.h"
+#include "hostiflib.h"
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -184,7 +185,9 @@ BYTE *pdoucal_getTxPdoAdrs(UINT channelId_p)
 {
     ATOMIC_T    wi;
     BYTE*       pPdo;
-    Xil_DCacheInvalidateRange((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    hostif_InvalidateDCacheRange((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
     wi = pPdoMem_l->txChannelInfo[channelId_p].writeBuf;
     //TRACE ("%s() channelId:%d wi:%d\n", __func__, channelId_p, wi);
     pPdo = pTripleBuf_l[wi] + pPdoMem_l->txChannelInfo[channelId_p].channelOffset;
@@ -212,17 +215,23 @@ tEplKernel pdoucal_setTxPdo(UINT channelId_p, BYTE* pPdo_p,  WORD pdoSize_p)
 
    // UNUSED_PARAMETER(pPdo_p);
    // UNUSED_PARAMETER(pdoSize_p);
-    Xil_DCacheFlushRange((u32)pPdo_p, pdoSize_p);
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    hostif_FlushDCacheRange((u32)pPdo_p, pdoSize_p);
+#endif
     //TRACE ("%s() chan:%d wi:%d\n", __func__, channelId_p, pPdoMem_l->txChannelInfo[channelId_p].writeBuf);
 
     //shmWriterSpinlock(&pPdoMem_l->txSpinlock);
-    Xil_DCacheInvalidateRange((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    hostif_InvalidateDCacheRange((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
     temp = pPdoMem_l->txChannelInfo[channelId_p].writeBuf;
     ATOMIC_EXCHANGE(&pPdoMem_l->txChannelInfo[channelId_p].cleanBuf,
                     temp,
                     pPdoMem_l->txChannelInfo[channelId_p].writeBuf);
     pPdoMem_l->txChannelInfo[channelId_p].newData = 1;
-    Xil_DCacheFlushRange((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    hostif_FlushDCacheRange((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
     //shmWriterSpinUnlock(&pPdoMem_l->txSpinlock);
 
     //TRACE ("%s() chan:%d new wi:%d\n", __func__, channelId_p, pPdoMem_l->txChannelInfo[channelId_p].writeBuf);
@@ -250,7 +259,9 @@ tEplKernel pdoucal_getRxPdo(BYTE** ppPdo_p, UINT channelId_p, WORD pdoSize_p)
     ATOMIC_T           readBuf;
 
    // UNUSED_PARAMETER(pdoSize_p);
-    Xil_DCacheInvalidateRange((u32)&pPdoMem_l->rxChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    hostif_InvalidateDCacheRange((u32)&pPdoMem_l->rxChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
     if (pPdoMem_l->rxChannelInfo[channelId_p].newData)
     {
         readBuf = pPdoMem_l->rxChannelInfo[channelId_p].readBuf;
@@ -259,10 +270,14 @@ tEplKernel pdoucal_getRxPdo(BYTE** ppPdo_p, UINT channelId_p, WORD pdoSize_p)
                         pPdoMem_l->rxChannelInfo[channelId_p].readBuf);
         pPdoMem_l->rxChannelInfo[channelId_p].newData = 0;
     }
-    Xil_DCacheFlushRange((u32)&pPdoMem_l->rxChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    hostif_FlushDCacheRange((u32)&pPdoMem_l->rxChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
     readBuf = pPdoMem_l->rxChannelInfo[channelId_p].readBuf;
     *ppPdo_p =  pTripleBuf_l[readBuf] + pPdoMem_l->rxChannelInfo[channelId_p].channelOffset;
-    Xil_DCacheInvalidateRange((u32)*ppPdo_p, pdoSize_p);
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    hostif_InvalidateDCacheRange((u32)*ppPdo_p, pdoSize_p);
+#endif
     return kEplSuccessful;
 }
 

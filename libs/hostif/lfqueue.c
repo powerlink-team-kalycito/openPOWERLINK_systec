@@ -940,7 +940,7 @@ static void writeCirMemory (tQueue *pQueue_p, UINT16 offset_p,
     {
 
         memcpy((pDst + offset_p), pSrc_p, srcSpan_p);
-#if (HOSTIF_USE_DCACHE != FALSE)
+#if (HOSTIF_SYNC_DCACHE != FALSE)
 
         hostif_FlushDCacheRange((UINT32)(pDst + offset_p), srcSpan_p);
 
@@ -957,7 +957,7 @@ static void writeCirMemory (tQueue *pQueue_p, UINT16 offset_p,
 
         /// copy the rest starting at the buffer's head
         memcpy(pDst, (pSrc_p + part), srcSpan_p - part);
-#if (HOSTIF_USE_DCACHE != FALSE)
+#if (HOSTIF_SYNC_DCACHE != FALSE)
         hostif_FlushDCacheRange((UINT32)(pDst + offset_p), part);
         hostif_FlushDCacheRange((UINT32)(pDst), srcSpan_p - part);
 #endif
@@ -1024,7 +1024,7 @@ static void readCirMemory (tQueue *pQueue_p, UINT16 offset_p,
 
     if(offset_p + dstSpan_p <= pQueue_p->queueBufferSpan)
     {
-#if (HOSTIF_USE_DCACHE != FALSE)
+#if (HOSTIF_SYNC_DCACHE != FALSE)
        	hostif_InvalidateDCacheRange((UINT32)(pSrc + offset_p), dstSpan_p);
 #endif
         memcpy(pDst_p, (pSrc + offset_p), dstSpan_p);
@@ -1035,7 +1035,7 @@ static void readCirMemory (tQueue *pQueue_p, UINT16 offset_p,
 
         /// mind the circular nature of this buffer!
         part = pQueue_p->queueBufferSpan - offset_p;
-#if (HOSTIF_USE_DCACHE != FALSE)
+#if (HOSTIF_SYNC_DCACHE != FALSE)
 
         hostif_InvalidateDCacheRange((UINT32)(pSrc + offset_p), part);
         hostif_InvalidateDCacheRange((UINT32)(pSrc),dstSpan_p - part);

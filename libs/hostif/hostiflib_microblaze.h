@@ -91,9 +91,9 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p);
 // Added here to support Cache specific operation required in Zynq
 // in absence of api
 #if (XPAR_MICROBLAZE_USE_DCACHE == 1)
-#define HOSTIF_USE_DCACHE           TRUE
+#define HOSTIF_SYNC_DCACHE           TRUE
 #else
-#define HOSTIF_USE_DCACHE           FALSE
+#define HOSTIF_SYNC_DCACHE           FALSE
 #endif
 
 #define HOSTIF_MAKE_NONCACHEABLE(ptr) 		(void *) ptr

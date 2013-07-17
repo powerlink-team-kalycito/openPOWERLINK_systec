@@ -120,7 +120,7 @@ Note: The settings are specific for MN with openMAC!
     ///< support auto-response (e.g. openMAC)
 #define EDRV_TIME_TRIG_TX                   TRUE
     ///< support time triggered transmission (e.g. openMAC)
-#define EDRVCYC_NEG_SHIFT_US                100U
+#define EDRVCYC_NEG_SHIFT_US                80U
     ///< us (timer irq before next cycle)
 /**@}*/
 

@@ -425,7 +425,7 @@ static void writeMemory (UINT8 *pBase_p, UINT16 offset_p,
         UINT8 *pSrc_p, UINT16 srcSpan_p)
 {
     memcpy(pBase_p + offset_p, pSrc_p, srcSpan_p);
-#if (HOSTIF_USE_DCACHE != FALSE)
+#if (HOSTIF_SYNC_DCACHE != FALSE)
     hostif_FlushDCacheRange((UINT32)(pBase_p + offset_p), srcSpan_p);
 #endif
 
@@ -446,7 +446,7 @@ This function reads data from memory.
 static void readMemory (UINT8 *pBase_p, UINT16 offset_p,
         UINT8 *pDst_p, UINT16 dstSpan_p)
 {
-#if (HOSTIF_USE_DCACHE != FALSE)
+#if (HOSTIF_SYNC_DCACHE != FALSE)
 	hostif_InvalidateDCacheRange((UINT32)(pBase_p + offset_p), dstSpan_p);
 #endif
     memcpy(pDst_p, pBase_p + offset_p, dstSpan_p);

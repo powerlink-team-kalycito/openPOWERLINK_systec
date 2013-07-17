@@ -1312,12 +1312,11 @@ tHostifReturn hostif_dynBufAcquire (tHostifInstance pInstance_p,
             // handle base address in pcp memory space
             pHostif->apDynBufHost[i] = (UINT8*)pcpBaseAddr_p;
 
-            hostif_writeDynBufHost(pHostif->pBase, (UINT8)i, pcpBaseAddr_p);
-
             // return base address in host memory space
-            if ((UINT32)apDynBuf[i] != NULL) //TODO: Review
+            if (apDynBuf[i] != NULL) //TODO: Review
             {
-            *ppDynBufBase_p = (UINT8*)((UINT32)apDynBuf[i] +
+                hostif_writeDynBufHost(pHostif->pBase, (UINT8)i, pcpBaseAddr_p);
+                *ppDynBufBase_p = (UINT8*)((UINT32)apDynBuf[i] +
                     (UINT32)pHostif->pBase);
             }
             else
@@ -1368,8 +1367,10 @@ tHostifReturn hostif_dynBufFree (tHostifInstance pInstance_p, UINT32 pcpBaseAddr
         {
             // free dynamic buffer
             pHostif->apDynBufHost[i] = 0;
-
-            hostif_writeDynBufHost(pHostif->pBase, (UINT8)i, 0);
+            if(apDynBuf[i] != NULL)
+            {
+                hostif_writeDynBufHost(pHostif->pBase, (UINT8)i, 0);
+            }
 
             Ret = kHostifSuccessful;
             break;

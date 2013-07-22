@@ -34,22 +34,22 @@ subject to the License Agreement located at the end of this file below.
 
 #define ERR                 (-1)  // There is error.
 
-#define SLCR_LOCK			0xF8000004 /**< SLCR Write Protection Lock */
-#define SLCR_UNLOCK			0xF8000008 /**< SLCR Write Protection Unlock */
-#define AFI_WRCHAN_CTRL2 	0xF800A014
-#define AFI_RDCHAN_CTRL2 	0xF800A000
-#define FPGA_RST_CNTRL   	0xF8000240
+#define SLCR_LOCK           0xF8000004 /**< SLCR Write Protection Lock */
+#define SLCR_UNLOCK         0xF8000008 /**< SLCR Write Protection Unlock */
+#define AFI_WRCHAN_CTRL2    0xF800A014
+#define AFI_RDCHAN_CTRL2    0xF800A000
+#define FPGA_RST_CNTRL      0xF8000240
 
-#define SLCR_LOCK_VAL		0x767B
-#define SLCR_UNLOCK_VAL		0xDF0D
-#define AFI_WRCHAN_CONFIG	0x00000F01 //32 bit enable, 16 beats
-#define AFI_RDCHAN_CONFIG	0x00000001 //32 bit enable
-#define DEFAULT_PRIORITY	0xa0a0a0a0UL
+#define SLCR_LOCK_VAL       0x767B
+#define SLCR_UNLOCK_VAL     0xDF0D
+#define AFI_WRCHAN_CONFIG   0x00000F01 //32 bit enable, 16 beats
+#define AFI_RDCHAN_CONFIG   0x00000001 //32 bit enable
+#define DEFAULT_PRIORITY    0xa0a0a0a0UL
 
-#define SYNC_INTR_PRIORITY		0x00		//lower the value, higher the priority
-#define ASYNC_INTR_PRIORITY		0x01		//lower the value, higher the priority
-#define TRIGGER_VALUE			0x0			//For SPI, 0X --> High-level senstive
-											//1X --> rising edge (bit 2 is readonly)
+#define SYNC_INTR_PRIORITY      0x00        //lower the value, higher the priority
+#define ASYNC_INTR_PRIORITY     0x01        //lower the value, higher the priority
+#define TRIGGER_VALUE           0x0         //For SPI, 0X --> High-level senstive
+                                            //1X --> rising edge (bit 2 is readonly)
 #if (XPAR_CPU_ID == 0)
 #define TARGET_CPU_VALUE 0x01
 #else
@@ -81,40 +81,40 @@ subject to the License Agreement located at the end of this file below.
 
 #if defined(CN_API_USING_16BIT) || defined(CN_API_USING_8BIT)
   #ifdef XPAR_AP_INTC_SYSTEM_AXI_POWERLINK_0_AP_SYNCIRQ_PIN_INTR
-   #define SYNC_IRQ_NUM			XPAR_AP_INTC_SYSTEM_AXI_POWERLINK_0_AP_SYNCIRQ_PIN_INTR
-   #define SYNC_IRQ_NUM_MASK	XPAR_SYSTEM_AXI_POWERLINK_0_AP_SYNCIRQ_PIN_MASK
+   #define SYNC_IRQ_NUM         XPAR_AP_INTC_SYSTEM_AXI_POWERLINK_0_AP_SYNCIRQ_PIN_INTR
+   #define SYNC_IRQ_NUM_MASK    XPAR_SYSTEM_AXI_POWERLINK_0_AP_SYNCIRQ_PIN_MASK
   #endif //XPAR_AP_INTC_SYSTEM_AXI_POWERLINK_0_AP_SYNCIRQ_PIN_INTR
 #else
   #ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_SYNCIRQ_VEC_ID
-   #define SYNC_IRQ_NUM			XPAR_FABRIC_AXI_POWERLINK_0_AP_SYNCIRQ_INTR
+   #define SYNC_IRQ_NUM         XPAR_FABRIC_AXI_POWERLINK_0_AP_SYNCIRQ_INTR
    //#define SYNC_IRQ_NUM_MASK	XPAR_AXI_POWERLINK_0_AP_SYNCIRQ_MASK
   #endif //XPAR_FABRIC_AXI_POWERLINK_0_AP_SYNCIRQ_VEC_ID
 #endif
 #if defined(CN_API_USING_16BIT) || defined(CN_API_USING_8BIT)
   #ifdef XPAR_AP_INTC_SYSTEM_AXI_POWERLINK_0_AP_ASYNCIRQ_PIN_INTR
-   #define ASYNC_IRQ_NUM		XPAR_AP_INTC_SYSTEM_AXI_POWERLINK_0_AP_ASYNCIRQ_PIN_INTR
-   #define ASYNC_IRQ_NUM_MASK	XPAR_SYSTEM_AXI_POWERLINK_0_AP_ASYNCIRQ_PIN_MASK
+   #define ASYNC_IRQ_NUM        XPAR_AP_INTC_SYSTEM_AXI_POWERLINK_0_AP_ASYNCIRQ_PIN_INTR
+   #define ASYNC_IRQ_NUM_MASK   XPAR_SYSTEM_AXI_POWERLINK_0_AP_ASYNCIRQ_PIN_MASK
   #endif //XPAR_AP_INTC_PLB_POWERLINK_0_AP_ASYNCIRQ_INTR
 #else
   #ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_VEC_ID
-   #define ASYNC_IRQ_NUM		XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_INTR
+   #define ASYNC_IRQ_NUM                XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_INTR
    //#define ASYNC_IRQ_NUM_MASK	XPAR_AXI_POWERLINK_0_AP_ASYNCIRQ_MASK
   #endif //XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_VEC_ID
 #endif
 
 #ifdef XPAR_AP_OUTPUT_BASEADDR
-	#define OUTPORT_AP_BASE_ADDRESS		XPAR_AP_OUTPUT_BASEADDR
+    #define OUTPORT_AP_BASE_ADDRESS     XPAR_AP_OUTPUT_BASEADDR
 #endif
 
 #ifdef XPAR_AP_INPUT_BASEADDR
-	#define INPORT_AP_BASE_ADDRESS		XPAR_AP_INPUT_BASEADDR
+    #define INPORT_AP_BASE_ADDRESS      XPAR_AP_INPUT_BASEADDR
 #endif
 
 #ifdef XPAR_PS7_SCUGIC_0_BASEADDR
-	#define	ARM_IRQ_IC_BASE				XPAR_PS7_SCUGIC_0_BASEADDR
+    #define	ARM_IRQ_IC_BASE             XPAR_PS7_SCUGIC_0_BASEADDR
 #endif
 #ifdef XPAR_PS7_SCUGIC_0_DIST_BASEADDR
-	#define	ARM_IRQ_IC_DIST_BASE		XPAR_PS7_SCUGIC_0_DIST_BASEADDR
+    #define	ARM_IRQ_IC_DIST_BASE        XPAR_PS7_SCUGIC_0_DIST_BASEADDR
 #endif
 /******************************************************************************/
 /* typedefs */

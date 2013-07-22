@@ -129,10 +129,7 @@ if [ -n "$REBUILD" -o ! -f $BSP_DIR/public.mk ]; then
     popd >> /dev/null
 
     #workaround for linker.x issue
-	echo "Fixing linker script issuee"
     ./fix-linkerx
-	echo "*****************************************"
-	echo ""
 fi
 
 # Set TCI memory size

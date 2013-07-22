@@ -49,8 +49,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <xparameters.h>
 // include section header file for special functions in
 // tightly-coupled memory
-#include <section-microblaze.h> // TODO : Check this include in absence
-                                //        of TCM
+#include <section-microblaze.h> // TODO : Is this needed in absence
+                                //        of TCM?
 
 // Memory offset file for Zynq architecture
 // NOTE : This file is handwritten
@@ -66,10 +66,9 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p);
 #define HOSTIF_PCP_BASE		HOSTINTERFACE_0_BASE
 #define HOSTIF_HOST_BASE	HOSTINTERFACE_0_BASE
 
-//TODO: Get IRQ ID from Interrupt Controller
-//TODO: Any Intterupt is given to Microblaze from Host Interface ?
-#define HOSTIF_IRQ_IC_ID	-1 //FIXME: @Vinod On Zynq Host is ARM
-#define HOSTIF_IRQ			-1 //FIXME: @Vinod On Zynq Host is ARM
+//TODO: Assign Interrupt on Microblaze if Host?
+#define HOSTIF_IRQ_IC_ID	-1
+#define HOSTIF_IRQ			-1
 
 #elif (defined(PCP_0_HOSTINTERFACE_0_PCP_BASE) && \
        defined(PCP_0_HOSTINTERFACE_0_HOST_BASE))
@@ -89,7 +88,7 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p);
 #endif
 
 // Added here to support Cache specific operation required in Zynq
-// in absence of api
+// in absence of cache handling BSP routines
 #if (XPAR_MICROBLAZE_USE_DCACHE == 1)
 #define HOSTIF_SYNC_DCACHE           TRUE
 #else
@@ -123,7 +122,11 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p);
 #define HOSTIF_IRQ_DISABLE()     \
                     XIntc_DisableIntr(HOSTIF_IRQ_IC_ID,HOSTIF_IRQ) //FIXME: Change the base address and mask as required
 
+#define HOSTIF_FLUSH_DCACHE_RANGE(base,range) \
+                    microblaze_flush_dcache_range(base, range);
 
+#define HOSTIF_INVALIDATE_DCACHE_RANGE(base,range) \
+                    microblaze_invalidate_dcache_range(base, range);
 
 
 #endif /* _INC_HOST_IF_MICROBLAZE_H_ */

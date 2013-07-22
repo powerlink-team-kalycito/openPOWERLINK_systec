@@ -77,8 +77,6 @@
 #define _DEV_BIT32_             0x00000300L     // 32 bit
 
 // compilers
-//TODO:@John Added here
-#define _DEV_GNUC_ARM_			0x00000023L
 #define _DEV_GNUC_MICROBLAZE_   0x00000020L     // Xilinx Microblaze GCC
 #define _DEV_GNUC_NIOS2_        0x0000001FL     // Altera Nios II GCC
 #define _DEV_GNUC_X86_          0x00000017L     // GNU for I386
@@ -86,7 +84,7 @@
 #define _DEV_MSEVC_             0x00000012L     // Microsoft embedded Visual C/C++#define _DEV_GNUC_ARM7_         0x0000000EL     // GNU Compiler gcc for ARM7
 #define _DEV_LINUX_GCC_         0x0000000AL     // Linux GNU Compiler gcc
 #define _DEV_MSVC32_            0x00000000L     // Microsoft Visual C/C++
-
+#define _DEV_GNUC_ARM_          0x00000023L     // Xilinx ARM EABI GCC
 // these defines can be used to mask previous elements
 #define _DEV_MASK_COMPILER      0x000000FFL
 #define _DEV_MASK_BITCOUNT      0x00000F00L
@@ -104,9 +102,8 @@
 #define _DEV_NIOS2_             (_DEV_BIT32_ | _DEV_GNUC_NIOS2_               | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_ | _DEV_ALIGNMENT_4_ )
 #define _DEV_VXWORKS_           (_DEV_BIT32_ | _DEV_LINUX_GCC_                | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_)
 #define _DEV_MICROBLAZE_BIG_    (_DEV_BIT32_ | _DEV_GNUC_MICROBLAZE   | _DEV_BIGEND_ | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_ | _DEV_ALIGNMENT_4_ )
-#define _DEV_MICROBLAZE_LITTLE_ (_DEV_BIT32_ | _DEV_GNUC_MICROBLAZE   | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_ | _DEV_ALIGNMENT_4_ )
-//TODO:@John Added here
-#define	_DEV_ARM_				(_DEV_BIT32_ | _DEV_GNUC_ARM_                 	| _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_)
+#define _DEV_MICROBLAZE_LITTLE_ (_DEV_BIT32_ | _DEV_GNUC_MICROBLAZE           | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_ | _DEV_ALIGNMENT_4_ )
+#define	_DEV_ARM_               (_DEV_BIT32_ | _DEV_GNUC_ARM_                 | _DEV_64BIT_SUPPORT_ | _DEV_COMMA_EXT_ | _DEV_ONLY_INT_MAIN_)
 
 //---------------------------------------------------------------------------
 //  useful macros
@@ -175,8 +172,8 @@
         #define TARGET_SYSTEM   _VXWORKS_
         #define DEV_SYSTEM      _DEV_VXWORKS_
 
-	#elif defined (__arm__) //TODO:@John: Added here
-		#define TARGET_SYSTEM	_NO_OS_
+	#elif defined (__arm__)
+		#define TARGET_SYSTEM   _NO_OS_
 		#define DEV_SYSTEM      _DEV_ARM_
 
 
@@ -347,8 +344,9 @@
     #if (DEV_SYSTEM == _DEV_MICROBLAZE_BIG_ \
         || DEV_SYSTEM == _DEV_MICROBLAZE_LITTLE_)
         #include <section-microblaze.h>
-		#include <xil_io.h>
-
+        #include <xil_io.h>
+        //FIXME : Rework ATOMIC_EXCHANGE logic
+        //        Can XOR operation be used?
         #define ATOMIC_T    unsigned char
         #define ATOMIC_EXCHANGE(address, newval, oldval) \
                                 oldval = Xil_In8(address); \
@@ -356,13 +354,10 @@
 
     #endif
 
-	//FIXME:@Vinod: Atomic Functions copied
-	#if (DEV_SYSTEM == _DEV_ARM_)
+    #if (DEV_SYSTEM == _DEV_ARM_)
         #include <section-arm.h>
-		//////////////////////////////////////////////////////////////////////
-        //FIXME: Find way for atomic exchange!!!
-        // NOTE: THIS IS NO ATOMIC EXCHANGE!!!
-        //#include <alt_types.h>
+        //////////////////////////////////////////////////////////////////////
+        //FIXME: Rework ATOMIC_EXCHANGE logic !!!
         #include <xil_io.h>
         #define ATOMIC_T    unsigned char
         #define ATOMIC_EXCHANGE(address, newval, oldval) \

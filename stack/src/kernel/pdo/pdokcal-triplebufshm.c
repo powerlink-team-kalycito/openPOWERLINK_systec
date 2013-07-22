@@ -50,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <EplInc.h>
 #include <pdo.h>
 #include <kernel/pdokcal.h>
-#include "hostiflib.h" //TODO: review
+#include "hostiflib.h"
 
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
@@ -201,15 +201,15 @@ tEplKernel pdokcal_writeRxPdo(UINT channelId_p, BYTE *pPayload_p, UINT16 pdoSize
     BYTE*           pPdo;
     ATOMIC_T        temp;
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-    hostif_InvalidateDCacheRange((u32)&pPdoMem_l->rxChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
+    HOSTIF_INVALIDATE_DCACHE_RANGE((u32)&pPdoMem_l->rxChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
 #endif
     pPdo = pTripleBuf_l[pPdoMem_l->rxChannelInfo[channelId_p].writeBuf] +
            pPdoMem_l->rxChannelInfo[channelId_p].channelOffset;
-  //  TRACE ("%s() chan:%d wi:%d\n", __func__, channelId_p, pPdoMem_l->rxChannelInfo[channelId_p].writeBuf);
+    //TRACE ("%s() chan:%d wi:%d\n", __func__, channelId_p, pPdoMem_l->rxChannelInfo[channelId_p].writeBuf);
 
     memcpy(pPdo, pPayload_p, pdoSize_p);
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-    hostif_FlushDCacheRange((u32)pPdo,pdoSize_p);
+    HOSTIF_FLUSH_DCACHE_RANGE((u32)pPdo,pdoSize_p);
 #endif
     temp = pPdoMem_l->rxChannelInfo[channelId_p].writeBuf;
     ATOMIC_EXCHANGE(&pPdoMem_l->rxChannelInfo[channelId_p].cleanBuf,
@@ -218,7 +218,7 @@ tEplKernel pdokcal_writeRxPdo(UINT channelId_p, BYTE *pPayload_p, UINT16 pdoSize
 
     pPdoMem_l->rxChannelInfo[channelId_p].newData = 1;
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-    hostif_FlushDCacheRange((u32)&pPdoMem_l->rxChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
+    HOSTIF_FLUSH_DCACHE_RANGE((u32)&pPdoMem_l->rxChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
 #endif
     //TRACE ("%s() chan:%d new wi:%d\n", __func__, channelId_p, pPdoMem_l->rxChannelInfo[channelId_p].writeBuf);
     //TRACE ("%s() *pPayload_p:%02x\n", __func__, *pPayload_p);
@@ -245,7 +245,7 @@ tEplKernel pdokcal_readTxPdo(UINT channelId_p, BYTE* pPayload_p, UINT16 pdoSize_
     BYTE*           pPdo;
     ATOMIC_T        readBuf;
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-    hostif_InvalidateDCacheRange((u32)&pPdoMem_l->txChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
+    HOSTIF_INVALIDATE_DCACHE_RANGE((u32)&pPdoMem_l->txChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
 #endif
     if (pPdoMem_l->txChannelInfo[channelId_p].newData)
     {
@@ -262,11 +262,11 @@ tEplKernel pdokcal_readTxPdo(UINT channelId_p, BYTE* pPayload_p, UINT16 pdoSize_
     pPdo =  pTripleBuf_l[pPdoMem_l->txChannelInfo[channelId_p].readBuf] +
             pPdoMem_l->txChannelInfo[channelId_p].channelOffset;
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-    hostif_FlushDCacheRange((u32)&pPdoMem_l->txChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
+    HOSTIF_FLUSH_DCACHE_RANGE((u32)&pPdoMem_l->txChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
 #endif
 
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-    hostif_InvalidateDCacheRange((u32)pPdo,pdoSize_p);
+    HOSTIF_INVALIDATE_DCACHE_RANGE((u32)pPdo,pdoSize_p);
 #endif
     memcpy (pPayload_p, pPdo, pdoSize_p);
 
@@ -325,7 +325,7 @@ static void setupPdoMemInfo(tPdoChannelSetup* pPdoChannels_p, tPdoMemRegion* pPd
     }
     pPdoMemRegion_p->pdoMemSize = offset;
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-    hostif_FlushDCacheRange((u32)pPdoMemRegion_p,sizeof(tPdoMemRegion));
+    HOSTIF_FLUSH_DCACHE_RANGE((u32)pPdoMemRegion_p,sizeof(tPdoMemRegion));
 #endif
 }
 ///\}

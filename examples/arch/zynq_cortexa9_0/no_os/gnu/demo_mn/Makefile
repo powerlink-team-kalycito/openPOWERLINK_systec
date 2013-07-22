@@ -297,9 +297,8 @@ clean_all: clean_sw clean_hw
 .PHONY: clean_sw
 clean_sw:
 	-@echo "Cleaning software parts..."
-	@touch $(EXECUTABLE)
-	-${RM} -rf $(EXECUTABLE).* $(OBJ) $(OBJD) $(PROCESSOR_NAME)
-	-$(MAKE) -C $(BSP_PATH) clean
+	 @touch $(EXECUTABLE)
+	-${RM} -rf $(EXECUTABLE).* $(OBJ) $(OBJD)
 	-@echo ' '
 
 .PHONY: clean_hw

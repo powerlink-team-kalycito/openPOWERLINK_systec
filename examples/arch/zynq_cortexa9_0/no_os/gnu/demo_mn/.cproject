@@ -1048,6 +1048,7 @@
 					<path value=""/>
 				</doc-comment-owner>
 			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 		</cconfiguration>
 		<cconfiguration id="xilinx.gnu.arm.toolchain.1583916257.1019556712">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="xilinx.gnu.arm.toolchain.1583916257.1019556712" moduleId="org.eclipse.cdt.core.settings" name="ARM">
@@ -1091,6 +1092,9 @@
 							<tool id="xilinx.gnu.arm.c.toolchain.linker.2138906028" name="ARM gcc linker" superClass="xilinx.gnu.arm.c.toolchain.linker"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="xilinx.gnu.arm.toolchain.1583916257.1019556712.1071404980" name="lscript_zynq_axi_dual.ld" rcbsApplicability="disable" resourcePath="lscript_zynq_axi_dual.ld" toolsToInvoke="xilinx.gnu.arm.cxx.linker.252150738.506572975">
+						<tool id="xilinx.gnu.arm.cxx.linker.252150738.506572975" name="ARM g++ linker" superClass="xilinx.gnu.arm.cxx.linker.252150738"/>
+					</fileInfo>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
@@ -2101,6 +2105,7 @@
 					<path value=""/>
 				</doc-comment-owner>
 			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">

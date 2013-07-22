@@ -11,6 +11,7 @@ support host interface
 *******************************************************************************/
 /*------------------------------------------------------------------------------
 Copyright (c) 2012 Kalycito Infotech Private Limited
+              www.kalycito.com
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -79,44 +80,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 //------------------------------------------------------------------------------
 int hostiflib_RegisterHandler (u32 BaseAddress_p, int InterruptId_p,
-	   XInterruptHandler Handler_p, void *CallBackRef_p)
+            XInterruptHandler Handler_p, void *CallBackRef_p)
 {
-	XIntc_RegisterHandler(BaseAddress_p,InterruptId_p,Handler_p,CallBackRef_p);
-	return 1;
+    XIntc_RegisterHandler(BaseAddress_p,InterruptId_p,Handler_p,CallBackRef_p);
+    return 1;
 }
-//------------------------------------------------------------------------------
-/**
-\brief  Flush Data cache for the specified range
 
-\param  dwAddr_p    base address of the range to be flushed
-\param  span_p      Range of addresses to be flushed
-
-
-\return void
-
-\ingroup module_hostiflib
-*/
-//------------------------------------------------------------------------------
-void hostif_FlushDCacheRange(u32 dwAddr_p,u16 span_p)
-{
-	microblaze_flush_dcache_range(dwAddr_p, span_p);
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Invalidate Data cache for the specified range
-
-\param  dwAddr_p    base address of the range to be flushed
-\param  span_p      Range of addresses to be flushed
-
-\return void
-
-\ingroup module_hostiflib
-*/
-//------------------------------------------------------------------------------
-void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p)
-{
-	microblaze_invalidate_dcache_range(dwAddr_p, span_p);
-}
 //------------------------------------------------------------------------------
 /**
 \brief  READ and WRITE functions with Invalidation and flushing
@@ -129,43 +98,43 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p)
 u32 MB_READ32(u32 dwBase_p,u32 offset_p)
 {
     u32 Address = (u32) dwBase_p + offset_p;
-	microblaze_invalidate_dcache_range(Address, 4);
-	return Xil_In32(Address);
+    microblaze_invalidate_dcache_range(Address, 4);
+    return Xil_In32(Address);
 }
 u16 MB_READ16(u32 dwBase_p,u32 offset_p)
 {
     u32 Address = (u32) dwBase_p + offset_p;
-	microblaze_invalidate_dcache_range(Address, 2);
-	return Xil_In16(Address);
+    microblaze_invalidate_dcache_range(Address, 2);
+    return Xil_In16(Address);
 
 }
 
 u8 MB_READ8(u32 dwBase_p,u32 offset_p)
 {
     u32 Address = (u32) dwBase_p + offset_p;
-	microblaze_invalidate_dcache_range(Address, 1);
-	return Xil_In8(Address);
+    microblaze_invalidate_dcache_range(Address, 1);
+    return Xil_In8(Address);
 }
 
 void MB_WRITE32(u32 dwBase_p,u32 offset_p,u32 Val_p)
 {
     u32 Address = (u32) dwBase_p + offset_p;
-	Xil_Out32(Address,Val_p);
-	microblaze_flush_dcache_range(Address, 4);
+    Xil_Out32(Address,Val_p);
+    microblaze_flush_dcache_range(Address, 4);
 }
 
 void MB_WRITE16(u32 dwBase_p,u32 offset_p,u16 Val_p)
 {
     u32 Address = (u32) dwBase_p + offset_p;
-	Xil_Out16(Address,Val_p);
-	microblaze_flush_dcache_range(Address, 2);
+    Xil_Out16(Address,Val_p);
+    microblaze_flush_dcache_range(Address, 2);
 }
 
 void MB_WRITE8(u32 dwBase_p,u32 offset_p,u8 Val_p)
 {
     u32 Address = (u32) dwBase_p + offset_p;
-	Xil_Out8(Address,Val_p);
-	microblaze_flush_dcache_range(Address, 1);
+    Xil_Out8(Address,Val_p);
+    microblaze_flush_dcache_range(Address, 1);
 }
 
 /**

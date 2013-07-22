@@ -40,9 +40,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include "xil_cache.h"
-
 #include <Epl.h>
-#include <EplTarget.h>
+
 #include "xap.h"
 
 //============================================================================//
@@ -69,7 +68,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // const defines
 //------------------------------------------------------------------------------
 #define NODEID      0xF0                //=> MN
-#define CYCLE_LEN   250                // us
+#define CYCLE_LEN   1000                // us
 #define IP_ADDR     0xc0a86401          // 192.168.100.1
 #define SUBNET_MASK 0xFFFFFF00          // 255.255.255.0
 #define HOSTNAME    "openPOWERLINK Stack    "
@@ -92,7 +91,7 @@ const BYTE abMacAddr[] = {0x00, 0x12, 0x34, 0x56, 0x78, NODEID};
 // local vars
 //------------------------------------------------------------------------------
 static unsigned int uiNodeId_g = EPL_C_ADR_INVALID;
-static unsigned int uiCycleLen_g = 500;
+static unsigned int uiCycleLen_g = 0;
 static unsigned int uiCurCycleLen_g = 0;
 static BOOL fShutdown = FALSE;
 
@@ -123,11 +122,13 @@ static int                  iUsedNodeIds_g[] =
 };
 static unsigned int         uiCnt_g;
 static APP_NODE_VAR_T       nodeVar_g[MAX_NODES];
+#ifdef SDO_TEST
 static unsigned int         dw_le_CycleLen_g;
 static unsigned int         dw_SdoHandle_l;
 static unsigned int         dw_SdoHandle_l_1;
 static WORD                 data1;
 static WORD                 data2;
+#endif
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
@@ -164,7 +165,7 @@ int  main (void)
     char*                       sHostname = HOSTNAME;
     int                         checkStack = 0;
 #ifdef SDO_TEST
-    int							SendSdo = 0;
+    int                         SendSdo = 0;
 #endif
 
     // Initialize target
@@ -172,10 +173,10 @@ int  main (void)
 
     if(EplRet != kEplSuccessful)
     {
-    	printf("Could not initialize the hardware!\n");
-    	goto Exit;
+        printf("Could not initialize the hardware!\n");
+        goto Exit;
     }
-	
+
     printf("----------------------------------------------------\n");
     printf("openPOWERLINK FPGA MN DEMO application\n");
     printf("----------------------------------------------------\n");
@@ -250,7 +251,7 @@ int  main (void)
     {
         goto Exit;
     }
-    //TODO: CleanUp
+
     printf("Initializing process image...\n");
     printf("Size of input process image: %ld\n", sizeof(PI_IN));
     printf("Size of output process image: %ld\n", sizeof (PI_OUT));
@@ -270,7 +271,6 @@ int  main (void)
     }
 
     // start processing
-    printf ("Initializing EplApiExecNmtCommand --> kEplNmtEventSwReset...\n");
     EplRet = EplApiExecNmtCommand(kEplNmtEventSwReset);
     if (EplRet != kEplSuccessful)
     {
@@ -288,7 +288,7 @@ int  main (void)
             checkStack = 0;
             if(!api_checkKernelStack())
             {
-                printf(" Kernel is dead!\n");
+                printf("Kernel is dead!\n");
                 fShutdown = TRUE;
             }
         }
@@ -653,6 +653,7 @@ tEplKernel PUBLIC AppCbSync(void)
 {
     tEplKernel          EplRet;
     int                 i;
+
     EplRet = api_processImageExchangeOut();
     if (EplRet != kEplSuccessful)
     {
@@ -661,8 +662,6 @@ tEplKernel PUBLIC AppCbSync(void)
 
     uiCnt_g++;
 
-    nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M01_X20DI9371_DigitalInput01;
-#if 0 // Default program for B&R CN
     nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[1].m_uiInput = pProcessImageOut_l->CN2_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[2].m_uiInput = pProcessImageOut_l->CN3_M00_Digital_Input_8_Bit_Byte_1;
@@ -675,7 +674,7 @@ tEplKernel PUBLIC AppCbSync(void)
     nodeVar_g[9].m_uiInput = pProcessImageOut_l->CN10_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[10].m_uiInput = pProcessImageOut_l->CN11_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[11].m_uiInput = pProcessImageOut_l->CN12_M00_Digital_Input_8_Bit_Byte_1;
-#endif
+
     for (i = 0; (i < MAX_NODES) && (iUsedNodeIds_g[i] != 0); i++)
     {
         /* Running Leds */
@@ -720,25 +719,22 @@ tEplKernel PUBLIC AppCbSync(void)
         }
     }
 
-   pProcessImageIn_l->CN1_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[0].m_uiLeds;
-    pProcessImageIn_l->CN2_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[1].m_uiLeds;
-    pProcessImageIn_l->CN3_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[2].m_uiLeds;
-    pProcessImageIn_l->CN3_M05_X20DO9322_DigitalOutput01_Byte = nodeVar_g[3].m_uiLeds;
-    pProcessImageIn_l->CN3_M06_X20DO9322_DigitalOutput01_Byte = nodeVar_g[4].m_uiLeds;
-    pProcessImageIn_l->CN4_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[5].m_uiLeds;
-    pProcessImageIn_l->CN5_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[6].m_uiLeds;
- //   pProcessImageIn_l->CN6_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[7].m_uiLeds;
-    pProcessImageIn_l->CN8_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[8].m_uiLeds;
-    pProcessImageIn_l->CN11_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[9].m_uiLeds;
-    pProcessImageIn_l->CN14_M02_X20DO9322_DigitalOutput01_Byte = nodeVar_g[0].m_uiLeds;
-    pProcessImageIn_l->CN1_M02_X20DO9322_DigitalOutput01 = 1;
+    pProcessImageIn_l->CN1_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[0].m_uiLeds;
+    pProcessImageIn_l->CN2_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[1].m_uiLeds;
+    pProcessImageIn_l->CN3_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[2].m_uiLeds;
+    pProcessImageIn_l->CN4_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[3].m_uiLeds;
+    pProcessImageIn_l->CN5_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[4].m_uiLeds;
+    pProcessImageIn_l->CN6_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[5].m_uiLeds;
+    pProcessImageIn_l->CN7_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[6].m_uiLeds;
+    pProcessImageIn_l->CN8_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[7].m_uiLeds;
+    pProcessImageIn_l->CN9_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[8].m_uiLeds;
+    pProcessImageIn_l->CN10_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[9].m_uiLeds;
+    pProcessImageIn_l->CN11_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[10].m_uiLeds;
+    pProcessImageIn_l->CN12_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[11].m_uiLeds;
 
-    //pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = nodeVar_g[0].m_uiLeds;
-   // pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = uiCnt_g;
-  // pProcessImageIn_l->CN14_M00_Digital_Ouput_32_Bit_DWORD_06 = uiCnt_g;
-    // pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = pProcessImageOut_l->CN1_M00_Digital_Input_32_Bit_DWORD_01 ;
-     EplRet = api_processImageExchangeIn();
-     return EplRet;
+    EplRet = api_processImageExchangeIn();
+
+    return EplRet;
 }
 #ifdef SDO_TEST
 void PUBLIC AppSdoTestWrite(void)
@@ -747,21 +743,21 @@ void PUBLIC AppSdoTestWrite(void)
     tEplKernel      EplRet;
 
 
-	data1++;
-if(data1 == 255)
-{
-	data1 =0;
-}
-	//uisize = 4;
-	//EplRet = EplApiReadObject(&dw_SdoHandle_l, 1, 0x1006, 0x00, &dw_le_CycleLen_g, &uisize, kEplSdoTypeUdp, NULL);
-	//if (EplRet != kEplSuccessful)
+    data1++;
+    if(data1 == 255)
+    {
+        data1 =0;
+    }
 
-	//EplRet = EplApiReadObject(&dw_SdoHandle_l, 1, 0x1006, 0x00, &dw_le_CycleLen_g, &uisize, kEplSdoTypeAsnd, NULL);
-	//if (EplRet != kEplSuccessful)
-	//{   // local OD access failed
-	   	//break;
-	//}
-	uisize = 1;
+    //EplRet = EplApiReadObject(&dw_SdoHandle_l, 1, 0x1006, 0x00, &dw_le_CycleLen_g, &uisize, kEplSdoTypeUdp, NULL);
+    //if (EplRet != kEplSuccessful)
+
+    //EplRet = EplApiReadObject(&dw_SdoHandle_l, 1, 0x1006, 0x00, &dw_le_CycleLen_g, &uisize, kEplSdoTypeAsnd, NULL);
+    //if (EplRet != kEplSuccessful)
+    //{   // local OD access failed
+    //break;
+    //}
+    uisize = 1;
     EplRet = EplApiWriteObject(&dw_SdoHandle_l, 1, 0x6200, 0x01, &data1, uisize, kEplSdoTypeAsnd, NULL);
     if (EplRet != kEplSuccessful)
     {   // local OD access failed
@@ -772,13 +768,13 @@ if(data1 == 255)
 
 void PUBLIC AppSdoTestRead(void)
 {
-	int							uisize;
-	tEplKernel			EplRet;
-	uisize = 1;
-	EplRet = EplApiReadObject(&dw_SdoHandle_l_1, 1, 0x6200, 0x01, &data2, &uisize, kEplSdoTypeAsnd, NULL);
-	if (EplRet != kEplSuccessful)
-	{   // local OD access failed
-	    //break;
+    int                 uisize;
+    tEplKernel          EplRet;
+    uisize = 1;
+    EplRet = EplApiReadObject(&dw_SdoHandle_l_1, 1, 0x6200, 0x01, &data2, &uisize, kEplSdoTypeAsnd, NULL);
+    if (EplRet != kEplSuccessful)
+    {   // local OD access failed
+        //break;
     }
 }
 #endif

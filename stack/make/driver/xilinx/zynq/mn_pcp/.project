@@ -138,11 +138,6 @@
 			<locationURI>STACK_ROOT/libs/hostif/hostiflib_microblaze.h</locationURI>
 		</link>
 		<link>
-			<name>libs/hostif/hostiflib_target.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/libs/hostif/hostiflib_target.h</locationURI>
-		</link>
-		<link>
 			<name>libs/hostif/lfqueue.c</name>
 			<type>1</type>
 			<locationURI>STACK_ROOT/libs/hostif/lfqueue.c</locationURI>
@@ -188,9 +183,19 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>stack/src/common/debug.c</name>
+			<type>1</type>
+			<locationURI>STACK_ROOT/stack/src/common/debug.c</locationURI>
+		</link>
+		<link>
 			<name>stack/src/common/dll</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>stack/src/common/errstring.c</name>
+			<type>1</type>
+			<locationURI>STACK_ROOT/stack/src/common/errstring.c</locationURI>
 		</link>
 		<link>
 			<name>stack/src/common/event</name>

@@ -426,7 +426,7 @@ static void writeMemory (UINT8 *pBase_p, UINT16 offset_p,
 {
     memcpy(pBase_p + offset_p, pSrc_p, srcSpan_p);
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-    hostif_FlushDCacheRange((UINT32)(pBase_p + offset_p), srcSpan_p);
+    HOSTIF_FLUSH_DCACHE_RANGE((UINT32)(pBase_p + offset_p), srcSpan_p);
 #endif
 
 }
@@ -447,7 +447,7 @@ static void readMemory (UINT8 *pBase_p, UINT16 offset_p,
         UINT8 *pDst_p, UINT16 dstSpan_p)
 {
 #if (HOSTIF_SYNC_DCACHE != FALSE)
-	hostif_InvalidateDCacheRange((UINT32)(pBase_p + offset_p), dstSpan_p);
+    HOSTIF_INVALIDATE_DCACHE_RANGE((UINT32)(pBase_p + offset_p), dstSpan_p);
 #endif
     memcpy(pDst_p, pBase_p + offset_p, dstSpan_p);
 }

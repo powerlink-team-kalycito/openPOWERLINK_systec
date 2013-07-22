@@ -42,7 +42,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-//FIXME:@John Check the appropriate headers
 #include <stdint.h>
 #include <stdlib.h>
 #include <xil_cache.h>
@@ -56,7 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // include section header file for special functions in
 // tightly-coupled memory
-#include <section-arm.h>//TODO:@John include specific arm files
+#include <section-arm.h>//TODO:Check if this is needed with no TCM
 
 // include generated header file for memory structure and version filed
 #include "hostiflib-zynqmem.h"//TODO:@John include the zynq specific file
@@ -84,7 +83,7 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p);
 
 #endif
 
-#define HOSTIF_SYNC_DCACHE 	TRUE
+#define HOSTIF_SYNC_DCACHE      TRUE
 
 /// cache
 #define HOSTIF_MAKE_NONCACHEABLE(ptr)       (void*)(ptr)
@@ -113,6 +112,12 @@ void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p);
 
 #define HOSTIF_IRQ_DISABLE()        \
                     XScuGic_DisableIntr(HOSTIF_IRQ_IC_ID, HOSTIF_IRQ);
+
+#define HOSTIF_FLUSH_DCACHE_RANGE(base,range) \
+                    Xil_DCacheFlushRange(base, range);
+
+#define HOSTIF_INVALIDATE_DCACHE_RANGE(base,range) \
+                    Xil_DCacheInvalidateRange(base, range);
 
 
 //------------------------------------------------------------------------------

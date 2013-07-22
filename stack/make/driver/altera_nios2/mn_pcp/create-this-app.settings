@@ -17,20 +17,20 @@
 
 ##################################
 # Settings for Debugging with optimized compilation
-DBG_MODE=_DEBUG
-OPT_LEVEL=-O2
+#DBG_MODE=_DEBUG
+#OPT_LEVEL=-O2
 
 ##################################
 # Settings for Release
-#DBG_MODE=NDEBUG
-#OPT_LEVEL=-O2
+DBG_MODE=NDEBUG
+OPT_LEVEL=-O2
 
 ##################################
 # DEF_DEBUG_LVL = [
 # 0x20000000L DEBUG_LVL_ASSERT
 # 0x40000000L DEBUG_LVL_ERROR
 # 0x80000000L DEBUG_LVL_ALWAYS ]
-DEF_DEBUG_LVL=0xEC00000FL
+DEF_DEBUG_LVL=0xEC000000L
 
 ################################################################################
 
@@ -45,8 +45,8 @@ PLK_NODE_IS=CONFIG_MN
 
 ##################################
 # Relative path to SOPC file
-SOPC_DIR=../../../../../fpga/boards/altera/TERASIC_DE2-115/mn_dual_nios2/
-#SOPC_DIR=../../../../../fpga/boards/altera/TERASIC_DE2-115/mn_par_pcp/
+#SOPC_DIR=../../../../../fpga/boards/altera/TERASIC_DE2-115/mn_dual_nios2/
+SOPC_DIR=../../../../../fpga/boards/altera/TERASIC_DE2-115/mn_par_pcp/
 
 ##################################
 # Relative path to openPOWERLINK root directory

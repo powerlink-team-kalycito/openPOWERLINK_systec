@@ -132,7 +132,7 @@
 #define O_BINARY 0 //FIXME: If file system is used, you have to fix that!
 #endif
 
-#if (TARGET_SYSTEM == _NO_OS_ && DEV_SYSTEM == _DEV_ARM_)//TODO:@John: to be ported
+#if (TARGET_SYSTEM == _NO_OS_ && DEV_SYSTEM == _DEV_ARM_)
 #define O_BINARY 0 //FIXME: If file system is used, you have to fix that!
 #endif
 

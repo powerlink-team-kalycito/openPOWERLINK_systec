@@ -25,9 +25,6 @@ subject to the License Agreement located at the end of this file below.
 #include "EplTarget.h"
 #include <unistd.h>
 
-#ifdef CN_API_USING_SPI
-#include "xspi.h"
-#endif // CN_API_USING_SPI
 
 /******************************************************************************/
 /* defines */
@@ -61,9 +58,9 @@ static void Gic_InterruptHandler(XScuGic *InstancePtr);
 
 /**
 ********************************************************************************
-\brief  init the peripherals of the AP
+\brief  init the peripherals of the ARM processor
 
-This function init's the peripherals of the AP like cache and the interrupt
+This function init's the peripherals of the ARM like cache and the interrupt
 controller.
 *******************************************************************************/
 void SysComp_initPeripheral(void)
@@ -84,9 +81,9 @@ void SysComp_initPeripheral(void)
 
 /**
 ********************************************************************************
-\brief enables the nios2 interrupts
+\brief enables the interrupts
 
-This function enables the interrupts of the AP processor
+This function enables the interrupts of the Host processor on ARM
 *******************************************************************************/
 inline void SysComp_enableInterrupts(void)
 {
@@ -99,9 +96,9 @@ inline void SysComp_enableInterrupts(void)
 
 /**
 ********************************************************************************
-\brief disables the nios2 interrupts
+\brief disables the interrupts
 
-This function disables the interrupts of the AP processor on nios2
+This function disables the interrupts of the Host processor on ARM
 *******************************************************************************/
 inline void SysComp_disableInterrupts(void)
 {
@@ -231,7 +228,7 @@ inline void SysComp_disableAsyncInterrupt(void)
 #endif
 }
 
-#ifdef CN_API_USING_SPI
+#ifdef MN_API_USING_SPI
 /**
 ********************************************************************************
 \brief  Execute SPI command
@@ -291,7 +288,7 @@ DWORD SysComp_readInputPort(void)
 
 /**
 *****************************************************************************
-\brief		This function initializes the distributor of the GIC
+\brief		This function initializes the distributor of the GIC on ARM
 
 				- Write the trigger mode, priority and target CPU
 				- All interrupt sources are disabled

@@ -65,7 +65,7 @@ This function returns the currect system tick determined by the system timer.
 //------------------------------------------------------------------------------
 DWORD PUBLIC EplTgtGetTickCountMs (void)
 {
-	DWORD dwTicks;
+    DWORD dwTicks;
 
     //FIXME: Find another way to generate a system tick...
     dwTicks = getMSCount();
@@ -86,25 +86,24 @@ This function enabels/disables global interrupts.
 //------------------------------------------------------------------------------
 void PUBLIC EplTgtEnableGlobalInterrupt (BYTE fEnable_p)
 {
-	static int              iLockCount = 0;
+    static int              iLockCount = 0;
 
-	    if (fEnable_p != FALSE)
-	    {   // restore interrupts
+    if (fEnable_p != FALSE)
+    {   // restore interrupts
 
-	        if (--iLockCount == 0)
-	        {
-	            enableInterruptMaster();
-	        }
-	    }
-	    else
-	    {   // disable interrupts
-
-	        if (iLockCount == 0)
-	        {
-	            disableInterruptMaster();
-	        }
-	        iLockCount++;
-	    }
+        if (--iLockCount == 0)
+        {
+            enableInterruptMaster();
+        }
+    }
+    else
+    {   // disable interrupts
+        if (iLockCount == 0)
+        {
+            disableInterruptMaster();
+        }
+        iLockCount++;
+    }
 
 }
 //------------------------------------------------------------------------------
@@ -122,25 +121,24 @@ This function obtains if the CPU is in interrupt context.
 //------------------------------------------------------------------------------
 BYTE PUBLIC EplTgtIsInterruptContext (void)
 {
-	// No real interrupt context check is performed.
-	    // This would be possible with a flag in the ISR, only.
-	    // For now, simply return ME.
+// No real interrupt context check is performed.
+    // This would be possible with a flag in the ISR, only.
+    // For now, simply return ME.
+    DWORD dwGIE;
 
-	    DWORD dwGIE;
+    dwGIE = Xil_In32(XPAR_PCP_INTC_BASEADDR + XIN_MER_OFFSET) & \
+            XIN_INT_MASTER_ENABLE_MASK;
 
-	    dwGIE = Xil_In32(XPAR_PCP_INTC_BASEADDR + XIN_MER_OFFSET) & \
-	            XIN_INT_MASTER_ENABLE_MASK;
-
-	    if(dwGIE == 0)
-	    {
-	        //master enable is off
-	        return TRUE;
-	    }
-	    else
-	    {
-	        //master enable is on
-	        return FALSE;
-	    }
+    if(dwGIE == 0)
+    {
+        //master enable is off
+        return TRUE;
+    }
+    else
+    {
+        //master enable is on
+        return FALSE;
+    }
 }
 //------------------------------------------------------------------------------
 /**
@@ -154,8 +152,8 @@ openPOWERLINK stack.
 //------------------------------------------------------------------------------
 tEplKernel target_init(void)
 {
-	SysComp_initPeripheral();
-	SysComp_enableInterrupts();
+    SysComp_initPeripheral();
+    SysComp_enableInterrupts();
     return kEplSuccessful;
 }
 //------------------------------------------------------------------------------

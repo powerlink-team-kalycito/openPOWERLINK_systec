@@ -41,12 +41,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-//FIXME:@John: To be ported
+//FIXME: To be ported
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
 
-#define XIL_INTERNAL_RAM    __attribute__((section(".local_memory")))
+#define XIL_INTERNAL_RAM    __attribute__((section(".ocm")))
 
 #if (defined(XIL_NO_OPT_LEVEL) || defined(XIL_OPT_LEVEL_1) || \
     defined(XIL_OPT_LEVEL_2)   || defined(XIL_OPT_LEVEL_3) || \

@@ -67,40 +67,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 /**
-\brief  Flush Data cache for the specified range
-
-\param  dwAddr_p    base address of the range to be flushed
-\param  span_p      Range of addresses to be flushed
-
-
-\return void
-
-\ingroup module_hostiflib
-*/
-//------------------------------------------------------------------------------
-void hostif_FlushDCacheRange(u32 dwAddr_p,u16 span_p)
-{
-    Xil_DCacheFlushRange(dwAddr_p, span_p);
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Invalidate Data cache for the specified range
-
-\param  dwAddr_p    base address of the range to be flushed
-\param  span_p      Range of addresses to be flushed
-
-
-\return void
-
-\ingroup module_hostiflib
-*/
-//------------------------------------------------------------------------------
-void hostif_InvalidateDCacheRange(u32 dwAddr_p,u16 span_p)
-{
-    Xil_DCacheInvalidateRange(dwAddr_p, span_p);
-}
-//------------------------------------------------------------------------------
-/**
 \brief  READ and WRITE functions with Invalidation and flushing
 
 \param  base      base address to be READ/WRITE

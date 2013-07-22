@@ -53,7 +53,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "xil_io.h"
 #include "xil_exception.h"
 #include <unistd.h>
-
 #include "hostiflib_arm.h"
 
 //------------------------------------------------------------------------------
@@ -133,14 +132,14 @@ This function enabels/disables global interrupts.
 //------------------------------------------------------------------------------
 void EplTgtEnableGlobalInterrupt (BYTE fEnable_p)
 {
-	if(fEnable_p == TRUE)
-	{
-		SysComp_enableInterrupts();
-	}
-	else
-	{
-		SysComp_disableInterrupts();
-	}
+    if(fEnable_p == TRUE)
+    {
+        SysComp_enableInterrupts();
+    }
+    else
+    {
+        SysComp_disableInterrupts();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -162,23 +161,12 @@ BYTE EplTgtIsInterruptContext (void)
     // This would be possible with a flag in the ISR, only.
     // For now, the global interrupt enable flag is checked.
 
-	// Read the distributor state
-	u32 Distributor_state = Xil_In32(XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET);
-		// Read the DP (Distributor) and CP (CPU interface) state
-	u32 CPUif_state = Xil_In32(XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET);
+    // Read the distributor state
+    u32 Distributor_state = Xil_In32(XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET);
+    // Read the DP (Distributor) and CP (CPU interface) state
+    u32 CPUif_state = Xil_In32(XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET);
 
-	if(Distributor_state && CPUif_state)
-	{
-		return TRUE;
-	}
-	else
-	{
-		return FALSE;
-	}
-
-/*	register unsigned int Reg __asm(XREG_CP15_INTERRUPT_STATUS);
-	//unsigned int Reg = asm(XREG_CP15_INTERRUPT_STATUS);
-    if (Reg == 0)
+    if(Distributor_state && CPUif_state)
     {
         return TRUE;
     }
@@ -186,8 +174,6 @@ BYTE EplTgtIsInterruptContext (void)
     {
         return FALSE;
     }
-    *///FIXME:@John Check if this register can be accessed in normal mode of operation, so that we can
-	//	use this instead of the above configuration.
 }
 //------------------------------------------------------------------------------
 /**

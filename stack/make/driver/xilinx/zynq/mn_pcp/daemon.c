@@ -107,8 +107,8 @@ int main (void)
     Ret = target_init();
     if(kEplSuccessful != Ret)
     {
-    	PRINTF("Target Initialization Failed\n\n");
-    	return Ret;
+        PRINTF("Target Initialization Failed\n\n");
+        return Ret;
     }
 
     while(1)

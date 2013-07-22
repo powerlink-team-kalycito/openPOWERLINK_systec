@@ -82,27 +82,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #endif //XPAR_PLB_POWERLINK_0_PDI_ASYNC_BUF_COUNT
 
 #elif defined(POWERLINK_USES_AXI_BUS)
-	#ifdef __ZYNQ__ //TODO: check Marco at makefile its shouldnt be ndef
-		#include "xil_io.h"
-		// base address of PS Uart1
-		#define UART_BASE 0xE0001000
-		/* Write to memory location or register */
-		#define X_mWriteReg(BASE_ADDRESS, RegOffset, data) \
-				   *(unsigned int *)(BASE_ADDRESS + RegOffset) = ((unsigned int) data);
-		/* Read from memory location or register */
-		#define X_mReadReg(BASE_ADDRESS, RegOffset) \
-				   *(unsigned int *)(BASE_ADDRESS + RegOffset);
+    #ifdef __ZYNQ__
+        #include "xil_io.h"
+        // base address of PS Uart1
+        #define UART_BASE 0xE0001000
+        /* Write to memory location or register */
+        #define X_mWriteReg(BASE_ADDRESS, RegOffset, data) \
+                    *(unsigned int *)(BASE_ADDRESS + RegOffset) = ((unsigned int) data);
+        /* Read from memory location or register */
+        #define X_mReadReg(BASE_ADDRESS, RegOffset) \
+                    *(unsigned int *)(BASE_ADDRESS + RegOffset);
 
-		#define XUartChanged_IsTransmitFull(BaseAddress)			 \
-			((Xil_In32((BaseAddress) + 0x2C) & 	\
-			 0x10) == 0x10)
+        #define XUartChanged_IsTransmitFull(BaseAddress)  \
+                    ((Xil_In32((BaseAddress) + 0x2C) & \
+                                0x10) == 0x10)
 
-		#define XUartChanged_SendByte(BAddr,Data) \
-			u32 u32BaseAddress = BAddr; \
-			u8 u8Data = Data; \
-			while (XUartChanged_IsTransmitFull(u32BaseAddress));\
-			X_mWriteReg(u32BaseAddress, 0x30, u8Data);
-	#endif
+        #define XUartChanged_SendByte(BAddr,Data) \
+            u32 u32BaseAddress = BAddr; \
+            u8 u8Data = Data; \
+            while (XUartChanged_IsTransmitFull(u32BaseAddress));\
+            X_mWriteReg(u32BaseAddress, 0x30, u8Data);
+    #endif
     #ifdef XPAR_AXI_POWERLINK_0_S_AXI_SMP_PCP_BASEADDR
     #define LATCHED_IOPORT_BASE   (void*) XPAR_AXI_POWERLINK_0_S_AXI_SMP_PCP_BASEADDR
     #define LATCHED_IOPORT_CFG    (void*) (LATCHED_IOPORT_BASE + 4)

@@ -59,27 +59,6 @@ ${STACKROOT_DIR}/libs/hostif \
 ${STACKROOT_DIR}/objdicts/CiA302-4_MN \
 ${STACKROOT_DIR}/stack/src"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ##################################
 # Source files
 SRCFILES="demo_main.c \
@@ -115,8 +94,6 @@ ${STACKROOT_DIR}/stack/src/user/nmt/statusu.c \
 ${STACKROOT_DIR}/stack/src/user/nmt/syncu.c \
 ${STACKROOT_DIR}/stack/src/user/obd/obd.c \
 ${STACKROOT_DIR}/stack/src/user/obd/obdcdc.c \
-
-
 ${STACKROOT_DIR}/stack/src/user/pdo/pdou.c \
 ${STACKROOT_DIR}/stack/src/user/pdo/pdoucal.c \
 ${STACKROOT_DIR}/stack/src/user/pdo/pdoucal-triplebufshm.c \

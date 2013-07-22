@@ -44,7 +44,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hostiflib_target.h"
 
 
-
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -83,13 +82,6 @@ The offsets of the sub-registers of the status control register
 #define HOSTIF_SC_RES2_OFFS             0x0600U ///< reserved
 #define HOSTIF_SC_RES3_OFFS             0x0700U ///< reserved
 #define HOSTIF_SC_HIGH_ADDR             0x07FFU ///< high address
-
-//TODO: Review , Added from old file..Is it needed in new file ?
-#define HOSTIF_SC_DYNB_OFFS_AP          0x0800U ///< Dynamic buffer
-#define HOSTIF_SC_RES1_OFFS_AP          0x0900U ///< reserved
-#define HOSTIF_SC_RES2_OFFS_AP          0x1000U ///< reserved
-#define HOSTIF_SC_RES3_OFFS_AP          0x1100U ///< reserved
-#define HOSTIF_SC_HIGH_ADDR_AP          0x11FFU ///< high address
 /**@}*/
 
 //------------------------------------------------------------------------------
@@ -696,7 +688,6 @@ UINT32 hostif_readDynBufHost (UINT8 *pHostifScBase_p, UINT8 num_p)
 //------------------------------------------------------------------------------
 void hostif_writeDynBufHost (UINT8 *pHostifScBase_p, UINT8 num_p, UINT32 addr_p)
 {
-    //TODO: Review
     HOSTIF_WR32(pHostifScBase_p + HOSTIF_SC_DYNB_OFFS,
             offsetof(tScDynB, Host.aDynBuf[num_p]), addr_p);
 }
@@ -1041,63 +1032,61 @@ void hostif_writeDynBufPcpRpdo (UINT8 *pHostifScBase_p, UINT32 addr_p)
             offsetof(tScDynB, Pcp.rpdoAddr), addr_p);
 }
 
-
-//TODO: Review :Added from old file used in hostlib.c 
 //------------------------------------------------------------------------------
 /**
-\brief  Read dynamic buffers (Host only)
+\brief  Read dynamic buffers assigned by PCP (Host only)
 
 \param  pHostifScBase_p     base address of Status/Control registers
-\param	InstanceId_p		instance id for the resource to be retrieved
+\param  InstanceId_p        instance id for the resource to be retrieved
 
-\return The function returns the dynamic buffer address. Note that the returned
-address is limited by the address width of the bridge master.
+\return The function returns the dynamic buffer address allocated on pcp.
+        Note that the returned address is limited by the address width of
+        the bridge master.
 
 \ingroup module_hostiflib
 */
 //------------------------------------------------------------------------------
 UINT32 hostif_readDynBufPcp (UINT8 *pHostifScBase_p,tHostifInstanceId InstanceId_p)
 {
-	UINT32 DynBufPcpAddr;
+    UINT32 DynBufPcpAddr;
 
-	switch(InstanceId_p)
-	{
-		case kHostifInstIdErrCount:
-			DynBufPcpAddr = hostif_readDynBufPcpErrCnt(pHostifScBase_p);
-			break;
-		case kHostifInstIdTxNmtQueue:
-			//printf("why\n");
-			DynBufPcpAddr = hostif_readDynBufPcpTxNmtQ(pHostifScBase_p);
-			break;
-		case kHostifInstIdTxGenQueue:
-			DynBufPcpAddr = hostif_readDynBufPcpTxGenQ(pHostifScBase_p);
-			break;
-		case kHostifInstIdTxSyncQueue:
-			DynBufPcpAddr = hostif_readDynBufPcpTxSyncQ(pHostifScBase_p);
-			break;
-		case kHostifInstIdTxVethQueue:
-			DynBufPcpAddr = hostif_readDynBufPcpTxVethQ(pHostifScBase_p);
-			break;
-		case kHostifInstIdRxVethQueue:
-			DynBufPcpAddr = hostif_readDynBufPcpRxVethQ(pHostifScBase_p);
-			break;
-		case kHostifInstIdK2UQueue:
-			DynBufPcpAddr = hostif_readDynBufPcpK2UQ(pHostifScBase_p);
-			break;
-		case kHostifInstIdU2KQueue:
-			DynBufPcpAddr = hostif_readDynBufPcpU2KQ(pHostifScBase_p);
-			break;
-		case kHostifInstIdTpdo:
-			DynBufPcpAddr = hostif_readDynBufPcpTpdo(pHostifScBase_p);
-			break;
-		case kHostifInstIdRpdo:
-			DynBufPcpAddr = hostif_readDynBufPcpRpdo(pHostifScBase_p);
-			break;
-		default:
-			DynBufPcpAddr = 0;
-			break;
-	}
-	//printf("addr:%ld-%ld\n",DynBufPcpAddr,pHostifScBase_p);
+    switch(InstanceId_p)
+    {
+        case kHostifInstIdErrCount:
+            DynBufPcpAddr = hostif_readDynBufPcpErrCnt(pHostifScBase_p);
+            break;
+        case kHostifInstIdTxNmtQueue:
+            DynBufPcpAddr = hostif_readDynBufPcpTxNmtQ(pHostifScBase_p);
+            break;
+        case kHostifInstIdTxGenQueue:
+            DynBufPcpAddr = hostif_readDynBufPcpTxGenQ(pHostifScBase_p);
+            break;
+        case kHostifInstIdTxSyncQueue:
+            DynBufPcpAddr = hostif_readDynBufPcpTxSyncQ(pHostifScBase_p);
+            break;
+        case kHostifInstIdTxVethQueue:
+            DynBufPcpAddr = hostif_readDynBufPcpTxVethQ(pHostifScBase_p);
+            break;
+        case kHostifInstIdRxVethQueue:
+            DynBufPcpAddr = hostif_readDynBufPcpRxVethQ(pHostifScBase_p);
+            break;
+        case kHostifInstIdK2UQueue:
+            DynBufPcpAddr = hostif_readDynBufPcpK2UQ(pHostifScBase_p);
+            break;
+        case kHostifInstIdU2KQueue:
+            DynBufPcpAddr = hostif_readDynBufPcpU2KQ(pHostifScBase_p);
+            break;
+        case kHostifInstIdTpdo:
+            DynBufPcpAddr = hostif_readDynBufPcpTpdo(pHostifScBase_p);
+            break;
+        case kHostifInstIdRpdo:
+            DynBufPcpAddr = hostif_readDynBufPcpRpdo(pHostifScBase_p);
+            break;
+            default:
+            DynBufPcpAddr = 0;
+            break;
+    }
+
     return DynBufPcpAddr;
 }
 

@@ -3879,16 +3879,6 @@ unsigned long ps7_peripherals_init_data[] = {
     EMIT_MASKWRITE(0XF8008014, 0x00000001U ,0x00000001U),
     // .. .. FINISH: AFI0 REGISTERS
     // .. .. START: AFI1 REGISTERS
-    // .. .. n32BitEn = 1
-    // .. .. ==> 0XF8009000[0:0] = 0x00000001U
-    // .. ..     ==> MASK : 0x00000001U    VAL : 0x00000001U
-    // .. .. 
-    EMIT_MASKWRITE(0XF8009000, 0x00000001U ,0x00000001U),
-    // .. .. n32BitEn = 1
-    // .. .. ==> 0XF8009014[0:0] = 0x00000001U
-    // .. ..     ==> MASK : 0x00000001U    VAL : 0x00000001U
-    // .. .. 
-    EMIT_MASKWRITE(0XF8009014, 0x00000001U ,0x00000001U),
     // .. .. FINISH: AFI1 REGISTERS
     // .. .. START: AFI2 REGISTERS
     // .. .. FINISH: AFI2 REGISTERS

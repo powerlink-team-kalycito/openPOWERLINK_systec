@@ -3,6 +3,7 @@ XmpVersion: 14.4
 VerMgmt: 14.4
 IntStyle: default
 Flow: ise
+ModuleSearchPath: ../../../../../fpga/ipcore/xilinx/
 MHS File: system.mhs
 Architecture: zynq
 Device: xc7z020

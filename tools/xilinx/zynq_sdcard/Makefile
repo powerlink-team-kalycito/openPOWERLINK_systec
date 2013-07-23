@@ -22,4 +22,4 @@ build:
 .PHONY: transfer
 transfer:
 	cp BOOT.BIN ${DRV_NAME}:
-	windrive -e ${DRV_NAME}
+	

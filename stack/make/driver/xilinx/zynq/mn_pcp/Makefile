@@ -346,5 +346,5 @@ build-sd:
 	$(MAKE) -C $(SDCARD_DIR) build
 	-@echo "BOOT.bin Created Succesfully"
 	
-	$(MAKE) -C $(SDCARD_DIR) transfer
+#$(MAKE) -C $(SDCARD_DIR) transfer
 -include $(OBJD)

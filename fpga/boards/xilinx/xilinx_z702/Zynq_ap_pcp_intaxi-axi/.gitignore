@@ -1,3 +1,8 @@
 __xps
 pcores
 *.log
+*.make
+synthesis
+*.opt
+hdl
+implementation

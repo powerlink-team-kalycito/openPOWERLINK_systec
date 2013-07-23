@@ -317,6 +317,9 @@ void ctrlkcal_storeInitParam(tCtrlInitParam* pInitParam_p)
 {
     if(instance_l.pInitParamBase != NULL)
         EPL_MEMCPY(instance_l.pInitParamBase, pInitParam_p, sizeof(tCtrlInitParam));
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+        HOSTIF_FLUSH_DCACHE_RANGE((UINT32)(instance_l.pInitParamBase), sizeof(tCtrlInitParam));
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -336,7 +339,9 @@ tEplKernel ctrlkcal_readInitParam(tCtrlInitParam* pInitParam_p)
 {
     if(instance_l.pInitParamBase == NULL)
         return kEplNoResource;
-
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+        HOSTIF_INVALIDATE_DCACHE_RANGE((UINT32)(instance_l.pInitParamBase), sizeof(tCtrlInitParam));
+#endif
     EPL_MEMCPY(pInitParam_p, instance_l.pInitParamBase, sizeof(tCtrlInitParam));
 
     return kEplSuccessful;

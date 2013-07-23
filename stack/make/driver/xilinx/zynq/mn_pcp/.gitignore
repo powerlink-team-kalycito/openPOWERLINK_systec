@@ -1,0 +1,12 @@
+*.elf
+*orig
+*.bak
+*.objdump
+.settings
+obj
+*.map
+*.size
+*.mem
+*.elfcheck
+
+

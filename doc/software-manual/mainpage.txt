@@ -21,6 +21,7 @@ openPOWERLINK is supported on several platforms and operating systems.
 - \subpage linux-x86
 - \subpage altera
 - \subpage xilinx
+- \subpage zynq
 - \subpage other-platforms
 - \subpage porting-guide
 
@@ -40,3 +41,13 @@ as Managing Node or Controlled Node.
 
 *******************************************************************************/
 
+/**
+*******************************************************************************
+\page zynq openPOWERLINK on Zynq
+
+openPOWERLINK is supported on Xilinx Zynq platform
+as Managing Node.
+- \subpage zynq-mn
+
+
+*******************************************************************************/

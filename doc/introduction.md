@@ -58,6 +58,7 @@ Communication Profile Specification.
 - [Windows](\ref other-platforms)
 - [Altera NiosII](\ref altera)
 - [Xilinx Microblaze](\ref xilinx)
+- [Xilinx Zynq] (\ref zynq)
 - [Freescale Coldfire MCF5484](\ref other-platforms)
 - [Hilscher netX-500](\ref other-platforms)
 - [Atmel AT91RM9200 with Davicom DM9003 under Linux](\ref other-platforms)

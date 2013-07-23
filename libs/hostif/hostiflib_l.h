@@ -42,7 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include "hostiflib_target.h"
-
+#include "hostiflib.h"
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
@@ -118,6 +118,7 @@ void hostif_writeDynBufPcpTpdo (UINT8 *pHostifScBase_p, UINT32 addr_p);
 UINT32 hostif_readDynBufPcpRpdo (UINT8 *pHostifScBase_p);
 void hostif_writeDynBufPcpRpdo (UINT8 *pHostifScBase_p, UINT32 addr_p);
 
+UINT32 hostif_readDynBufPcp (UINT8 *pHostifScBase_p,tHostifInstanceId InstanceId_p); // TODO: Review
 #ifdef __cplusplus
 }
 #endif

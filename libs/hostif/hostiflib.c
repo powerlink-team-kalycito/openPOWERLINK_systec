@@ -1312,12 +1312,18 @@ tHostifReturn hostif_dynBufAcquire (tHostifInstance pInstance_p,
             // handle base address in pcp memory space
             pHostif->apDynBufHost[i] = (UINT8*)pcpBaseAddr_p;
 
-            hostif_writeDynBufHost(pHostif->pBase, (UINT8)i, pcpBaseAddr_p);
-
-            // return base address in host memory space
-            *ppDynBufBase_p = (UINT8*)((UINT32)apDynBuf[i] +
+            
+            if (apDynBuf[i] != NULL)
+            {
+                hostif_writeDynBufHost(pHostif->pBase, (UINT8)i, pcpBaseAddr_p);
+                 // return base address in host memory space
+                *ppDynBufBase_p = (UINT8*)((UINT32)apDynBuf[i] +
                     (UINT32)pHostif->pBase);
-
+            }
+            else
+            {
+                *ppDynBufBase_p = (UINT8*)pcpBaseAddr_p;
+            }
             Ret = kHostifSuccessful;
             break;
         }
@@ -1362,8 +1368,10 @@ tHostifReturn hostif_dynBufFree (tHostifInstance pInstance_p, UINT32 pcpBaseAddr
         {
             // free dynamic buffer
             pHostif->apDynBufHost[i] = 0;
-
-            hostif_writeDynBufHost(pHostif->pBase, (UINT8)i, 0);
+            if(apDynBuf[i] != NULL)
+            {
+                hostif_writeDynBufHost(pHostif->pBase, (UINT8)i, 0);
+            }
 
             Ret = kHostifSuccessful;
             break;
@@ -2524,8 +2532,16 @@ static tHostifReturn queueConfig (tHostif *pHostif_p,
     else if(pHostif_p->config.ProcInstance == kHostifProcHost)
     {
         // add hostif offset
+        if(pQueueConfig_p->pBase != NULL)
+        {
         pQueueConfig_p->pBase = (UINT8*)((UINT32)pQueueConfig_p->pBase +
                 (UINT32)pHostif_p->pBase);
+        }
+        else
+        {
+            pQueueConfig_p->pBase = (UINT8*) hostif_readDynBufPcp(pHostif_p->pBase,
+                                                InstanceId_p);
+        }
     }
     else
     {
@@ -2656,8 +2672,16 @@ static tHostifReturn limConfig (tHostif *pHostif_p,
     else if(pHostif_p->config.ProcInstance == kHostifProcHost)
     {
         // add hostif offset
+        if(pLimConfig_p->pBase != NULL)
+        {
         pLimConfig_p->pBase = (UINT8*)((UINT32)pLimConfig_p->pBase +
                 (UINT32)pHostif_p->pBase);
+        }
+        else
+        {
+            pLimConfig_p->pBase = (UINT8*) hostif_readDynBufPcp(pHostif_p->pBase,
+                                              InstanceId_p);
+        }
     }
     else
     {

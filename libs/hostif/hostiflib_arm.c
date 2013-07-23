@@ -1,16 +1,16 @@
 /**
 ********************************************************************************
-\file   hostiflib_target.h
+\file   hostiflib_arm.c
 
-\brief  Host Interface Library - Target header file
+\brief  Host Interface Library Support File - For ARM target
 
-This header file defines target specific macros (e.g. data types) and selects
-the target specific header file (e.g. hostiflib_nios.h).
+This file provides specific function definition for Zynq ARM(ps7_cortexa9_0) CPU
+to support host interface
 
+\ingroup module_hostiflib
 *******************************************************************************/
-
 /*------------------------------------------------------------------------------
-Copyright (c) 2012, Bernecker+Rainer Industrie-Elektronik Ges.m.b.H. (B&R)
+Copyright (c) 2012 Kalycito Infotech Private Limited
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,77 +36,82 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ------------------------------------------------------------------------------*/
 
-#ifndef _INC_HOSTIF_TARGET_H_
-#define _INC_HOSTIF_TARGET_H_
-
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-#include <stdint.h>
-
-#if defined(__NIOS2__)
-
-#include "hostiflib_nios.h"
-
-#elif defined(__MICROBLAZE__)
-
-#include "hostiflib_microblaze.h"
-
-#elif defined(__arm__)
 
 #include "hostiflib_arm.h"
 
-#else
-
-#error "Target is not supported! Please revise hostiflib_target.h"
-
-#endif
-
-//---------------------------------------------------------
-// include section header file with null macros
-#include <section-default.h>
+//============================================================================//
+//            G L O B A L   D E F I N I T I O N S                             //
+//============================================================================//
 
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+// module global vars
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// global function prototypes
+//------------------------------------------------------------------------------
+
+//============================================================================//
+//            P R I V A T E   D E F I N I T I O N S                           //
+//============================================================================//
+
+//------------------------------------------------------------------------------
+// const defines
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /**
-\name Data types
-If the following data types are not defined in the environment, then they are
-set to those provided by stdint.h.
-*/
-/**@{*/
-#ifndef UINT8
-#define UINT8               uint8_t
-#endif
+\brief  READ and WRITE functions with Invalidation and flushing
 
-#ifndef UINT16
-#define UINT16              uint16_t
-#endif
+\param  base      base address to be READ/WRITE
+\param  offset    Offset to be READ/WRITE
 
-#ifndef UINT32
-#define UINT32              uint32_t
-#endif
-
-#ifndef BOOL
-#define BOOL                uint8_t
-#endif
-
-#ifndef FALSE
-#define FALSE               0x00
-#endif
-
-#ifndef TRUE
-#define TRUE                0xFF
-#endif
-/**@}*/
-
+ */
 //------------------------------------------------------------------------------
-// typedef
-//------------------------------------------------------------------------------
+u32 ARM_READ32(void* base,u32 offset)
+{
+    u32 Address = (u32)base + offset;
+    Xil_DCacheInvalidateRange(Address,4);
+    return Xil_In32(Address);;
+}
+u16 ARM_READ16(void* base,u32 offset)
+{
+    u32 Address = (u32)base + offset;
+    Xil_DCacheInvalidateRange(Address,2);
+    return Xil_In16(Address);;
+}
+u8  ARM_READ8(void* base, u32 offset)
+{
+    u32 Address = (u32)base + offset;
+    Xil_DCacheInvalidateRange(Address,1);
+    return Xil_In8(Address);;
+}
 
-//------------------------------------------------------------------------------
-// function prototypes
-//------------------------------------------------------------------------------
+void ARM_WRITE32(void* base,u32 offset,u32 dword)
+{
+    u32 Address = (u32)base + offset;
+    Xil_Out32(Address, dword);
+    Xil_DCacheFlushRange(Address,4);
+}
+void ARM_WRITE16(void* base,u32 offset,u16 word)
+{
+    u32 Address = (u32)base + offset;
+    Xil_Out16(Address, word);
+    Xil_DCacheFlushRange(Address,2);
+}
+void ARM_WRITE8(void* base,u32 offset,u8 byte)
+{
+    u32 Address = (u32)base + offset;
+    Xil_Out8(Address, byte);
+    Xil_DCacheFlushRange(Address,1);
+}
 
-#endif /* _INC_HOSTIF_TARGET_H_ */
+/**
+ * EOF
+ */

@@ -686,6 +686,7 @@ INPUT                  = ../../stack/src \
                          ../supported-platforms/altera-mn.md \
                          ../supported-platforms/altera-cn.md \
                          ../supported-platforms/xilinx.md \
+                         ../supported-platforms/zynq-mn.md \
                          ../supported-platforms/other-platforms.md \
                          ../porting-guide.md \
                          ../introduction.md \

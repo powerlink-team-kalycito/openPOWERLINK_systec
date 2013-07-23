@@ -70,7 +70,7 @@
 #define XILINX_SLEEP_H_
 
 #include "global.h"
-
-void usleep(DWORD time);
+#include <sys/types.h>
+int usleep(useconds_t time);
 
 #endif /* XILINX_SLEEP_H_ */

@@ -131,7 +131,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #ifndef SECTION_MAIN_APP_CB_SYNC
         #define SECTION_MAIN_APP_CB_SYNC
     #endif
-
+    #ifndef SECTION_EVENTKCAL_HOSTIF_RXHDL
+        #define SECTION_EVENTKCAL_HOSTIF_RXHDL
+    #endif
 //------------------------------------------------------------------------------
 // typedef
 //------------------------------------------------------------------------------

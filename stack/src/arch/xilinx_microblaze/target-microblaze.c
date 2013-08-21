@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <xparameters.h>
 #include "xilinx_usleep.h"
 #include "xilinx_irq.h"
-
+#include "systemComponents.h"
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -188,8 +188,8 @@ openPOWERLINK stack.
 //------------------------------------------------------------------------------
 tEplKernel target_init(void)
 {
-    //TODO jz: do stuff in systemComponents.c here?
-
+    SysComp_initPeripheral();
+    SysComp_enableInterrupts();
     return kEplSuccessful;
 }
 

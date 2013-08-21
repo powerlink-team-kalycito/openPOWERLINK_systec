@@ -178,6 +178,18 @@
                                 Xil_Out8(address, newval)
     #endif
 
+#if (DEV_SYSTEM == _DEV_ARM_)
+        //////////////////////////////////////////////////////////////////////
+        //FIXME: Rework ATOMIC_EXCHANGE logic !!!
+        #include <xil_types.h>
+        #include <xil_io.h>
+        #define ATOMIC_T    u8
+        #define ATOMIC_EXCHANGE(address, newval, oldval) \
+                                oldval = Xil_In8(address); \
+                                Xil_Out8(address, newval)
+        //////////////////////////////////////////////////////////////////////
+    #endif
+
 #elif (TARGET_SYSTEM == _LINUX_)
 
     #ifndef __KERNEL__

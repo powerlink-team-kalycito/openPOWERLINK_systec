@@ -85,8 +85,10 @@ BITSTREAM= download
 # Include directory
 INCLUDES=-I${APP_DIR} \
 -I${STACK_ROOT}/include \
+-I${STACK_ROOT}/include/kernel \
+-I${STACK_ROOT}/libs/dualprocshm \
+-I${STACK_ROOT}/libs/circbuf \
 -I${STACK_ROOT}/libs/omethlib \
--I${STACK_ROOT}/libs/hostif \
 -I${STACK_ROOT}/stack/include/target/openmac \
 -I${STACK_ROOT}/stack/src \
 -I${STACK_ROOT}/stack/src/arch/xilinx_microblaze \
@@ -94,47 +96,47 @@ INCLUDES=-I${APP_DIR} \
 
 ##################################
 # Source files
-SRCFILES=${STACK_ROOT}/libs/hostif/hostiflib_microblaze.c \
-${STACK_ROOT}/libs/hostif/hostiflib.c \
-${STACK_ROOT}/libs/hostif/hostiflib_l.c \
-${STACK_ROOT}/libs/hostif/lfqueue.c \
-${STACK_ROOT}/libs/hostif/linmem.c \
-${STACK_ROOT}/libs/omethlib/omethlib.c \
+SRCFILES=${STACK_ROOT}/libs/omethlib/omethlib.c \
 ${STACK_ROOT}/libs/omethlib/omethlibint.c \
 ${STACK_ROOT}/libs/omethlib/omethlib_phycfg_generic.c \
 ${STACK_ROOT}/libs/trace/trace-printf.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm-microblaze.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm-noos.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm_l.c \
+${STACK_ROOT}/libs/circbuf/circbuffer.c \
+${STACK_ROOT}/libs/circbuf/circbuf-noosdual.c \
 ${STACK_ROOT}/stack/src/arch/xilinx_microblaze/xilinx_irq.c \
 ${STACK_ROOT}/stack/src/arch/xilinx_microblaze/xilinx_usleep.c \
 ${STACK_ROOT}/stack/src/arch/xilinx_microblaze/target-microblaze.c \
-${STACK_ROOT}/stack/src/common/dll/dllcal-hostif.c \
 ${STACK_ROOT}/stack/src/common/event/event.c \
 ${STACK_ROOT}/stack/src/common/errstring.c \
+${STACK_ROOT}/stack/src/common/debug.c \
 ${STACK_ROOT}/stack/src/kernel/ctrl/ctrlk.c \
-${STACK_ROOT}/stack/src/kernel/ctrl/ctrlkcal-hostif.c \
+${STACK_ROOT}/stack/src/kernel/ctrl/ctrlkcal-noosdual.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllk.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllkfilter.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllkstatemachine.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllkframe.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllkevent.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllkcal.c \
+${STACK_ROOT}/stack/src/common/dll/dllkcal-circbuf.c \
 ${STACK_ROOT}/stack/src/kernel/edrv/edrvcyclic-openmac.c \
 ${STACK_ROOT}/stack/src/kernel/edrv/edrv-openmac.c \
 ${STACK_ROOT}/stack/src/kernel/errhnd/errhndk.c \
-${STACK_ROOT}/stack/src/kernel/errhnd/errhndkcal-hostif.c \
+${STACK_ROOT}/stack/src/kernel/errhnd/errhndkcal-noosdual.c \
 ${STACK_ROOT}/stack/src/kernel/event/eventk.c \
-${STACK_ROOT}/stack/src/kernel/event/eventkcal-nooshostif.c \
-${STACK_ROOT}/stack/src/kernel/event/eventkcalintf-hostif.c \
+${STACK_ROOT}/stack/src/kernel/event/eventkcal-noosdual.c \
+${STACK_ROOT}/stack/src/kernel/event/eventkcalintf-circbuf.c \
 ${STACK_ROOT}/stack/src/kernel/hrtimer/hrtimer-openmac.c \
 ${STACK_ROOT}/stack/src/kernel/nmt/nmtk.c \
 ${STACK_ROOT}/stack/src/kernel/pdo/pdok.c \
 ${STACK_ROOT}/stack/src/kernel/pdo/pdokcal.c \
 ${STACK_ROOT}/stack/src/kernel/pdo/pdokcal-triplebufshm.c \
-${STACK_ROOT}/stack/src/kernel/pdo/pdokcalmem-hostif.c \
-${STACK_ROOT}/stack/src/kernel/pdo/pdokcalsync-hostif.c \
+${STACK_ROOT}/stack/src/kernel/pdo/pdokcalmem-noosdual.c \
+${STACK_ROOT}/stack/src/kernel/pdo/pdokcalsync-noosdual.c \
 ${STACK_ROOT}/stack/src/kernel/timestamp/timestamp-openmac.c \
 ${APP_DIR}/daemon.c \
 ${APP_DIR}/systemComponents.c 
-
 #####################################
 # Dependencies
 DEPS = ${APP_DIR}/EplCfg.h \

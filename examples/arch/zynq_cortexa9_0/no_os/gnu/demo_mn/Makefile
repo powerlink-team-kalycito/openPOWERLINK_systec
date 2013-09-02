@@ -79,7 +79,8 @@ BITSTREAM= download
 INCLUDES=-I${APP_DIR} \
 -I${APP_DIR}/sd_fat16 \
 -I${STACK_ROOT}/include \
--I${STACK_ROOT}/libs/hostif \
+-I${STACK_ROOT}/libs/dualprocshm \
+-I${STACK_ROOT}/libs/circbuf \
 -I${STACK_ROOT}/libs/sharedbuff \
 -I${STACK_ROOT}/stack/include/target/openmac \
 -I${STACK_ROOT}/stack/src \
@@ -94,8 +95,8 @@ ${APP_DIR}/mnobd.txt \
 ${APP_DIR}/makefile.settings \
 ${APP_DIR}/systemComponents.h \
 ${STACK_ROOT}/include \
-${STACK_ROOT}/libs/hostif \
-${STACK_ROOT}/libs/sharedbuff \
+${STACK_ROOT}/libs/dualprocshm \
+${STACK_ROOT}/libs/circbuf \
 ${STACK_ROOT}/stack/include/target/openmac \
 ${STACK_ROOT}/stack/src \
 ${STACK_ROOT}/objdicts/CiA302-4_MN \
@@ -105,16 +106,15 @@ $(BSP_PATH)/${PROCESSOR_NAME}
 # Source files
 
 SRCFILES=${STACK_ROOT}/libs/ami/amiarm.c \
-${STACK_ROOT}/libs/hostif/hostiflib_arm.c \
-${STACK_ROOT}/libs/hostif/hostiflib.c \
-${STACK_ROOT}/libs/hostif/hostiflib_l.c \
-${STACK_ROOT}/libs/hostif/lfqueue.c \
-${STACK_ROOT}/libs/hostif/linmem.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm-arm.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm-noos.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm_l.c \
+${STACK_ROOT}/libs/circbuf/circbuffer.c \
+${STACK_ROOT}/libs/circbuf/circbuf-noosdual.c \
 ${STACK_ROOT}/libs/trace/trace-printf.c \
 ${STACK_ROOT}/objdicts/CiA302-4_MN/EplApiProcessImageSetup.c \
 ${STACK_ROOT}/objdicts/CiA302-4_MN/Objdict.c \
 ${STACK_ROOT}/stack/src/arch/xilinx_arm/target_arm.c \
-${STACK_ROOT}/stack/src/common/dll/dllcal-hostif.c \
 ${STACK_ROOT}/stack/src/common/event/event.c \
 ${STACK_ROOT}/stack/src/common/timer/timer-generic.c \
 ${STACK_ROOT}/stack/src/common/debug.c \
@@ -122,13 +122,14 @@ ${STACK_ROOT}/stack/src/common/errstring.c \
 ${STACK_ROOT}/stack/src/user/api/generic.c \
 ${STACK_ROOT}/stack/src/user/api/processimage.c \
 ${STACK_ROOT}/stack/src/user/ctrl/ctrlu.c \
-${STACK_ROOT}/stack/src/user/ctrl/ctrlucal-hostif.c \
+${STACK_ROOT}/stack/src/user/ctrl/ctrlucal-noosdual.c \
 ${STACK_ROOT}/stack/src/user/dll/dllucal.c \
+${STACK_ROOT}/stack/src/user/dll/dllucal-circbuf.c \
 ${STACK_ROOT}/stack/src/user/errhnd/errhndu.c \
-${STACK_ROOT}/stack/src/user/errhnd/errhnducal-hostif.c \
+${STACK_ROOT}/stack/src/user/errhnd/errhnducal-noosdual.c \
 ${STACK_ROOT}/stack/src/user/event/eventu.c \
-${STACK_ROOT}/stack/src/user/event/eventucal-nooshostif.c \
-${STACK_ROOT}/stack/src/user/event/eventucalintf-hostif.c \
+${STACK_ROOT}/stack/src/user/event/eventucal-noosdual.c \
+${STACK_ROOT}/stack/src/user/event/eventucalintf-circbuf.c \
 ${STACK_ROOT}/stack/src/user/nmt/identu.c \
 ${STACK_ROOT}/stack/src/user/nmt/nmtcnu.c \
 ${STACK_ROOT}/stack/src/user/nmt/nmtmnu.c \
@@ -140,8 +141,8 @@ ${STACK_ROOT}/stack/src/user/obd/obdcdc.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdou.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdoucal-triplebufshm.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdoucal.c \
-${STACK_ROOT}/stack/src/user/pdo/pdoucalmem-hostif.c \
-${STACK_ROOT}/stack/src/user/pdo/pdoucalsync-hostif.c \
+${STACK_ROOT}/stack/src/user/pdo/pdoucalmem-noosdual.c \
+${STACK_ROOT}/stack/src/user/pdo/pdoucalsync-noosdual.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-asndu.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-asysequ.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-comu.c \
@@ -262,7 +263,7 @@ $(OBJDIR)/xilinx_usleep.o: xilinx_usleep.c xilinx_usleep.h $(BSP_PATH)/$(PROCESS
 ${EXECUTABLE}.elf: $(BSP_PATH)/$(PROCESSOR_NAME) ${OBJ} ${LSSCRIPT}
 	@echo Building target: $@
 	@echo Invoking: ARM gcc linker
-	$(CC) $(LDFLAGS) $(LIBSPATH) ${OBJ} ${LIBS} -o ${EXECUTABLE}.elf	
+	$(CC) $(LDFLAGS) ${OPT_LEVEL} $(LIBSPATH) ${OBJ} ${LIBS} -o ${EXECUTABLE}.elf	
 	@echo Finished building target: $@
 	@echo ' '
 

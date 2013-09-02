@@ -90,13 +90,13 @@ The generic defines are valid for the whole openPOWERLINK stack.
 The queue defines determine the stack's queues.
 */
 /**@{*/
-#define EPL_EVENT_K2U_QUEUE                 EPL_QUEUE_HOSTINTERFACE
+#define EPL_EVENT_K2U_QUEUE                 EPL_QUEUE_CIRCBUF
     ///< kernel-to-user queue implementation
-#define EPL_EVENT_U2K_QUEUE                 EPL_QUEUE_HOSTINTERFACE
+#define EPL_EVENT_U2K_QUEUE                 EPL_QUEUE_CIRCBUF
     ///< user-to-kernel queue implementation
 #define EPL_EVENT_UINT_QUEUE                EPL_QUEUE_DIRECT
     ///< user-internal queue implementation
-#define CONFIG_DLLCAL_QUEUE                 EPL_QUEUE_HOSTINTERFACE
+#define CONFIG_DLLCAL_QUEUE                 EPL_QUEUE_CIRCBUF
     ///< DLLCAL queue implementation
 #define EPL_USE_SHAREDBUFF                  FALSE
     ///< disable shared buffer

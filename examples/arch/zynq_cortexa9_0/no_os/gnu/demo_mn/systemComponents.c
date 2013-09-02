@@ -21,7 +21,7 @@ subject to the License Agreement located at the end of this file below.
 #include "xil_types.h"
 #include "xil_io.h"
 #include "xil_exception.h"
-#include "hostiflib_arm.h"
+//#include "dualprocshm-arm.h"
 #include "EplTarget.h"
 #include <unistd.h>
 

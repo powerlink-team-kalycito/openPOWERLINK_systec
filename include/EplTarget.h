@@ -163,6 +163,9 @@
         #define ATOMIC_EXCHANGE(address, newval, oldval) \
                                 oldval = IORD(address, 0); \
                                 IOWR(address, 0, newval)
+
+        #define TARGET_FLUSH_DCACHE
+        #define TARGET_INVALIDATE_DCACHE
     #endif
 
     #if (DEV_SYSTEM == _DEV_MICROBLAZE_BIG_ \
@@ -171,11 +174,18 @@
         // NOTE: THIS IS NO ATOMIC EXCHANGE!!!
         #include <xil_types.h>
         #include <xil_io.h>
+        #include <xil_cache.h>
 
         #define ATOMIC_T    u8
         #define ATOMIC_EXCHANGE(address, newval, oldval) \
                                 oldval = Xil_In8(address); \
                                 Xil_Out8(address, newval)
+
+        #define TARGET_FLUSH_DCACHE(base, range)        \
+                                microblaze_flush_dcache_range((UINT32)base, (UINT32)range);
+
+        #define TARGET_INVALIDATE_DCACHE(base, range)   \
+                                microblaze_invalidate_dcache_range((UINT32)base, (UINT32)range);
     #endif
 
 #if (DEV_SYSTEM == _DEV_ARM_)
@@ -183,11 +193,18 @@
         //FIXME: Rework ATOMIC_EXCHANGE logic !!!
         #include <xil_types.h>
         #include <xil_io.h>
+        #include <xil_cache.h>
         #define ATOMIC_T    u8
         #define ATOMIC_EXCHANGE(address, newval, oldval) \
                                 oldval = Xil_In8(address); \
                                 Xil_Out8(address, newval)
         //////////////////////////////////////////////////////////////////////
+
+        #define TARGET_FLUSH_DCACHE(base, range)        \
+                                Xil_DCacheFlushRange((UINT32)base, (UINT32)range);
+
+        #define TARGET_INVALIDATE_DCACHE(base, range)   \
+                                Xil_DCacheInvalidateRange((UINT32)base, (UINT32)range);
     #endif
 
 #elif (TARGET_SYSTEM == _LINUX_)

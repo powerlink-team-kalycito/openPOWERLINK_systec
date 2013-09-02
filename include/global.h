@@ -172,9 +172,9 @@
         #define TARGET_SYSTEM   _VXWORKS_
         #define DEV_SYSTEM      _DEV_VXWORKS_
 
-	#elif defined (__arm__)
-		#define TARGET_SYSTEM   _NO_OS_
-		#define DEV_SYSTEM      _DEV_ARM_
+    #elif defined (__arm__)
+        #define TARGET_SYSTEM   _NO_OS_
+        #define DEV_SYSTEM      _DEV_ARM_
 
 
     #else

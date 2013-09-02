@@ -1,17 +1,18 @@
 /**
 ********************************************************************************
-\file   target-arm.c
+\file   pdokcalsync-noosdual.c
 
-\brief  target specific functions for ARM on Zynq without OS
+\brief  Dual Processor PDO CAL kernel sync module
 
-This target depending module provides several functions that are necessary for
-systems without shared buffer and any OS.
+The sync module is responsible to notify the user layer that new PDO data
+could be transfered.
 
-\ingroup module_target
+\ingroup module_pdokcal
 *******************************************************************************/
 
 /*------------------------------------------------------------------------------
-Copyright (c) 2012, Kalycito Infotech Pvt Ltd, Coimbatore
+Copyright (c) 2012 Kalycito Infotech Private Limited
+              www.kalycito.com
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,24 +37,19 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ------------------------------------------------------------------------------*/
-/*
- *  Created on: May 17, 2013       Author: Chidrupaya S
- */
 
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-#include <global.h>
-#include <xscugic.h>
-#include <xtime_l.h>
-#include "systemComponents.h"
-#include "xil_cache.h"
-#include "xil_types.h"
-#include "xscugic.h"
-#include "xil_io.h"
-#include "xil_exception.h"
-#include <unistd.h>
+#include <EplInc.h>
+#include <pdo.h>
+#include <kernel/pdokcal.h>
 
+#include <dualprocshm.h>
+
+//============================================================================//
+//            G L O B A L   D E F I N I T I O N S                             //
+//============================================================================//
 
 //------------------------------------------------------------------------------
 // const defines
@@ -67,6 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // global function prototypes
 //------------------------------------------------------------------------------
 
+
 //============================================================================//
 //            P R I V A T E   D E F I N I T I O N S                           //
 //============================================================================//
@@ -74,9 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-#define TGTCONIO_MS_IN_US(x)    (x*1000U)
 
-#define HOSTIF_MAGIC            0x504C4B00
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -84,10 +79,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
+static tDualprocDrvInstance pDrvInstance_l;
 
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
+static tEplKernel enableSyncIrq(BOOL fEnable_p);
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -95,142 +92,113 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //------------------------------------------------------------------------------
 /**
-\brief    returns current system tick
+\brief  Initialize kernel PDO CAL sync module
 
-This function returns the current system tick determined by the system timer.
-
-\return system tick
-\retval DWORD
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-DWORD PUBLIC EplTgtGetTickCountMs(void)
-{
-    DWORD dwTicks;
-    XTime* ticks;
-    /*Uses global timer functions*/
-
-    XTime_GetTime(ticks);
-    /*Select the lower 32 bit of the timer value*/
-    dwTicks = (DWORD)(((2000 * (*ticks))/XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ));
-
-    return dwTicks;
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief    enables global interrupt
-
-This function enabels/disables global interrupts.
-
-\param  fEnable_p               TRUE = enable interrupts
-                                FALSE = disable interrupts
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-void EplTgtEnableGlobalInterrupt (BYTE fEnable_p)
-{
-    if(fEnable_p == TRUE)
-    {
-        SysComp_enableInterrupts();
-    }
-    else
-    {
-        SysComp_disableInterrupts();
-    }
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief    checks if CPU is in interrupt context
-
-This function obtains if the CPU is in interrupt context.
-
-\return CPU in interrupt context
-\retval TRUE                    CPU is in interrupt context
-\retval FALSE                   CPU is NOT in interrupt context
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-BYTE EplTgtIsInterruptContext (void)
-{
-    // No real interrupt context check is performed.
-    // This would be possible with a flag in the ISR, only.
-    // For now, the global interrupt enable flag is checked.
-
-    // Read the distributor state
-    u32 Distributor_state = Xil_In32(XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET);
-    // Read the DP (Distributor) and CP (CPU interface) state
-    u32 CPUif_state = Xil_In32(XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET);
-
-    if(Distributor_state && CPUif_state)
-    {
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Initialize target specific stuff
-
-The function initialize target specific stuff which is needed to run the
-openPOWERLINK stack.
+The function initializes the kernel PDO CAL sync module.
 
 \return The function returns a tEplKernel error code.
+
+\ingroup module_pdokcal
 */
 //------------------------------------------------------------------------------
-tEplKernel target_init(void)
+tEplKernel pdokcal_initSync(void)
 {
-u32 version = 0;
-#if defined(__arm__)
+    pDrvInstance_l = dualprocshm_getInstance(kDualProcPcp);
 
-    Xil_DCacheFlush();
-    SysComp_initPeripheral();
+    if(pDrvInstance_l == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s: Could not find dual proc driver instance!\n", __func__);
+        return kEplNoResource;
+    }
 
-    return kEplSuccessful;
-#else
-    // Add Here any other platform specific code
-	return kEplSuccessful;
-#endif
+    return enableSyncIrq(FALSE);
 }
 
 //------------------------------------------------------------------------------
 /**
-\brief  Cleanup target specific stuff
+\brief  Cleanup PDO CAL sync module
 
-The function cleans-up target specific stuff.
+The function cleans up the PDO CAL sync module
 
-\return The function returns a tEplKernel error code.
+\ingroup module_pdokcal
 */
 //------------------------------------------------------------------------------
-tEplKernel target_cleanup(void)
+void pdokcal_exitSync(void)
+{
+    if(pDrvInstance_l == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s: Could not find Driver instance!\n", __func__);
+        return;
+    }
+
+    enableSyncIrq(FALSE);
+}
+
+//------------------------------------------------------------------------------
+/**
+\brief  Send a sync event
+
+The function sends a sync event
+
+\return The function returns a tEplKernel error code.
+
+\ingroup module_pdokcal
+*/
+//------------------------------------------------------------------------------
+tEplKernel pdokcal_sendSyncEvent(void)
 {
     return kEplSuccessful;
 }
 
 //------------------------------------------------------------------------------
 /**
-\brief Sleep for the specified number of milliseconds
+\brief  Enable sync events
 
-The function makes the calling thread sleep until the number of specified
-milliseconds have elapsed.
+The function enables sync events
 
-\param  mseconds_p              Number of milliseconds to sleep
+\param  fEnable_p               enable/disable sync event
 
-\ingroup module_target
+\return The function returns a tEplKernel error code.
+
+\ingroup module_pdokcal
 */
 //------------------------------------------------------------------------------
-void target_msleep (unsigned int milliSecond_p)
+tEplKernel pdokcal_controlSync(BOOL fEnable_p)
 {
-    usleep(TGTCONIO_MS_IN_US(milliSecond_p));
+    if(pDrvInstance_l == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s: Could not find Driver instance!\n", __func__);
+        return kEplNoResource;
+    }
+
+    return enableSyncIrq(fEnable_p);
 }
 
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
 //============================================================================//
+
+//------------------------------------------------------------------------------
+/**
+\brief  Enable sync interrupt source in host interface ipcore
+
+\param  fEnable_p               enable/disable sync interrupt source
+
+\return The function returns a tEplKernel error code.
+*/
+//------------------------------------------------------------------------------
+static tEplKernel enableSyncIrq(BOOL fEnable_p)
+{
+    tDualprocReturn dualRet;
+
+    dualRet = dualprocshm_irqSourceEnable(pDrvInstance_l, kDualprocIrqSrcSync, fEnable_p);
+
+    if(dualRet != kDualprocSuccessful)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s irq not possible (%d)!\n",
+                   fEnable_p ? "enable" : "disable", dualRet);
+        return kEplNoResource;
+    }
+
+    return kEplSuccessful;
+}

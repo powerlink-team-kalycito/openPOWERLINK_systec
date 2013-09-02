@@ -1,17 +1,18 @@
 /**
 ********************************************************************************
-\file   target-arm.c
+\file   errhnducal-noosdual.c
 
-\brief  target specific functions for ARM on Zynq without OS
+\brief  Implementation of user CAL module for error handler
 
-This target depending module provides several functions that are necessary for
-systems without shared buffer and any OS.
+This module implements the user layer CAL functions of the error handler.
+This implementation uses shared memory to share the error objects
+between user and kernel part runninf on two different processors.
 
-\ingroup module_target
+\ingroup module_errhnducal
 *******************************************************************************/
-
 /*------------------------------------------------------------------------------
-Copyright (c) 2012, Kalycito Infotech Pvt Ltd, Coimbatore
+Copyright (c) 2012 Kalycito Infotech Private Limited
+              www.kalycito.com
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,24 +37,20 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ------------------------------------------------------------------------------*/
-/*
- *  Created on: May 17, 2013       Author: Chidrupaya S
- */
 
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-#include <global.h>
-#include <xscugic.h>
-#include <xtime_l.h>
-#include "systemComponents.h"
-#include "xil_cache.h"
-#include "xil_types.h"
-#include "xscugic.h"
-#include "xil_io.h"
-#include "xil_exception.h"
+#include <EplInc.h>
+
+#include <errhnd.h>
 #include <unistd.h>
 
+#include <dualprocshm.h>
+
+//============================================================================//
+//            G L O B A L   D E F I N I T I O N S                             //
+//============================================================================//
 
 //------------------------------------------------------------------------------
 // const defines
@@ -61,6 +58,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //------------------------------------------------------------------------------
 // module global vars
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// global variable declaration
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
@@ -74,9 +75,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-#define TGTCONIO_MS_IN_US(x)    (x*1000U)
 
-#define HOSTIF_MAGIC            0x504C4B00
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -84,6 +83,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
+static tErrHndObjects           *pLocalObjects_l;       ///< pointer to user error objects
+static BYTE*                    pErrHndMem_l;
 
 //------------------------------------------------------------------------------
 // local function prototypes
@@ -95,142 +96,134 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //------------------------------------------------------------------------------
 /**
-\brief    returns current system tick
+\brief    Initialize error handler user CAL module
 
-This function returns the current system tick determined by the system timer.
+The function initializes the user layer CAL module of the error handler.
 
-\return system tick
-\retval DWORD
+\param  pLocalObjects_p         Pointer to local error objects
 
-\ingroup module_target
+\return Always returns kEplSuccessful
+
+\ingroup module_errhnducal
 */
 //------------------------------------------------------------------------------
-DWORD PUBLIC EplTgtGetTickCountMs(void)
+tEplKernel errhnducal_init (tErrHndObjects *pLocalObjects_p)
 {
-    DWORD dwTicks;
-    XTime* ticks;
-    /*Uses global timer functions*/
+    tDualprocReturn dualRet;
+    tDualprocDrvInstance pInstance = dualprocshm_getInstance(kDualProcHost);
+    UINT8*               pBase;
+    UINT16               span;
 
-    XTime_GetTime(ticks);
-    /*Select the lower 32 bit of the timer value*/
-    dwTicks = (DWORD)(((2000 * (*ticks))/XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ));
-
-    return dwTicks;
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief    enables global interrupt
-
-This function enabels/disables global interrupts.
-
-\param  fEnable_p               TRUE = enable interrupts
-                                FALSE = disable interrupts
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-void EplTgtEnableGlobalInterrupt (BYTE fEnable_p)
-{
-    if(fEnable_p == TRUE)
+    if(pInstance == NULL)
     {
-        SysComp_enableInterrupts();
+        return kEplNoResource;
     }
-    else
+
+    if (pErrHndMem_l != NULL)
+        return kEplNoFreeInstance;
+
+    dualRet = dualprocshm_getDynRes(pInstance, kDualprocResIdErrCount, &pBase, &span );
+    if(dualRet != kDualprocSuccessful)
     {
-        SysComp_disableInterrupts();
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Error counter buffer details (%d)\n",
+                __func__, dualRet);
+        return kEplNoResource;
     }
-}
 
-//------------------------------------------------------------------------------
-/**
-\brief    checks if CPU is in interrupt context
-
-This function obtains if the CPU is in interrupt context.
-
-\return CPU in interrupt context
-\retval TRUE                    CPU is in interrupt context
-\retval FALSE                   CPU is NOT in interrupt context
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-BYTE EplTgtIsInterruptContext (void)
-{
-    // No real interrupt context check is performed.
-    // This would be possible with a flag in the ISR, only.
-    // For now, the global interrupt enable flag is checked.
-
-    // Read the distributor state
-    u32 Distributor_state = Xil_In32(XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET);
-    // Read the DP (Distributor) and CP (CPU interface) state
-    u32 CPUif_state = Xil_In32(XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET);
-
-    if(Distributor_state && CPUif_state)
+    if(span < sizeof(tErrHndObjects))
     {
-        return TRUE;
+        EPL_DBGLVL_ERROR_TRACE("%s: Error Handler Object Buffer too small\n",
+                __func__);
+        return kEplNoResource;
     }
-    else
-    {
-        return FALSE;
-    }
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Initialize target specific stuff
 
-The function initialize target specific stuff which is needed to run the
-openPOWERLINK stack.
+    pErrHndMem_l = (BYTE*) pBase;
 
-\return The function returns a tEplKernel error code.
-*/
-//------------------------------------------------------------------------------
-tEplKernel target_init(void)
-{
-u32 version = 0;
-#if defined(__arm__)
+    pLocalObjects_l = pLocalObjects_p;
 
-    Xil_DCacheFlush();
-    SysComp_initPeripheral();
-
-    return kEplSuccessful;
-#else
-    // Add Here any other platform specific code
-	return kEplSuccessful;
-#endif
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief  Cleanup target specific stuff
-
-The function cleans-up target specific stuff.
-
-\return The function returns a tEplKernel error code.
-*/
-//------------------------------------------------------------------------------
-tEplKernel target_cleanup(void)
-{
     return kEplSuccessful;
 }
 
 //------------------------------------------------------------------------------
 /**
-\brief Sleep for the specified number of milliseconds
+\brief    shutdown error handler user CAL module
 
-The function makes the calling thread sleep until the number of specified
-milliseconds have elapsed.
+The function is used to deinitialize and shutdown the user layer
+CAL module of the error handler.
 
-\param  mseconds_p              Number of milliseconds to sleep
-
-\ingroup module_target
+\ingroup module_errhnducal
 */
 //------------------------------------------------------------------------------
-void target_msleep (unsigned int milliSecond_p)
+void errhnducal_exit (void)
 {
-    usleep(TGTCONIO_MS_IN_US(milliSecond_p));
+    if (pErrHndMem_l != NULL)
+    {
+        pErrHndMem_l = NULL;
+    }
+}
+
+//------------------------------------------------------------------------------
+/**
+\brief    write an error handler object
+
+The function writes an error handler object to the shared memory region used
+by user and kernel modules.
+
+\param  index_p             Index of object in object dictionary
+\param  subIndex_p          Subindex of object
+\param  pParam_p            Pointer to object in error handlers memory space
+
+\return Returns a tEplKernel error code.
+
+\ingroup module_errhnducal
+*/
+//------------------------------------------------------------------------------
+tEplKernel errhnducal_writeErrorObject(UINT index_p, UINT subIndex_p, UINT32 *pParam_p)
+{
+    UINT    offset;
+
+    UNUSED_PARAMETER(index_p);
+    UNUSED_PARAMETER(subIndex_p);
+
+    offset = (char *)pParam_p - (char *)pLocalObjects_l;
+    *(UINT32*)(pErrHndMem_l + offset) = *pParam_p;
+
+    TARGET_FLUSH_DCACHE((pErrHndMem_l + offset),sizeof(UINT32));
+    return kEplSuccessful;
+}
+
+//------------------------------------------------------------------------------
+/**
+\brief    read an error handler object
+
+The function reads an error handler object from the shared memory region used
+by user and kernel modules.
+
+\param  index_p             Index of object in object dictionary
+\param  subIndex_p          Subindex of object
+\param  pParam_p            Pointer to object in error handlers memory space
+
+\return Returns a tEplKernel error code.
+
+\ingroup module_errhnducal
+*/
+//------------------------------------------------------------------------------
+tEplKernel errhnducal_readErrorObject(UINT index_p, UINT subIndex_p, UINT32* pParam_p)
+{
+    UINT    offset;
+
+    UNUSED_PARAMETER(index_p);
+    UNUSED_PARAMETER(subIndex_p);
+
+    offset = (char *)pParam_p - (char *)pLocalObjects_l;
+
+    TARGET_INVALIDATE_DCACHE((pErrHndMem_l + offset),sizeof(UINT32));
+    *pParam_p = *(UINT32*)(pErrHndMem_l + offset);
+    return kEplSuccessful;
 }
 
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
 //============================================================================//
+
+

@@ -1,17 +1,20 @@
 /**
 ********************************************************************************
-\file   target-arm.c
+\file   pdoucalmem-noosdual.c
 
-\brief  target specific functions for ARM on Zynq without OS
+\brief  PDO user CAL shared-memory module using dual processor library
 
-This target depending module provides several functions that are necessary for
-systems without shared buffer and any OS.
+This file contains an implementation for the user PDO CAL shared-memory
+module which uses dual processor library to access it. The shared memory is used
+to transfer PDO data between user and kernel layer. This implementation is used if
+user and kernel layer are on two different processors using a common memory.
 
-\ingroup module_target
+\ingroup module_pdoucal
 *******************************************************************************/
 
 /*------------------------------------------------------------------------------
-Copyright (c) 2012, Kalycito Infotech Pvt Ltd, Coimbatore
+Copyright (c) 2012 Kalycito Infotech Private Limited
+              www.kalycito.com
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,24 +39,20 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ------------------------------------------------------------------------------*/
-/*
- *  Created on: May 17, 2013       Author: Chidrupaya S
- */
 
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-#include <global.h>
-#include <xscugic.h>
-#include <xtime_l.h>
-#include "systemComponents.h"
-#include "xil_cache.h"
-#include "xil_types.h"
-#include "xscugic.h"
-#include "xil_io.h"
-#include "xil_exception.h"
-#include <unistd.h>
+#include <EplInc.h>
 
+#include <pdo.h>
+#include <user/ctrlucal.h>
+
+#include <dualprocshm.h>
+
+//============================================================================//
+//            G L O B A L   D E F I N I T I O N S                             //
+//============================================================================//
 
 //------------------------------------------------------------------------------
 // const defines
@@ -74,16 +73,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-#define TGTCONIO_MS_IN_US(x)    (x*1000U)
 
-#define HOSTIF_MAGIC            0x504C4B00
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
+typedef struct
+{
+    tDualprocDrvInstance    pDrvInstance;
+    BYTE*                   pBase;
+    WORD                    span;
+} tMemInstance;
 
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
+static tMemInstance         memPdo_l;
 
 //------------------------------------------------------------------------------
 // local function prototypes
@@ -95,142 +99,123 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //------------------------------------------------------------------------------
 /**
-\brief    returns current system tick
+\brief  Open PDO shared memory
 
-This function returns the current system tick determined by the system timer.
-
-\return system tick
-\retval DWORD
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-DWORD PUBLIC EplTgtGetTickCountMs(void)
-{
-    DWORD dwTicks;
-    XTime* ticks;
-    /*Uses global timer functions*/
-
-    XTime_GetTime(ticks);
-    /*Select the lower 32 bit of the timer value*/
-    dwTicks = (DWORD)(((2000 * (*ticks))/XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ));
-
-    return dwTicks;
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief    enables global interrupt
-
-This function enabels/disables global interrupts.
-
-\param  fEnable_p               TRUE = enable interrupts
-                                FALSE = disable interrupts
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-void EplTgtEnableGlobalInterrupt (BYTE fEnable_p)
-{
-    if(fEnable_p == TRUE)
-    {
-        SysComp_enableInterrupts();
-    }
-    else
-    {
-        SysComp_disableInterrupts();
-    }
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief    checks if CPU is in interrupt context
-
-This function obtains if the CPU is in interrupt context.
-
-\return CPU in interrupt context
-\retval TRUE                    CPU is in interrupt context
-\retval FALSE                   CPU is NOT in interrupt context
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-BYTE EplTgtIsInterruptContext (void)
-{
-    // No real interrupt context check is performed.
-    // This would be possible with a flag in the ISR, only.
-    // For now, the global interrupt enable flag is checked.
-
-    // Read the distributor state
-    u32 Distributor_state = Xil_In32(XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET);
-    // Read the DP (Distributor) and CP (CPU interface) state
-    u32 CPUif_state = Xil_In32(XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET);
-
-    if(Distributor_state && CPUif_state)
-    {
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Initialize target specific stuff
-
-The function initialize target specific stuff which is needed to run the
-openPOWERLINK stack.
+The function performs all actions needed to setup the shared memory at
+starting of the stack.
 
 \return The function returns a tEplKernel error code.
+
+\ingroup module_pdokcal
 */
 //------------------------------------------------------------------------------
-tEplKernel target_init(void)
+tEplKernel pdoucal_openMem(void)
 {
-u32 version = 0;
-#if defined(__arm__)
+    tDualprocReturn dualRet;
+    tDualprocDrvInstance pInstance = dualprocshm_getInstance(kDualProcHost);
 
-    Xil_DCacheFlush();
-    SysComp_initPeripheral();
+    if(pInstance == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Host dual proc driver instance\n",
+                __func__);
+        return kEplNoResource;
+    }
 
-    return kEplSuccessful;
-#else
-    // Add Here any other platform specific code
-	return kEplSuccessful;
-#endif
-}
+    memPdo_l.pDrvInstance = pInstance;
 
-//------------------------------------------------------------------------------
-/**
-\brief  Cleanup target specific stuff
+    dualRet = dualprocshm_getDynRes(pInstance, kDualprocResIdPdo, &memPdo_l.pBase, &memPdo_l.span );
+    if(dualRet != kDualprocSuccessful)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Pdo buffer details (%d)\n",
+                __func__, dualRet);
+        return kEplNoResource;
+    }
 
-The function cleans-up target specific stuff.
-
-\return The function returns a tEplKernel error code.
-*/
-//------------------------------------------------------------------------------
-tEplKernel target_cleanup(void)
-{
     return kEplSuccessful;
 }
 
 //------------------------------------------------------------------------------
 /**
-\brief Sleep for the specified number of milliseconds
+\brief  Close PDO shared memory
 
-The function makes the calling thread sleep until the number of specified
-milliseconds have elapsed.
+The function performs all actions needed to cleanup the shared memory at
+shutdown.
 
-\param  mseconds_p              Number of milliseconds to sleep
+\return The function returns a tEplKernel error code.
 
-\ingroup module_target
+\ingroup module_pdokcal
 */
 //------------------------------------------------------------------------------
-void target_msleep (unsigned int milliSecond_p)
+tEplKernel pdoucal_closeMem(void)
 {
-    usleep(TGTCONIO_MS_IN_US(milliSecond_p));
+    memPdo_l.pBase = NULL;
+    memPdo_l.pDrvInstance = NULL;
+    memPdo_l.span = 0;
+    EPL_MEMSET(&memPdo_l, 0, sizeof(memPdo_l));
+
+    return kEplSuccessful;
+}
+
+//------------------------------------------------------------------------------
+/**
+\brief  Allocate PDO shared memory
+
+The function allocates shared memory for the kernel needed to transfer the PDOs.
+
+\param  memSize_p               Size of PDO memory
+\param  ppPdoMem_p              Pointer to store the PDO memory pointer.
+
+\return The function returns a tEplKernel error code.
+
+\ingroup module_pdokcal
+*/
+//------------------------------------------------------------------------------
+tEplKernel pdoucal_allocateMem(size_t memSize_p, BYTE** ppPdoMem_p)
+{
+    if(memSize_p > memPdo_l.span)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() out of memory (%d > %d)\n",
+                __func__, memSize_p, memPdo_l.span);
+        return kEplNoResource;
+    }
+
+    *ppPdoMem_p = memPdo_l.pBase;
+
+    return kEplSuccessful;
+}
+
+//------------------------------------------------------------------------------
+/**
+\brief  Free PDO shared memory
+
+The function frees shared memory which was allocated in the kernel layer for
+transferring the PDOs.
+
+\param  pMem_p                  Pointer to the shared memory segment.
+\param  memSize_p               Size of PDO memory
+
+\return The function returns a tEplKernel error code.
+
+\ingroup module_pdokcal
+*/
+//------------------------------------------------------------------------------
+tEplKernel pdoucal_freeMem(BYTE* pMem_p, size_t memSize_p)
+{
+    UNUSED_PARAMETER(pMem_p);
+    UNUSED_PARAMETER(memSize_p);
+
+    TRACE("%s() try to free address %p (%p)\n",
+            __func__, pMem_p, memPdo_l.pBase);
+
+    return kEplSuccessful;
 }
 
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
 //============================================================================//
+/// \name Private Functions
+/// \{
+
+
+
+///\}

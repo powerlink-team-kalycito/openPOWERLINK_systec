@@ -1,17 +1,18 @@
 /**
 ********************************************************************************
-\file   target-arm.c
+\file   eventkcal-noosdual.c
 
-\brief  target specific functions for ARM on Zynq without OS
+\brief  Kernel event CAL module using shared memory on NON-OS systems
 
-This target depending module provides several functions that are necessary for
-systems without shared buffer and any OS.
+This kernel event CAL module implementation uses circular buffers and direct calls
+on NON-OS systems running on dual processor with shared memory interface.
 
-\ingroup module_target
+\ingroup module_eventkcal
 *******************************************************************************/
 
 /*------------------------------------------------------------------------------
-Copyright (c) 2012, Kalycito Infotech Pvt Ltd, Coimbatore
+Copyright (c) 2012 Kalycito Infotech Private Limited
+              www.kalycito.com
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,24 +37,21 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ------------------------------------------------------------------------------*/
-/*
- *  Created on: May 17, 2013       Author: Chidrupaya S
- */
+
 
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-#include <global.h>
-#include <xscugic.h>
-#include <xtime_l.h>
-#include "systemComponents.h"
-#include "xil_cache.h"
-#include "xil_types.h"
-#include "xscugic.h"
-#include "xil_io.h"
-#include "xil_exception.h"
-#include <unistd.h>
+#include <EplInc.h>
+#include <Epl.h>
 
+#include <kernel/eventkcal.h>
+#include <kernel/eventkcalintf.h>
+
+
+//============================================================================//
+//            G L O B A L   D E F I N I T I O N S                             //
+//============================================================================//
 
 //------------------------------------------------------------------------------
 // const defines
@@ -74,16 +72,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-#define TGTCONIO_MS_IN_US(x)    (x*1000U)
 
-#define HOSTIF_MAGIC            0x504C4B00
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
 
+/**
+\brief Kernel event CAL instance type
+
+The structure contains all necessary information needed by the kernel event
+CAL module.
+*/
+typedef struct
+{
+    BOOL                    fInitialized;
+} tEventkCalInstance;
+
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
+static tEventkCalInstance   instance_l;             ///< Instance variable of kernel event CAL module
 
 //------------------------------------------------------------------------------
 // local function prototypes
@@ -95,142 +103,141 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //------------------------------------------------------------------------------
 /**
-\brief    returns current system tick
+\brief    Initialize kernel event CAL module
 
-This function returns the current system tick determined by the system timer.
-
-\return system tick
-\retval DWORD
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-DWORD PUBLIC EplTgtGetTickCountMs(void)
-{
-    DWORD dwTicks;
-    XTime* ticks;
-    /*Uses global timer functions*/
-
-    XTime_GetTime(ticks);
-    /*Select the lower 32 bit of the timer value*/
-    dwTicks = (DWORD)(((2000 * (*ticks))/XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ));
-
-    return dwTicks;
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief    enables global interrupt
-
-This function enabels/disables global interrupts.
-
-\param  fEnable_p               TRUE = enable interrupts
-                                FALSE = disable interrupts
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-void EplTgtEnableGlobalInterrupt (BYTE fEnable_p)
-{
-    if(fEnable_p == TRUE)
-    {
-        SysComp_enableInterrupts();
-    }
-    else
-    {
-        SysComp_disableInterrupts();
-    }
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief    checks if CPU is in interrupt context
-
-This function obtains if the CPU is in interrupt context.
-
-\return CPU in interrupt context
-\retval TRUE                    CPU is in interrupt context
-\retval FALSE                   CPU is NOT in interrupt context
-
-\ingroup module_target
-*/
-//------------------------------------------------------------------------------
-BYTE EplTgtIsInterruptContext (void)
-{
-    // No real interrupt context check is performed.
-    // This would be possible with a flag in the ISR, only.
-    // For now, the global interrupt enable flag is checked.
-
-    // Read the distributor state
-    u32 Distributor_state = Xil_In32(XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET);
-    // Read the DP (Distributor) and CP (CPU interface) state
-    u32 CPUif_state = Xil_In32(XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET);
-
-    if(Distributor_state && CPUif_state)
-    {
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Initialize target specific stuff
-
-The function initialize target specific stuff which is needed to run the
-openPOWERLINK stack.
+The function initializes the kernel event CAL module on Linux.
 
 \return The function returns a tEplKernel error code.
+\retval kEplSuccessful          If function executes correctly
+\retval other error codes       If an error occurred
+
+\ingroup module_eventkcal
 */
 //------------------------------------------------------------------------------
-tEplKernel target_init(void)
+tEplKernel eventkcal_init (void)
 {
-u32 version = 0;
-#if defined(__arm__)
+    EPL_MEMSET(&instance_l, 0, sizeof(tEventkCalInstance));
 
-    Xil_DCacheFlush();
-    SysComp_initPeripheral();
+    if (eventkcal_initQueueCircbuf(kEventQueueU2K) != kEplSuccessful)
+        goto Exit;
 
+    if (eventkcal_initQueueCircbuf(kEventQueueK2U) != kEplSuccessful)
+        goto Exit;
+
+    instance_l.fInitialized = TRUE;
     return kEplSuccessful;
-#else
-    // Add Here any other platform specific code
-	return kEplSuccessful;
-#endif
+
+Exit:
+    eventkcal_exitQueueCircbuf(kEventQueueK2U);
+    eventkcal_exitQueueCircbuf(kEventQueueU2K);
+
+    return kEplNoResource;
 }
+
 
 //------------------------------------------------------------------------------
 /**
-\brief  Cleanup target specific stuff
+\brief    Cleanup kernel event CAL module
 
-The function cleans-up target specific stuff.
+The function cleans up the kernel event CAL module. For cleanup it calls the exit
+functions of the queue implementations for each used queue.
 
 \return The function returns a tEplKernel error code.
+\retval kEplSuccessful          If function executes correctly
+\retval other error codes       If an error occurred
+
+\ingroup module_eventkcal
 */
 //------------------------------------------------------------------------------
-tEplKernel target_cleanup(void)
+tEplKernel eventkcal_exit (void)
 {
+    if (instance_l.fInitialized == TRUE)
+    {
+        eventkcal_exitQueueCircbuf(kEventQueueK2U);
+        eventkcal_exitQueueCircbuf(kEventQueueU2K);
+    }
+    instance_l.fInitialized = FALSE;
+
     return kEplSuccessful;
 }
 
 //------------------------------------------------------------------------------
 /**
-\brief Sleep for the specified number of milliseconds
+\brief    Post kernel event
 
-The function makes the calling thread sleep until the number of specified
-milliseconds have elapsed.
+This function posts a event to the kernel queue.
 
-\param  mseconds_p              Number of milliseconds to sleep
+\param  pEvent_p                Event to be posted.
 
-\ingroup module_target
+\return The function returns a tEplKernel error code.
+\retval kEplSuccessful          If function executes correctly
+\retval other error codes       If an error occurred
+
+\ingroup module_eventkcal
 */
 //------------------------------------------------------------------------------
-void target_msleep (unsigned int milliSecond_p)
+tEplKernel eventkcal_postKernelEvent (tEplEvent *pEvent_p)
 {
-    usleep(TGTCONIO_MS_IN_US(milliSecond_p));
+    tEplKernel      ret = kEplSuccessful;
+
+    EplTgtEnableGlobalInterrupt(FALSE);
+
+    ret = eventk_process(pEvent_p);
+
+    EplTgtEnableGlobalInterrupt(TRUE);
+
+    return ret;
 }
 
+//------------------------------------------------------------------------------
+/**
+\brief    Post user event
+
+This function posts a event to the user queue.
+
+\param  pEvent_p                Event to be posted.
+
+\return The function returns a tEplKernel error code.
+\retval kEplSuccessful          If function executes correctly
+\retval other error codes       If an error occurred
+
+\ingroup module_eventkcal
+*/
+//------------------------------------------------------------------------------
+tEplKernel eventkcal_postUserEvent (tEplEvent *pEvent_p)
+{
+    tEplKernel      ret = kEplSuccessful;
+
+    /*TRACE("K2U type:%s(%d) sink:%s(%d) size:%d!\n",
+                       EplGetEventTypeStr(pEvent_p->m_EventType), pEvent_p->m_EventType,
+                       EplGetEventSinkStr(pEvent_p->m_EventSink), pEvent_p->m_EventSink,
+                       pEvent_p->m_uiSize);*/
+
+    ret = eventkcal_postEventCircbuf(kEventQueueK2U, pEvent_p);
+
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+/**
+\brief  Process function of kernel CAL module
+
+This function will be called by the systems process function.
+*/
+//------------------------------------------------------------------------------
+void eventkcal_process(void)
+{
+    // TODO: gks: can user event processing be done here
+    if(eventkcal_getEventCountCircbuf(kEventQueueU2K) > 0)
+    {
+       // printf("pk\n");
+        eventkcal_processEventCircbuf(kEventQueueU2K);
+    }
+}
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
 //============================================================================//
+/// \name Private Functions
+/// \{
+
+/// \}

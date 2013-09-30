@@ -7,7 +7,7 @@
 This user event CAL module implementation uses circular buffers and direct calls
 on NON-OS systems running on dual processor with shared memory interface.
 
-\ingroup module_eventkcal
+\ingroup module_eventucal
 *******************************************************************************/
 
 /*------------------------------------------------------------------------------
@@ -47,7 +47,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <user/eventucal.h>
 #include <user/eventucalintf.h>
 
-#include "Benchmark.h" //TODO Remove
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -94,7 +93,6 @@ static tEventuCalInstance       instance_l;             ///< Instance variable o
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
 //============================================================================//
@@ -178,13 +176,15 @@ queue post function is called.
 tEplKernel eventucal_postKernelEvent (tEplEvent *pEvent_p)
 {
     tEplKernel      ret;
-    /*TRACE("U2K type:%s(%d) sink:%s(%d) size:%d!\n",
+   /* TRACE("U2K type:%s(%d) sink:%s(%d) size:%d!\n",
                    EplGetEventTypeStr(pEvent_p->m_EventType), pEvent_p->m_EventType,
                    EplGetEventSinkStr(pEvent_p->m_EventSink), pEvent_p->m_EventSink,
                    pEvent_p->m_uiSize);*/
 
+    EplTgtEnableGlobalInterrupt(FALSE);
     ret = eventucal_postEventCircbuf(kEventQueueU2K,pEvent_p);
-   // printf("PostKernelEvent\n");
+    EplTgtEnableGlobalInterrupt(TRUE);
+
     return ret;
 }
 
@@ -230,10 +230,7 @@ void eventucal_process(void)
 {
     if (eventucal_getEventCountCircbuf(kEventQueueK2U) > 0)
     {
-       // printf("pu\n");
-        BENCHMARK_MOD_32_SET(3);
         eventucal_processEventCircbuf(kEventQueueK2U);
-        BENCHMARK_MOD_32_RESET(3);
     }
 }
 
@@ -244,3 +241,4 @@ void eventucal_process(void)
 /// \{
 
 /// \}
+

@@ -75,24 +75,61 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-
+#define CTRL_PROC_ID            0xFA
+#define DUALPROCSHM_DYNBUFF_ID  0x09
+#define TARGET_MAX_INTERRUPTS   4
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
+
+/**
+\brief Control buffer - Status/Control
+
+The control sub-registers provide basic Pcp-to-Host communication features.
+*/
+typedef struct sCtrlBuff
+{
+    volatile UINT16     magic;      ///< enable the bridge logic
+    volatile UINT16     status;     ///< reserved
+    volatile UINT16     heartbeat;  ///< heart beat word
+    volatile UINT16     command;    ///< command word
+    volatile UINT16     retval;     ///< return word
+    UINT16              resv;        ///< reserved
+    UINT16              irqEnable;  ///< enable irqs
+    union
+    {
+       volatile UINT16 irqSet;      ///< set irq (Pcp)
+       volatile UINT16 irqAck;      ///< acknowledge irq (Host)
+       volatile UINT16 irqPending;  ///< pending irq
+    };
+} tCtrlBuff;
+
+/**
+\brief Function type definition for target interrupt callback
+
+This function callback is called for a given interrupt source, registered by
+a specific user layer module.
+*/
+typedef void (*tTargetIrqCb) (void);
+
 typedef struct
 {
     tDualprocDrvInstance dualProcDrvInst;
     UINT8*               initParamBase;
-    UINT16               initParamBuffSize;
+    size_t               initParamBuffSize;
     BOOL                 fIrqMasterEnable;
-}tCtrlkCalInstance;
+    tTargetIrqCb         apfnIrqCb[TARGET_MAX_INTERRUPTS];
+}tCtrluCalInstance;
+
+
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
-static tCtrlkCalInstance   instance_l;
+static tCtrluCalInstance   instance_l;
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
+static void targetInterruptHandler ( void* pArg_p );
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -115,11 +152,12 @@ tEplKernel ctrlucal_init(void)
     tDualprocReturn dualRet;
     tDualprocConfig dualProcConfig;
 
-    EPL_MEMSET(&instance_l,0,sizeof(tCtrlkCalInstance));
+    EPL_MEMSET(&instance_l,0,sizeof(tCtrluCalInstance));
 
     EPL_MEMSET(&dualProcConfig,0,sizeof(tDualprocConfig));
 
     dualProcConfig.ProcInstance = kDualProcHost;
+    dualProcConfig.procId = CTRL_PROC_ID;
 
     dualRet = dualprocshm_create(&dualProcConfig,&instance_l.dualProcDrvInst);
     if(dualRet != kDualprocSuccessful)
@@ -131,24 +169,29 @@ tEplKernel ctrlucal_init(void)
         goto Exit;
     }
 
-    dualRet = dualprocshm_getDynRes(instance_l.dualProcDrvInst,kDualprocResIdDynBuff0,&instance_l.initParamBase, \
-                            &instance_l.initParamBuffSize);
+    dualRet = dualprocshm_getMemory(instance_l.dualProcDrvInst,DUALPROCSHM_DYNBUFF_ID,
+                                    &instance_l.initParamBase,&instance_l.initParamBuffSize,FALSE);
     if(dualRet != kDualprocSuccessful)
     {
+        EPL_DBGLVL_ERROR_TRACE("{%s} Error Retrieving dynamic buff %x\n ",__func__,dualRet);
         ret = kEplNoResource;
         goto Exit;
     }
-
-    instance_l.fIrqMasterEnable =  FALSE;
 
     // Disable the Interrupts from PCP
-    dualRet = dualprocshm_irqMasterEnable(instance_l.dualProcDrvInst, instance_l.fIrqMasterEnable);
-    if(dualRet != kDualprocSuccessful)
+    instance_l.fIrqMasterEnable =  FALSE;
+
+    if(target_regSyncIrqHdl(targetInterruptHandler, (void*)&instance_l) != 0)
     {
-        EPL_DBGLVL_ERROR_TRACE ("Could not disable Master Irq (0x%X)\n", dualRet);
+        EPL_DBGLVL_ERROR_TRACE("Interrupt\n ");
         ret = kEplNoResource;
         goto Exit;
     }
+
+    // enable system irq
+    target_enableSyncIrq(TRUE);
+
+
 
 Exit:
     return ret;
@@ -169,12 +212,15 @@ void ctrlucal_exit (void)
 
     instance_l.fIrqMasterEnable =  FALSE;
 
-    // Disable the Interrupts from PCP
-    dualRet = dualprocshm_irqMasterEnable(instance_l.dualProcDrvInst, \
-                            instance_l.fIrqMasterEnable);
+    // disable system irq
+    target_enableSyncIrq(FALSE);
+    target_regSyncIrqHdl(NULL, NULL);
+
+
+    dualRet = dualprocshm_freeMemory(instance_l.dualProcDrvInst,DUALPROCSHM_DYNBUFF_ID,FALSE);
     if(dualRet != kDualprocSuccessful)
     {
-        EPL_DBGLVL_ERROR_TRACE ("Could not disable Master Irq (0x%X)\n", dualRet);
+        EPL_DBGLVL_ERROR_TRACE("Unable to free memory (0x%X)\n",dualRet);
     }
 
     dualRet = dualprocshm_delete(instance_l.dualProcDrvInst);
@@ -183,6 +229,8 @@ void ctrlucal_exit (void)
         EPL_DBGLVL_ERROR_TRACE ("Could not delete dual proc driver inst (0x%X)\n", dualRet);
     }
 
+    instance_l.initParamBuffSize = 0;
+    instance_l.initParamBase = NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -201,21 +249,7 @@ tEplKernel ctrlucal_process (void)
     if (instance_l.fIrqMasterEnable ==  FALSE)
     {
         instance_l.fIrqMasterEnable = TRUE;
-
-        // Enable interrupts from PCP
-
-        if(dualprocshm_irqMasterEnable(instance_l.dualProcDrvInst, \
-                instance_l.fIrqMasterEnable) != kDualprocSuccessful)
-        {
-            EPL_DBGLVL_ERROR_TRACE ("Could not delete Enable Master \n");
-        }
     }
-    //TODO : @gks can this be moved ??
-  //  if(dualprocshm_process(instance_l.dualProcDrvInst) != kDualprocSuccessful)
-   // {
-   //     EPL_DBGLVL_ERROR_TRACE ("Could not initialize Dual processor driver \n");
-   //    return kEplInvalidOperation;
-  //  }
 
     return kEplSuccessful;
 }
@@ -242,13 +276,12 @@ tEplKernel ctrlucal_executeCmd(tCtrlCmdType cmd_p)
     /* write command into shared buffer */
     cmd = cmd_p;
     retVal = 0;
-    //printf("Cmd %x\n",cmd);
-    if(dualprocshm_setRetVal(instance_l.dualProcDrvInst,retVal) \
-            != kDualprocSuccessful )
+    if(dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,retval), \
+        sizeof(retVal),(UINT8 *)&retVal) != kDualprocSuccessful )
         return kEplGeneralError;
 
-    if(dualprocshm_setCommand(instance_l.dualProcDrvInst,cmd) \
-            != kDualprocSuccessful )
+    if(dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,command), \
+            sizeof(cmd),(UINT8 *)&cmd) != kDualprocSuccessful )
         return kEplGeneralError;
 
     /* wait for response */
@@ -256,14 +289,13 @@ tEplKernel ctrlucal_executeCmd(tCtrlCmdType cmd_p)
     {
         target_msleep(10);
 
-        if(dualprocshm_getCommand(instance_l.dualProcDrvInst,&cmd) \
-                != kDualprocSuccessful )
+        if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,command), \
+                sizeof(cmd),(UINT8 *)&cmd) != kDualprocSuccessful )
             return kEplGeneralError;
-        //printf("Cmd %x\n",cmd);
         if (cmd == 0)
         {
-            if(dualprocshm_getRetVal(instance_l.dualProcDrvInst,&retVal)\
-                    != kDualprocSuccessful )
+            if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,retval), \
+                    sizeof(retVal),(UINT8 *)&retVal) != kDualprocSuccessful )
                 return kEplGeneralError;
             else
                 return retVal;
@@ -298,8 +330,8 @@ tEplKernel ctrlucal_checkKernelStack(void)
 
     TRACE ("Checking for kernel stack...\n");
 
-    if(dualprocshm_getMagic(instance_l.dualProcDrvInst,&magic) \
-            != kDualprocSuccessful)
+    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,magic), \
+            sizeof(magic),(UINT8 *)&magic) != kDualprocSuccessful)
         return kEplGeneralError;
 
     if ( magic != CTRL_MAGIC)
@@ -360,8 +392,8 @@ UINT16 ctrlucal_getStatus(void)
 {
     UINT16          status;
 
-    if ((dualprocshm_getStatus(instance_l.dualProcDrvInst,&status)) \
-           == kDualprocSuccessful)
+    if (dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,status), \
+            sizeof(status),(UINT8 *)&status) == kDualprocSuccessful)
         return status;
     else
         return kCtrlStatusUnavailable;
@@ -382,8 +414,8 @@ UINT16 ctrlucal_getHeartbeat(void)
 {
     UINT16      heartbeat;
 
-    if( dualprocshm_getHeartbeat(instance_l.dualProcDrvInst,&heartbeat)\
-            == kDualprocSuccessful)
+    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,heartbeat), \
+            sizeof(heartbeat),(UINT8 *)&heartbeat) == kDualprocSuccessful)
        return heartbeat;
     else
        return 0;
@@ -405,8 +437,8 @@ void ctrlucal_storeInitParam(tCtrlInitParam* pInitParam_p)
 {
     if(instance_l.initParamBase != NULL)
     {
-        EPL_MEMCPY(instance_l.initParamBase,pInitParam_p,sizeof(tCtrlInitParam));
-        TARGET_FLUSH_DCACHE(instance_l.initParamBase,sizeof(tCtrlInitParam));
+        dualprocshm_writeData(instance_l.dualProcDrvInst,DUALPROCSHM_DYNBUFF_ID,0, \
+                                       sizeof(tCtrlInitParam),(UINT8 *)pInitParam_p);
     }
 }
 
@@ -426,18 +458,113 @@ The function reads the initialization parameter from the kernel stack.
 //------------------------------------------------------------------------------
 tEplKernel ctrlucal_readInitParam(tCtrlInitParam* pInitParam_p)
 {
+    tDualprocReturn dualRet;
+
     if(instance_l.initParamBase == NULL)
         return kEplNoResource;
 
-    TARGET_INVALIDATE_DCACHE(instance_l.initParamBase, sizeof(tCtrlInitParam));
+    dualRet = dualprocshm_readData(instance_l.dualProcDrvInst,DUALPROCSHM_DYNBUFF_ID,0, \
+            sizeof(tCtrlInitParam),(UINT8 *)pInitParam_p) ;
 
-    EPL_MEMCPY(pInitParam_p, instance_l.initParamBase, sizeof(tCtrlInitParam));
+    if (dualRet!= kDualprocSuccessful)
+    {
+        EPL_DBGLVL_ERROR_TRACE("Cannot read initparam (0x%X)\n",dualRet);
+        return kEplGeneralError;
+    }
 
     return kEplSuccessful;
 }
 
+//------------------------------------------------------------------------------
+/**
+\brief  Register interrupt handler
 
+The function registers a interrupt handler for the specified interrupt.
+
+\param  irqId_p        interrupt id.
+\param  pfnIrqHandler_p  interrpt handler
+
+\return The function returns a tEplKernel error code. It returns always
+        kEplSuccessful!
+
+\ingroup module_ctrlucal
+*/
+//------------------------------------------------------------------------------
+tEplKernel ctrlucal_registerHandler(UINT8 irqId_p,void* pfnIrqHandler_p)
+{
+    UINT16 irqEnableVal;
+
+    if(irqId_p > TARGET_MAX_INTERRUPTS)
+        return kEplInvalidOperation;
+
+    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqEnable), \
+                sizeof(irqEnableVal),(UINT8 *)&irqEnableVal) != kDualprocSuccessful)
+    {
+        return kEplInvalidOperation;
+    }
+
+    if(pfnIrqHandler_p != NULL)
+        irqEnableVal |= (1 << irqId_p);
+    else
+        irqEnableVal &= ~(1 << irqId_p);
+
+    instance_l.apfnIrqCb[irqId_p] = (tTargetIrqCb)pfnIrqHandler_p;
+
+    if(dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqEnable), \
+                sizeof(irqEnableVal),(UINT8 *)&irqEnableVal) != kDualprocSuccessful)
+    {
+        return kEplInvalidOperation;
+    }
+
+    return kEplSuccessful;
+}
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
 //============================================================================//
+//------------------------------------------------------------------------------
+/**
+\brief  Control Interrupt Handler
 
+This is the host interrupt handler which should by called by the system if the
+irq signal is asserted by PCP. This will be used to handle multiple interrupts sources
+with a single interrupt line available. This handler acknowledges the processed
+interrupt sources and calls the corresponding callbacks registered with
+ctrlucal_registerHandler().
+
+\param  pArg_p                  The system caller should provide the control module
+                                instance with this parameter.
+*/
+//------------------------------------------------------------------------------
+static void targetInterruptHandler ( void* pArg_p )
+{
+    UINT16 pendings;
+    UINT16 mask;
+    int i;
+
+    UNUSED_PARAMETER(pArg_p);
+
+    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqPending), \
+                sizeof(pendings),(UINT8 *)&pendings) != kDualprocSuccessful)
+    {
+        return;
+    }
+
+    for(i=0; i < TARGET_MAX_INTERRUPTS; i++)
+    {
+        mask = 1 << i;
+
+        //ack irq source first
+        if(pendings & mask)
+        {
+            pendings &= ~mask;
+            dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqAck), \
+                                        sizeof(pendings),(UINT8 *)&pendings);
+        }
+
+
+        //then try to execute the callback
+        if(instance_l.apfnIrqCb[i] != NULL)
+            instance_l.apfnIrqCb[i]();
+    }
+
+}

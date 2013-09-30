@@ -45,21 +45,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 #include <stdint.h>
 
-#if defined(__NIOS2__)
+#if defined(__ZYNQ__)
 
-#error "Nios is not supported yet"
-
-#elif defined(__MICROBLAZE__)
-
-#include "dualprocshm-microblaze.h"
-
-#elif defined(__arm__)
-
-#include "dualprocshm-arm.h"
+//#error ZYNQ
+#include "dualprocshm-zynq.h"
 
 #else
 
-#error "Target is not supported! Please point the target specific file in dualprocshm-target.h "
+#error "Paltform is not supported! Please point the target platform file in dualprocshm-platform.h "
 
 #endif
 
@@ -109,5 +102,14 @@ set to those provided by stdint.h.
 //------------------------------------------------------------------------------
 // function prototypes
 //------------------------------------------------------------------------------
+
+UINT8* dualprocshm_getCommonMemAddr(UINT16* pSize_p);
+UINT8* dualprocshm_getDynMapTableAddr(void);
+void dualprocshm_targetReadData(UINT8* pBase_p, UINT16 Size_p, UINT8* pData_p);
+void dualprocshm_targetWriteData(UINT8* pBase_p, UINT16 Size_p, UINT8* pData_p);
+void dualprocshm_releaseCommonMemAddr(UINT16 pSize_p);
+void dualprocshm_releaseDynMapTableAddr();
+void dualprocshm_targetAcquireLock(UINT8* pBase_p, UINT8 lockToken_p);
+void dualprocshm_targetReleaseLock(UINT8* pBase_p);
 
 #endif /* _INC_DUALPROCSHM_TARGET_H_ */

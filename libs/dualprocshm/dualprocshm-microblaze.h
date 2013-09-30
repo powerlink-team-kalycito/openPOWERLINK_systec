@@ -49,76 +49,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <xparameters.h>
 // include section header file for special functions in
 // tightly-coupled memory
-#include <section-microblaze.h> // TODO : Is this needed in absence
+#include <section-microblaze.h> // TODO gks:Is this needed in absence
                                 //        of TCM?
 
-// Memory offset file for Zynq architecture
-// NOTE : This file is handwritten
-#include "dualprocshm-zynqmem.h"
-
-int dualprocshm_RegisterHandler (u32 BaseAddress, int InterruptId,
-	   XInterruptHandler Handler, void *CallBackRef);
-
-#if defined(DUALPROCSHM_CMS_BASE)
-
-#define DUALPROCSHM_CMS_BASE_PCP        DUALPROCSHM_CMS_BASE
-#define DUALPROCSHM_CMS_BASE_HOST       DUALPROCSHM_CMS_BASE
-
-//TODO: Assign Interrupt on Microblaze if Host?
-#define DUALPROCSHM_IRQ_IC_ID    -1
-#define DUALPROCSHM_IRQ          -1
-
-#else
-
-#warning "Common Memory base is assumed! Set the correct address!"
-
-#define DUALPROCSHM_CMS_BASE_PCP             0x10000000
-#define DUALPROCSHM_CMS_BASE_HOST            0x10000000
-#define DUALPROCSHM_IRQ_IC_ID            0
-#define DUALPROCSHM_IRQ                  0
-
-#endif
-
-// Added here to support Cache specific operation required in Zynq
-// in absence of cache handling BSP routines
-#if (XPAR_MICROBLAZE_USE_DCACHE == 1)
-#define DUALPROCSHM_SYNC_DCACHE           TRUE
-#else
-#define DUALPROCSHM_SYNC_DCACHE           FALSE
-#endif
-
-
-
+/// cache
 #define DUALPROCSHM_MALLOC(size)            malloc(size)
 #define DUALPROCSHM_FREE(ptr)               free(ptr)
 
 /// sleep
-#define DUALPROCSHM_USLEEP(x)               usleep(x)
-
-/// hw access
-#define DPSHM_RD32(base, offset)            MB_READ32(base, offset);
-#define DPSHM_RD16(base, offset)            MB_READ16(base, offset);
-#define DPSHM_RD8(base, offset)             MB_READ8(base, offset);
-
-#define DPSHM_WR32(base, offset, dword)     MB_WRITE32(base,offset,dword);
-#define DPSHM_WR16(base, offset, word)      MB_WRITE16(base,offset,word);
-#define DPSHM_WR8(base, offset, byte)       MB_WRITE8(base,offset,byte);
+#define DUALPROCSHM_USLEEP(x)               usleep((unsigned int)x)
 
 
-
-#define DUALPROCSHM_REG_IRQHDL(cb, arg)  \
-                    dualprocshm_RegisterHandler(DUALPROCSHM_IRQ_IC_ID,DUALPROCSHM_IRQ,cb,arg)
-#define DUALPROCSHM_EN_IRQ()      \
-                    XIntc_EnableIntr(DUALPROCSHM_IRQ_IC_ID,DUALPROCSHM_IRQ) //FIXME: Change the base address and mask as required
-
-#define DUALPROCSHM_DISABLE_IRQ()     \
-                    XIntc_DisableIntr(DUALPROCSHM_IRQ_IC_ID,DUALPROCSHM_IRQ) //FIXME: Change the base address and mask as required
+#define DPSHM_READ8(base)                   Xil_In8((UINT32)base);
+#define DPSHM_WRITE8(base,val)                   Xil_Out8((UINT32)base,val);
 
 #define DUALPROCSHM_FLUSH_DCACHE_RANGE(base,range) \
                     microblaze_flush_dcache_range(base, range);
 
 #define DUALPROCSHM_INVALIDATE_DCACHE_RANGE(base,range) \
                     microblaze_invalidate_dcache_range(base, range);
-
 
 #endif /* _INC_DUALPROCSHM_MICROBLAZE_H_ */

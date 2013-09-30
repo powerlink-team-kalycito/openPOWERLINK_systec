@@ -1,6 +1,6 @@
 /**
 ********************************************************************************
-\file   dualprocshm_noos.c
+\file   dualprocshm-noos.c
 
 \brief  Dual Processor Library - Using shared memory
 
@@ -41,7 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include "dualprocshm.h"
-#include "dualprocshm_l.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -53,8 +52,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // const defines
 //------------------------------------------------------------------------------
 #define DUALPROC_INSTANCE_COUNT     2   ///< number of supported instances
-#define DUALPROCSHM_QUEUE_COUNT     12  ///< number of supported queues per driver
-                                        ///< instance
+#define MEM_LOCK_SIZE               1
+#define DYN_MEM_TABLE_ENTRY_SIZE    4
+
 //------------------------------------------------------------------------------
 // module global vars
 //------------------------------------------------------------------------------
@@ -73,91 +73,42 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
-
 /**
-\brief Function type to set the address of a Resource(queue/buffers)
+\brief Function type to set the address of a Buffer
 
 This function type enables to set the corresponding dynamic shared memory address
-register for a resource. The address of the dynamic shared memory address registers
-is given with pDualProcScBase_p and the address itself with addr_p.
+register for a dynamic buffer.
 */
-typedef void (*tSetDynRes) (UINT32 addr_p);
+typedef void (*tSetDynRes) (tDualprocDrvInstance  pDrvInst_p, UINT16 index_p,UINT32 addr_p);
 
 /**
-\brief Function type to get the address of a Resource(queue/buffers)
+\brief Function type to get the address of a Buffer
 
 This function type enables to get the address set in the dynamic shared buffer
-address register. The address of the dynamic shared memory address registers is
-given with DualProcScBase_p.
+address register.
 */
-typedef UINT32 (*tGetDynRes) ();
+typedef UINT32 (*tGetDynRes) (tDualprocDrvInstance  pDrvInst_p, UINT16 index_p);
 
 /**
-\brief Structure for dual processor dynamic resources(queue/buffers)
+\brief Structure for dual processor dynamic resources(buffers)
 
 This structure defines for each dynamic resources instance the set and get
 functions. Additionally the base and span is provided.
 */
 typedef struct sDualprocDynRes
 {
-    tSetDynRes  pfnSetDynRes; ///< this function sets the dynamic buffer base to hardware
-    tGetDynRes  pfnGetDynRes; ///< this function gets the dynamic buffer base to hardware
-    UINT8*      pBase;        ///< base of the dynamic buffer
-    UINT16      span;         ///< span of the dynamic buffer
+    tSetDynRes        pfnSetDynAddr;   ///< this function sets the dynamic buffer base to hardware
+    tGetDynRes        pfnGetDynAddr;   ///< this function gets the dynamic buffer base to hardware
+    UINT8*            pBase;           ///< base of the dynamic buffer
+    tDualprocMemInst* memInst; ///< pointer to memory instance
 } tDualprocDynResConfig;
 
 /**
-\brief Dynamic buffer configuration for Pcp
+\brief Dynamic buffer configuration
 
-Stores the default configuration settings for the dynamic buffers
+Stores the configuration settings for the dynamic buffers
 */
-const tDualprocDynResConfig aDynResInit[kDualprocResIdLast] =
-{
-    {   /* kDualprocResIdDynBuff0 */
-        dualprocshm_writeDynResBuff0, dualprocshm_readDynResBuff0,
-        NULL, DUALPROCSHM_SIZE_DYNBUF0
-    },
-    {   /* kDualprocResIdDynBuff1 */
-        dualprocshm_writeDynResBuff1, dualprocshm_readDynResBuff1,
-        NULL, DUALPROCSHM_SIZE_DYNBUF1
-    },
-    {   /* kDualprocResIdErrCount */
-        dualprocshm_writeDynResErrCnt, dualprocshm_readDynResErrCnt,
-        NULL, DUALPROCSHM_SIZE_ERRORCOUNTER
-    },
-    {   /* kDualprocResIdTxNmtQueue */
-        dualprocshm_writeDynResTxNmtQ, dualprocshm_readDynResTxNmtQ,
-        NULL, DUALPROCSHM_SIZE_TXNMTQ
-    },
-    {   /* kDualprocResIdTxGenQueue */
-        dualprocshm_writeDynResTxGenQ, dualprocshm_readDynResTxGenQ,
-        NULL, DUALPROCSHM_SIZE_TXGENQ
-    },
-    {   /* kDualprocResIdTxSyncQueue */
-        dualprocshm_writeDynResTxSyncQ, dualprocshm_readDynResTxSyncQ,
-        NULL, DUALPROCSHM_SIZE_TXSYNCQ
-    },
-    {   /* kDualprocResIdTxVethQueue */
-        dualprocshm_writeDynResTxVethQ, dualprocshm_readDynResTxVethQ,
-        NULL, DUALPROCSHM_SIZE_TXVETHQ
-    },
-    {   /* kDualprocResIdRxVethQueue */
-        dualprocshm_writeDynResRxVethQ, dualprocshm_readDynResRxVethQ,
-        NULL, DUALPROCSHM_SIZE_RXVETHQ
-    },
-    {   /* kDualprocResIdK2UQueue */
-        dualprocshm_writeDynResK2UQ, dualprocshm_readDynResK2UQ,
-        NULL, DUALPROCSHM_SIZE_K2UQ
-    },
-    {   /* kDualprocResIdU2KQueue */
-        dualprocshm_writeDynResU2KQ, dualprocshm_readDynResU2KQ,
-        NULL, DUALPROCSHM_SIZE_U2KQ
-    },
-    {   /* kDualprocResIdPdo */
-        dualprocshm_writeDynResPdo, dualprocshm_readDynResPdo,
-        NULL, DUALPROCSHM_SIZE_PDO
-    }
-};
+static tDualprocDynResConfig aDynResInit[MAX_DYNAMIC_BUFF_COUNT];
 
 /**
 \brief Dual Processor Instance
@@ -166,21 +117,16 @@ Holds the configuration passed to the instance at creation.
 */
 typedef struct sDualProcDrv
 {
-    tDualprocConfig         config;       ///< copy of configuration
-    UINT8                   *pBase;       ///< base address of host interface
-
-    int                     iDynResEntries; ///< number of dynamic buffers (Pcp/Host)
-    tDualprocDynResConfig*  pDynResTbl;  ///< dynamic buffer table (Pcp/Host)
-//    UINT8*                  apDynBufHost[DUALPROC_DYNBUF_COUNT]; ///< DynBuf acquired by Host
-//TODO: gks: decide on using process queue for circular buffer based queues
-
- //   tQueueProcess       aQueueProcessTable[DUALPROCSHM_QUEUE_COUNT]; ///< queue process table, processed by dualprocshm_process()
-//    int                 iQueueProcessEntries; ///< number of entries in aQueueProcessTable
-
-    tDualprocIrqCb        apfnIrqCb[kDualprocIrqSrcLast];
-    UINT16                activeIrq;        ///< list of active interrupts
+    tDualprocConfig         config;         ///< copy of configuration
+    UINT8                   *pCommMemBase;  ///< base address of the common memory
+    UINT8                   *pAddrTableBase;///< base address of the location to place dynamic
+                                            ///< memory address table
+    int                     iMaxDynBuffEntries; ///< number of dynamic buffers (Pcp/Host)
+    tDualprocDynResConfig*  pDynResTbl;     ///< dynamic buffer table (Pcp/Host)
 
 } tDualProcDrv;
+
+
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
@@ -191,19 +137,13 @@ This array holds all Dual Processor Driver instances available.
 */
 static tDualProcDrv *paDualProcDrvInstance[DUALPROC_INSTANCE_COUNT] =
 {
-    NULL
+    NULL,NULL
 };
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-static void dualprocshmIrqHandler (void *pArg_p);
-static tDualprocReturn allocateDynResources (tDualProcDrv *pDrvInst_p);
-static tDualprocReturn freeDynResources (tDualProcDrv *pDrvInst_p);
-static tDualprocReturn setDynResources (tDualProcDrv *pDrvInst_p);
-static tDualprocReturn getDynResources (tDualProcDrv *pDrvInst_p);
-static void getResAddr (tDualProcDrv *pDrvInst_p, tDualprocResourceId resId_p,UINT8** ppAddr_p);
-static UINT16 getResSpan (tDualProcDrv *pDrvInst_p, tDualprocResourceId resId_p);
-
+static void setDynBuffAddr (tDualprocDrvInstance  pDrvInst_p,UINT16 index_p,UINT32 addr_p);
+static UINT32 getDynBuffAddr (tDualprocDrvInstance pDrvInst_p,UINT16 index_p);
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
 //============================================================================//
@@ -237,7 +177,7 @@ tDualprocReturn dualprocshm_create (tDualprocConfig *pConfig_p, tDualprocDrvInst
     int              iIndex;
     if(pConfig_p->ProcInstance != kDualProcPcp && pConfig_p->ProcInstance != kDualProcHost )
     {
-        TRACE("Inst %x\n",pConfig_p->ProcInstance);
+        //TRACE("Inst %x\n",pConfig_p->ProcInstance);
         return kDualprocInvalidParameter;
     }
 
@@ -256,46 +196,20 @@ tDualprocReturn dualprocshm_create (tDualprocConfig *pConfig_p, tDualprocDrvInst
 
     pDrvInst->config = *pConfig_p;
 
-    pDrvInst->iDynResEntries = kDualprocResIdLast;
+    // get the common memory address
+    pDrvInst->pCommMemBase = dualprocshm_getCommonMemAddr(&pDrvInst->config.commMemSize);
+
+    // get the address to store address mapping table
+    pDrvInst->pAddrTableBase = dualprocshm_getDynMapTableAddr();
+
+
+    pDrvInst->iMaxDynBuffEntries = MAX_DYNAMIC_BUFF_COUNT;
     pDrvInst->pDynResTbl = (tDualprocDynResConfig*)aDynResInit;
 
-
-
-    if(pDrvInst->config.ProcInstance == kDualProcPcp)
+    for(iIndex = 0; iIndex < pDrvInst->iMaxDynBuffEntries; iIndex++)
     {
-        // store the base address of common memory strucutre PCP
-        pDrvInst->pBase = (UINT8*) DUALPROCSHM_CMS_BASE_PCP;
-
-        memset(pDrvInst->pBase,0,sizeof(tCommonMemStruc));
-        // initialize lower layer driver
-        dualprocshm_initMem(pDrvInst->pBase);
-    }
-    else
-    {
-        // store the base address of common memory strucutre HOST
-        pDrvInst->pBase = (UINT8*) DUALPROCSHM_CMS_BASE_HOST;
-
-        // initialize lower layer driver
-        dualprocshm_initMem(pDrvInst->pBase);
-    }
-
-    // allocate dynamic resources if PCP
-    if(pDrvInst->config.ProcInstance == kDualProcPcp)
-    {
-        ret = allocateDynResources(pDrvInst);
-        if(kDualprocSuccessful != ret )
-        {
-            goto Exit;
-        }
-    }
-    else // get them from dynamic shared memory registers
-    {
-        ret = getDynResources(pDrvInst);
-
-        if(kDualprocSuccessful != ret )
-        {
-            goto Exit;
-        }
+        pDrvInst->pDynResTbl[iIndex].pfnSetDynAddr = setDynBuffAddr;
+        pDrvInst->pDynResTbl[iIndex].pfnGetDynAddr = getDynBuffAddr;
     }
 
     // store driver instance in array
@@ -314,11 +228,6 @@ tDualprocReturn dualprocshm_create (tDualprocConfig *pConfig_p, tDualprocDrvInst
     {
         ret = kDualprocNoResource;
         goto Exit;
-    }
-
-    if( pDrvInst->config.ProcInstance  == kDualProcHost )
-    {
-        DUALPROCSHM_REG_IRQHDL(dualprocshmIrqHandler, (void*)pDrvInst);
     }
 
     // Return the driver instance
@@ -361,14 +270,9 @@ tDualprocReturn dualprocshm_delete (tDualprocDrvInstance pInstance_p)
         goto Exit;
     }
 
-    if( kDualProcHost == pDrvInst->config.ProcInstance )
-    {
-        // disable Sync Irq
-        DUALPROCSHM_DISABLE_IRQ();
-
-        // unregister the ISR
-        DUALPROCSHM_REG_IRQHDL(NULL, NULL);
-    }
+    // release common memory and addr mapping table
+    dualprocshm_releaseCommonMemAddr(pDrvInst->config.commMemSize);
+    dualprocshm_releaseDynMapTableAddr();
 
     for(iIndex = 0; iIndex < DUALPROC_INSTANCE_COUNT; iIndex++)
     {
@@ -378,11 +282,6 @@ tDualprocReturn dualprocshm_delete (tDualprocDrvInstance pInstance_p)
            paDualProcDrvInstance[iIndex] = NULL;
            break;
         }
-    }
-
-    if( kDualProcPcp == pDrvInst->config.ProcInstance )
-    {
-        freeDynResources(pDrvInst);
     }
 
     free(pDrvInst);
@@ -404,7 +303,7 @@ If the instance is not found NULL is returned
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocDrvInstance dualprocshm_getInstance (tDualProcInstance Instance_p)
+tDualprocDrvInstance dualprocshm_getDrvInst (tDualProcInstance Instance_p)
 {
     tDualProcDrv    *pDrvInst = NULL;
     int             iIndex;
@@ -423,898 +322,350 @@ tDualprocDrvInstance dualprocshm_getInstance (tDualProcInstance Instance_p)
 }
 //------------------------------------------------------------------------------
 /**
-\brief  This function processes all resources of dual processor driver
+\brief  Retrieves a dynamic memory buffer specified with Id
 
-This function processes the configured resources of the dual processor driver
-like the queues.
-
-\param  pInstance_p             dual processor driver instance
+\param  pInstance_p  driver instance
+\param  Id_p         Id of memory instance, used to index into the memory mapping
+                     table to identify a dynamic memory instance and book keeping
+                     in a local memory instance array.
+\param  ppAddr_p     Base address of the requested memory
+\param  pSize_p      Size of the memory to be allocated/ Return Size
+\param  fAlloc_p     Allocate memory if TRUE, Retrieve address from address mapping
+                     table if FALSE
 
 \return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
+\retval kDualprocSuccessful       The driver instance is deleted successfully.
 \retval kDualprocInvalidParameter The caller has provided incorrect parameters.
+\retval kDualprocNoResource       requested resources not available
 
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_process (tDualprocDrvInstance pInstance_p)
+tDualprocReturn dualprocshm_getMemory(tDualprocDrvInstance pInstance_p, UINT8 Id_p,
+                                      UINT8 **ppAddr_p, size_t *pSize_p, BOOL fAlloc_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
+    UINT8*          pMemBase;
 
-    if(pDrvInst == NULL)
+    if(pInstance_p == NULL || ppAddr_p == NULL || pSize_p == NULL )
+        return kDualprocInvalidParameter;
+
+    if(Id_p > MAX_DYNAMIC_BUFF_COUNT)
     {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
+        TRACE("Invalid Buffer Id 0X%x",Id_p);
+        return kDualprocInvalidParameter;
     }
-    //TODO: Handle Queue processing here
 
-Exit:
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  This function adds an irq handler for the corresponding irq source
-
-This function adds an irq handler function for the corresponding irq source.
-Note: The provided callback is invoked within the interrupt context!
-If the provided callback is NULL, then the irq source is disabled.
-
-\param  pInstance_p             dual processor driver instance
-\param  irqSrc_p                irq source that should invoke the callback
-\param  callback_p              callback that is invoked
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-\retval kDualprocWrongProcInst    Only the host may call this function.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_irqRegHdl (tDualprocDrvInstance pInstance_p,
-        tDualprocIrqSrc irqSrc_p, tDualprocIrqCb pfnCb_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
-    UINT16 irqEnableVal = pDrvInst->activeIrq;
-
-    // Only host can register ISR
-    if(kDualProcHost != pDrvInst->config.ProcInstance)
+    if(fAlloc_p)
     {
-        ret = kDualprocWrongProcInst;
-        goto Exit;
-    }
-    if(NULL != pfnCb_p)
-    {
-        irqEnableVal |= (1 << irqSrc_p);
+        // allocate dynamic buffer
+        pMemBase = DUALPROCSHM_MALLOC(*pSize_p + sizeof(tDualprocMemInst) );
+
+        if(pMemBase == NULL)
+            return kDualprocNoResource;
+
+        memset(pMemBase,0,(*pSize_p + sizeof(tDualprocMemInst)));
+
+        pDrvInst->pDynResTbl[Id_p].memInst = (tDualprocMemInst*) pMemBase;
+        pDrvInst->pDynResTbl[Id_p].pBase = pMemBase + sizeof(tDualprocMemInst);
+        pDrvInst->pDynResTbl[Id_p].memInst->span = (UINT16)*pSize_p;
+
+        // write the address in mapping table
+        pDrvInst->pDynResTbl[Id_p].pfnSetDynAddr(pDrvInst,Id_p,(UINT32)pMemBase);
     }
     else
     {
-        irqEnableVal &= ~(1 << irqSrc_p);
-    }
+        pMemBase = (UINT8 *)pDrvInst->pDynResTbl[Id_p].pfnGetDynAddr(pDrvInst,Id_p);
 
-    pDrvInst->apfnIrqCb[irqSrc_p] = pfnCb_p;
-    pDrvInst->activeIrq = irqEnableVal;
+        if(pMemBase == NULL)
+            return kDualprocNoResource;
 
-Exit:
-    return ret;
+        pDrvInst->pDynResTbl[Id_p].memInst = (tDualprocMemInst*) pMemBase;
+        pDrvInst->pDynResTbl[Id_p].pBase = pMemBase + sizeof(tDualprocMemInst);
+        *pSize_p = (size_t) pDrvInst->pDynResTbl[Id_p].memInst->span;
+     }
+
+    *ppAddr_p = pDrvInst->pDynResTbl[Id_p].pBase;
+
+    return kDualprocSuccessful;
 }
 //------------------------------------------------------------------------------
 /**
-\brief  This function enables an irq source
+\brief  Retrieves a dynamic memory buffer specified with Id
 
-This function enables an irq source from the Pcp side.
-
-\param  pInstance_p             dual processor instance
-\param  irqSrc_p                irq source to be controlled
-\param  fEnable_p               enable the irq source (TRUE)
+\param  pInstance_p  driver instance
+\param  Id_p         Id to be used for memory, used for indexing the memory
+                     instance array.
+\param  fFree_p      Free memory if TRUE, clear address from address mapping table
+                     if FALSE
 
 \return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
+\retval kDualprocSuccessful       The driver instance is deleted successfully.
 \retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-\retval kDualprocWrongProcInst    Only the host may call this function.
+\retval kDualprocNoResource       requested resources not available
 
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_irqSourceEnable (tDualprocDrvInstance pInstance_p,
-        tDualprocIrqSrc irqSrc_p, BOOL fEnable_p)
+tDualprocReturn dualprocshm_freeMemory(tDualprocDrvInstance pInstance_p, UINT8 Id_p,
+                                                                    BOOL fFree_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
-    UINT16 irqEnableVal = pDrvInst->activeIrq;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
+    UINT8*          pMemBase;
 
-    if(pInstance_p == NULL)
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
+    if(pInstance_p == NULL )
+        return kDualprocInvalidParameter;
 
-    if(fEnable_p)
+    if(Id_p > MAX_DYNAMIC_BUFF_COUNT)
+        return kDualprocInvalidParameter;
+
+    if(fFree_p)
     {
-        // Add irqSrc_p to active interrupt list
-        irqEnableVal |= (1 << irqSrc_p);
+        pDrvInst->pDynResTbl[Id_p].pfnSetDynAddr(pDrvInst,Id_p,0);
+        pMemBase = (UINT8*)pDrvInst->pDynResTbl[Id_p].memInst;
+        pDrvInst->pDynResTbl[Id_p].pBase = NULL;
+        free(pMemBase);
     }
     else
     {
-        // remove irqSrc_p from active list
-        irqEnableVal &= ~(1 << irqSrc_p);;
+        pDrvInst->pDynResTbl[Id_p].memInst = NULL;
+        pDrvInst->pDynResTbl[Id_p].pBase = NULL;
     }
-    // add the new Irq to the list for handling
-    pDrvInst->activeIrq = irqEnableVal;
 
-Exit:
-    return ret;
+    return kDualprocSuccessful;
 }
+
 //------------------------------------------------------------------------------
 /**
-\brief  This function controls the master irq enable
+\brief  Read specified number of bytes from a specified buffer.
 
-This function allows the host to enable or disable all irq sources from the
-PCP.
-
-\param  pInstance_p             host interface instance
-\param  fEnable_p               enable the master irq (TRUE)
+\param  pInstance_p  driver instance
+\param  Id_p         Id of the buffer
+\param  offset_p     Offset from the base to be read.
+\param  Size_p       Number of bytes to be read.
+\param  pData_p      Pointer to memory to receive the read data.
 
 \return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
+\retval kDualprocSuccessful       The driver instance is deleted successfully.
 \retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-\retval kDualprocWrongProcInst    Only the host may call this function.
+\retval kDualprocNoResource       requested resources not available
 
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_irqMasterEnable (tDualprocDrvInstance pInstance_p,
-        BOOL fEnable_p)
+tDualprocReturn dualprocshm_readData(tDualprocDrvInstance pInstance_p, UINT8 Id_p,
+                                        UINT32 offset_p,size_t Size_p, UINT8* pData_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
+    UINT8* base;
+    UINT32 highAddr;
+    if(pInstance_p == NULL ||  Id_p > MAX_DYNAMIC_BUFF_COUNT || pData_p == NULL)
+        return kDualprocInvalidParameter;
 
-    if(pInstance_p == NULL)
+    base = pDrvInst->pDynResTbl[Id_p].pBase;
+    highAddr = (UINT32)(base + pDrvInst->pDynResTbl[Id_p].memInst->span);
+
+    if((offset_p + Size_p) > highAddr)
     {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
+        TRACE("Buffer overflow in read for 0X%x offs 0X%x",Id_p,offset_p);
+        return kDualprocNoResource;
     }
 
-    if(kDualProcHost == pDrvInst->config.ProcInstance)
-    {
-        if(fEnable_p)
-        {
-            // Enable sync interrupts
-            DUALPROCSHM_EN_IRQ();
-        }
-        else
-        {
-            DUALPROCSHM_DISABLE_IRQ();
-        }
-    }
-    else
-    {
-        ret = kDualprocWrongProcInst;
-        goto Exit;
-    }
+    dualprocshm_targetReadData(base + offset_p, Size_p, pData_p);
 
-Exit:
-    return ret;
+    return kDualprocSuccessful;
 }
 //------------------------------------------------------------------------------
 /**
-\brief  This function sets magic in control register
+\brief  Write specified number of bytes to a specified buffer
 
-\param  pInstance_p             dual processor driver instance
-\param  magic_p                 magic pattern
+\param  pInstance_p  driver instance
+\param  Id_p         Id of the buffer
+\param  offset_p     Offset from the base to be written.
+\param  Size_p       Number of bytes to write.
+\param  pData_p      Pointer to memory containing data to be written.
 
 \return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
+\retval kDualprocSuccessful       The driver instance is deleted successfully.
 \retval kDualprocInvalidParameter The caller has provided incorrect parameters.
+\retval kDualprocNoResource       requested resources not available
 
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_setMagic (tDualprocDrvInstance pInstance_p, UINT16 magic_p)
+tDualprocReturn dualprocshm_writeData(tDualprocDrvInstance pInstance_p, UINT8 Id_p,
+                                        UINT32 offset_p,size_t Size_p, UINT8* pData_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
+    UINT8* base;
+    UINT32 highAddr;
+    if(pInstance_p == NULL ||  Id_p > MAX_DYNAMIC_BUFF_COUNT || pData_p)
+        return kDualprocInvalidParameter;
 
-    if(pDrvInst == NULL)
+    base = pDrvInst->pDynResTbl[Id_p].pBase;
+    highAddr = (UINT32)(base + pDrvInst->pDynResTbl[Id_p].memInst->span);
+
+    if((offset_p + Size_p) > highAddr)
     {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
+        TRACE("Buffer overflow in read for 0X%x offs 0X%x",Id_p,offset_p);
+        return kDualprocNoResource;
     }
 
-    dualprocshm_writeMagic(magic_p);
+    dualprocshm_targetWriteData(base + offset_p, Size_p, pData_p);
 
-Exit:
-    return ret;
+    return kDualprocSuccessful;
 }
 //------------------------------------------------------------------------------
 /**
-\brief  This function reads magic from control register
+\brief  Read specified number of bytes from a specified offset from the common memory.
 
-\param  pInstance_p             dual processor driver instance
-\param  pMagic_p                return magic pattern
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_getMagic (tDualprocDrvInstance pInstance_p, UINT16 *pMagic_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
-
-    if(pDrvInst == NULL)
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
-
-    *pMagic_p = dualprocshm_readMagic();
-
-Exit:
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  This function sets a command in control register
-
-\param  pInstance_p             dual processor driver instance
-\param  cmd_p                   command
+\param  pInstance_p  driver instance
+\param  offset_p     Offset from the base of common memory to be read.
+\param  Size_p       Number of bytes to be read.
+\param  pData_p      Pointer to memory to receive the read data.
 
 \return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
+\retval kDualprocSuccessful       The driver instance is deleted successfully.
 \retval kDualprocInvalidParameter The caller has provided incorrect parameters.
 
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_setCommand (tDualprocDrvInstance pInstance_p, UINT16 cmd_p)
+tDualprocReturn dualprocshm_readDataCommon(tDualprocDrvInstance pInstance_p,UINT32 offset_p,
+                                                                size_t Size_p,UINT8* pData_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
+    UINT8* base = pDrvInst->pCommMemBase ;
 
-    if(pDrvInst == NULL)
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
+    if(pInstance_p == NULL || pData_p == NULL)
+        return kDualprocInvalidParameter;
 
-    dualprocshm_writeCommand(cmd_p);
-Exit:
-    return ret;
+    dualprocshm_targetReadData(base + offset_p, Size_p, pData_p);
+
+    return kDualprocSuccessful;
 }
 //------------------------------------------------------------------------------
 /**
-\brief  This function reads a command from control register
+\brief  Read specified number of bytes from a specified offset from the common memory.
 
-\param  pInstance_p             dual processor driver instance
-\param  cmd_p                   command
+\param  pInstance_p  driver instance
+\param  offset_p     Offset from the base of common memory to be written.
+\param  Size_p       Number of bytes to write.
+\param  pData_p      Pointer to memory containing data to be written.
 
 \return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
+\retval kDualprocSuccessful       The driver instance is deleted successfully.
 \retval kDualprocInvalidParameter The caller has provided incorrect parameters.
 
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_getCommand (tDualprocDrvInstance pInstance_p, UINT16 *pCmd_p)
+tDualprocReturn dualprocshm_writeDataCommon(tDualprocDrvInstance pInstance_p,UINT32 offset_p,
+                                                                size_t Size_p,UINT8* pData_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
+    UINT8* base = pDrvInst->pCommMemBase ;
 
-    if(( NULL == pDrvInst )|| ( NULL == pCmd_p))
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
+    if(pInstance_p == NULL || pData_p == NULL)
+        return kDualprocInvalidParameter;
 
-    *pCmd_p = dualprocshm_readCommand();
-Exit:
-    return ret;
+
+    dualprocshm_targetWriteData(base + offset_p, Size_p, pData_p);
+
+    return kDualprocSuccessful;
 }
 //------------------------------------------------------------------------------
 /**
-\brief  This function writes status info in control register
+\brief  Acquire lock for a buffer
 
-\param  pInstance_p             dual processor driver instance
-\param  status_p                status
+\param  pInstance_p  driver instance
+\param  Id_p         buffer id.
+
 
 \return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
+\retval kDualprocSuccessful       The driver instance is deleted successfully.
 \retval kDualprocInvalidParameter The caller has provided incorrect parameters.
 
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_setStatus (tDualprocDrvInstance pInstance_p, UINT16 status_p)
+tDualprocReturn dualprocshm_acquireBuffLock(tDualprocDrvInstance pInstance_p, UINT8 Id_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
 
-    if(pInstance_p == NULL)
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
+    if(pInstance_p == NULL )
+        return kDualprocInvalidParameter;
 
-    if(pDrvInst->config.ProcInstance != kDualProcPcp)
-    {
-        // host can't set Status field
-        ret = kDualprocWrongProcInst;
-        goto Exit;
-    }
+    dualprocshm_targetAcquireLock(&pDrvInst->pDynResTbl[Id_p].memInst->lock,pDrvInst->config.procId);
 
-    dualprocshm_writeStatus(status_p);
-
-Exit:
-    return ret;
+    return kDualprocSuccessful;
 }
 //------------------------------------------------------------------------------
 /**
-\brief  This function reads status info from control register
+\brief  Release lock for a buffer
 
-\param  pInstance_p             dual processor driver instance
-\param  pStatus_p               Read status value
+\param  pInstance_p  driver instance
+\param  Id_p         buffer id.
+
 
 \return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
+\retval kDualprocSuccessful       The driver instance is deleted successfully.
 \retval kDualprocInvalidParameter The caller has provided incorrect parameters.
 
 \ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_getStatus (tDualprocDrvInstance pInstance_p, UINT16 *pStatus_p)
+tDualprocReturn dualprocshm_releaseBuffLock(tDualprocDrvInstance pInstance_p, UINT8 Id_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
 
-    if(( NULL == pDrvInst )|| ( NULL == pStatus_p))
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
+    dualprocshm_targetReleaseLock(&pDrvInst->pDynResTbl[Id_p].memInst->lock);
 
-    *pStatus_p = dualprocshm_readStatus();
-
-Exit:
-    return ret;
+    return kDualprocSuccessful;
 }
-//------------------------------------------------------------------------------
-/**
-\brief  This function writes the return value in control register
 
-\param  pInstance_p             dual processor driver instance
-\param  retval_p                return value
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_setRetVal (tDualprocDrvInstance pInstance_p, UINT16 retval_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
-
-    if(pDrvInst == NULL)
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
-
-    dualprocshm_writeRetVal(retval_p);
-
-Exit:
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  This function reads the return value from control register
-
-\param  pInstance_p             dual processor driver instance
-\param  pRetval_p               read return value
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_getRetVal (tDualprocDrvInstance pInstance_p, UINT16 *pRetval_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
-
-    if(( NULL == pDrvInst )|| ( NULL == pRetval_p))
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
-
-    *pRetval_p = dualprocshm_readRetVal();
-
-Exit:
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  This function sets the heart beat value in control register
-
-Note that only the Pcp is allowed to write to this register!
-
-\param  pInstance_p             dual processor driver instance
-\param  heartbeat_p             heart beat value
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_setHeartbeat (tDualprocDrvInstance pInstance_p, UINT16 heartbeat_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
-
-    if(pInstance_p == NULL)
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
-
-    if(pDrvInst->config.ProcInstance != kDualProcPcp)
-    {
-        // host can't set heart beat
-        ret = kDualprocWrongProcInst;
-        goto Exit;
-    }
-
-    dualprocshm_writeHeartbeat(heartbeat_p);
-   // TRACE("Write Heart %x",heartbeat_p);
-Exit:
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  This function reads the heart beat value from control register
-
-\param  pInstance_p             dual processor driver instance
-\param  pHeartbeat_p            heart beat value
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_getHeartbeat (tDualprocDrvInstance pInstance_p, UINT16 *pHeartbeat_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pInstance_p;
-
-    if(( NULL == pDrvInst )|| ( NULL == pHeartbeat_p))
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
-
-    *pHeartbeat_p = dualprocshm_readHeartbeat();
-
-Exit:
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  This function retrieves the address and size of a dynamic resource
-
-\param  pInstance_p             dual processor driver instance
-\param  resId_p                 resource Id
-\param  ppAddr_p                return address of the resource
-\param  pSize_p                 return size of the resource
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_getDynRes(tDualprocDrvInstance pInstance_p,tDualprocResourceId resId_p,
-                                        UINT8 **ppAddr_p, UINT16 *pSize_p)
-{
-    tDualprocReturn     ret = kDualprocSuccessful ;
-    tDualProcDrv *pDrvInst = (tDualProcDrv *)pInstance_p;
-
-    if(pInstance_p == NULL || pSize_p == NULL || ppAddr_p == NULL )
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
-
-    // get the resource address
-    // getResAddr(pDrvInst,resId_p,ppAddr_p);
-    *ppAddr_p = pDrvInst->pDynResTbl[resId_p].pBase;
-    // TODO : @gks add a check for size
-    // *pSize_p = getResSpan(pDrvInst,resId_p,pSize_p);
-    *pSize_p = pDrvInst->pDynResTbl[resId_p].span;
-
-Exit:
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  This function acquires a lock for the specified queue
-
-\param  pInstance_p             dual processor driver instance
-\param  queueId_p               queue_Id
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_acquireQueueLock(UINT8 queueId_p)
-{
-    tDualprocReturn     ret = kDualprocSuccessful ;
-    UINT16      lockState, acquireLock = 0;
-
-    if(queueId_p > kDualprocResIdLast)
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
-
-    acquireLock = (1 << queueId_p );
-    lockState = dualprocshm_readQueueLock();
-    while((lockState & acquireLock))
-    {
-        lockState = dualprocshm_readQueueLock();
-    }
-
-    lockState |= acquireLock;
-
-    dualprocshm_writeQueueLock(lockState);
-Exit:
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  This function release a lock for the specified queue
-
-\param  pInstance_p             dual processor driver instance
-\param  queueId_p               queue_Id
-
-\return tDualprocReturn
-\retval kDualprocSuccessful       The process function exit without errors.
-\retval kDualprocInvalidParameter The caller has provided incorrect parameters.
-
-\ingroup module_dualprocshm
-*/
-//------------------------------------------------------------------------------
-tDualprocReturn dualprocshm_releaseQueueLock(UINT8 queueId_p)
-{
-    tDualprocReturn     ret = kDualprocSuccessful ;
-    UINT16      lockState;
-    if(queueId_p > kDualprocResIdLast)
-    {
-        ret = kDualprocInvalidParameter;
-        goto Exit;
-    }
-
-    lockState = dualprocshm_readQueueLock();
-    lockState &= ~(1 << queueId_p );
-    dualprocshm_writeQueueLock(lockState);
-Exit:
-    return ret;
-}
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
 //============================================================================//
-
 //------------------------------------------------------------------------------
 /**
-\brief  Sync Interrupt Handler
+\brief  write the buffer address in dynamic memory mapping table
 
-This is the sync interrupt handler which should by called by the system if the
-irq signal is asserted by the HOST/PCP. This handler acknowledges the processed
-interrupt sources and calls the corresponding callbacks registered with
-dualprocshm_irqRegHdl().
+\param  pInstance_p  driver instance
+\param  index_p      buffer index.
+\param  addr_p       address of the buffer.
 
-\param  pArg_p                  The system caller should provide the host
-                                interface instance with this parameter.
+\ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-static void dualprocshmIrqHandler (void *pArg_p)
+static void setDynBuffAddr (tDualprocDrvInstance  pInstance_p,UINT16 index_p,UINT32 addr_p)
 {
-    tDualProcDrv    *pDrvInst = (tDualProcDrv*)pArg_p;
-    UINT16          pendingIrq;
-    UINT16          activeIrq = pDrvInst->activeIrq;
-    UINT16          mask;
-    int             index;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
+    UINT8* tableBase = pDrvInst->pAddrTableBase;
+    UINT32 tableEntryOffs = index_p * DYN_MEM_TABLE_ENTRY_SIZE;
 
-    if(pArg_p == NULL )
-    {
-        goto Exit;
-    }
-    pendingIrq = dualprocshm_readPendingIrq();
-
-    for(index = 0 ; index < kDualprocIrqSrcLast ; index++)
-    {
-        mask = (1 << index);
-        if((pendingIrq & mask) && (activeIrq & mask))
-        {
-            // acknowledge interrupt
-            dualprocshm_ackIrq(mask);
-
-            // call the registered callback
-            if(pDrvInst->apfnIrqCb[index] != NULL)
-                pDrvInst->apfnIrqCb[index](pArg_p);
-        }
-    }
-
-Exit:
-    return;
+    dualprocshm_targetWriteData(tableBase + tableEntryOffs,DYN_MEM_TABLE_ENTRY_SIZE,(UINT8 *)&addr_p);
 }
 //------------------------------------------------------------------------------
 /**
-\brief  Allocate the dynamic Resources in heap memory
+\brief  read the buffer address from dynamic memory mapping table
 
-This function allocates the memory necessary for the dynamic resources in the heap
-on Pcp side. Note that this function does not allocate memory for buffers that
-can be set from host side, instead buffers like K2U-Queue or Error Counters.
+\param  pInstance_p  driver instance
+\param  index_p      buffer index.
 
-\param  pDrvInst_p               Dual processor Driver instance
+\return address of the buffer
 
-\return The function returns tDualprocReturn error code.
+\ingroup module_dualprocshm
 */
 //------------------------------------------------------------------------------
-static tDualprocReturn allocateDynResources (tDualProcDrv *pDrvInst_p)
+static UINT32 getDynBuffAddr (tDualprocDrvInstance pInstance_p,UINT16 index_p)
 {
-    tDualprocReturn ret = kDualprocSuccessful;
-    int             index;
-    UINT8           *pBase;
-    UINT16          span;
+    tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
+    UINT8* tableBase = pDrvInst->pAddrTableBase;
+    UINT32 tableEntryOffs = index_p * DYN_MEM_TABLE_ENTRY_SIZE;
+    UINT32 buffAddr;
 
-    for(index = 0; index < pDrvInst_p->iDynResEntries ; index++)
-    {
-        pBase = NULL;
-        span = pDrvInst_p->pDynResTbl[index].span;
+    dualprocshm_targetReadData(tableBase + tableEntryOffs,DYN_MEM_TABLE_ENTRY_SIZE,(UINT8 *)&buffAddr);
 
-        if(span > 0)
-          pBase = (UINT8*)DUALPROCSHM_MALLOC(span);
-
-        if(pBase == NULL)
-        {
-            ret = kDualprocNoResource;
-            goto Exit;
-        }
-
-        memset(pBase,0,span);
-
-        pDrvInst_p->pDynResTbl[index].pBase = pBase;
-    }
-
-    ret = setDynResources(pDrvInst_p);
-
-Exit:
-
-    if(ret != kDualprocSuccessful)
-    {
-       // index points to failed one
-       while(index != 0)
-       {
-           // TODO: @gks check this
-           free(pDrvInst_p->pDynResTbl[--index].pBase);
-
-           pDrvInst_p->pDynResTbl[index].pBase = NULL;
-       }
-    }
-
-    return ret;
-
+    return buffAddr;
 }
-//------------------------------------------------------------------------------
-/**
-\brief  Free the dynamic resources in heap memory
-
-This function frees the memory necessary for the dynamic buffers in the heap
-on Pcp side. Note that this function does not free memory for buffers that
-can be set from host side, instead buffers like K2U-Queue or Error Counters.
-
-\param  pDrvInst_p               Dual processor driver instance
-
-\return The function returns tDualprocReturn error code.
-*/
-//------------------------------------------------------------------------------
-static tDualprocReturn freeDynResources (tDualProcDrv *pDrvInst_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    int             index;
-
-    for(index = 0; index < pDrvInst_p->iDynResEntries ; index++)
-    {
-        DUALPROCSHM_FREE(pDrvInst_p->pDynResTbl[index].pBase);
-        pDrvInst_p->pDynResTbl[index].pBase = NULL;
-    }
-
-    ret = setDynResources(pDrvInst_p);
-
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Set the address of the dynamic resources
-
-This function sets the base addresses of the dynamic buffers in Pcp environment
-into the dynamic shared memory registers of common memory structure.
-
-\param  pDrvInst_p               driver instance
-
-\return The function returns tDualprocReturn error code.
-*/
-//------------------------------------------------------------------------------
-static tDualprocReturn setDynResources (tDualProcDrv *pDrvInst_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    int             index;
-    UINT32          addr;
-
-    for(index = 0; index < pDrvInst_p->iDynResEntries ; index++)
-    {
-        addr =  (UINT32) pDrvInst_p->pDynResTbl[index].pBase;
-
-        pDrvInst_p->pDynResTbl[index].pfnSetDynRes(addr);
-    }
-
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Get the address of the dynamic resources
-
-This function reads the base addresses of the dynamic buffers in PCP environment
-from the dynamic shared memory registers to be used by HOST.
-
-\param  pDrvInst_p               driver instance
-
-\return The function returns tDualprocReturn error code.
-*/
-//------------------------------------------------------------------------------
-static tDualprocReturn getDynResources (tDualProcDrv *pDrvInst_p)
-{
-    tDualprocReturn ret = kDualprocSuccessful;
-    int             index;
-    UINT8*          pAddr;
-
-    for(index = 0; index < pDrvInst_p->iDynResEntries ; index++)
-    {
-        pAddr =  (UINT8 *) pDrvInst_p->pDynResTbl[index].pfnGetDynRes();
-
-        pDrvInst_p->pDynResTbl[index].pBase = pAddr;
-    }
-
-    return ret;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Get the address of the Resource(queue/buffer)
-
-This function is used to retrieve the base addresses of a resource from
-dynamic shared memory registers.
-
-\param  resId_p               driver instance
-
-\return The function returns base address of the resource.
-*/
-//------------------------------------------------------------------------------
-static void getResAddr (tDualProcDrv *pDrvInst_p, tDualprocResourceId resId_p,UINT8** ppAddr_p)
-{
-    *ppAddr_p = pDrvInst_p->pDynResTbl[resId_p].pBase;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Get the length of the Resource(queue/buffer)
-
-This function is used to retrieve the length of a resource allocated in
-dynamically.
-
-\param  resId_p               driver instance
-
-\return The function returns base address of the resource.
-*/
-//------------------------------------------------------------------------------
-static UINT16 getResSpan (tDualProcDrv *pDrvInst_p, tDualprocResourceId resId_p)
-{
-    UINT16 span;
-
-    span = pDrvInst_p->pDynResTbl[resId_p].span;
-
-    return span;
-}
-
-//------------------------------------------------------------------------------
-/**
-\brief  Add queue instance to processing list
-
-This function adds a queue instance to the processing table of the host
-interface instance.
-If the function dualprocshm_process() is called, the queue process table is
-processed.
-
-\param  Instance_p              driver instance
-\param  QueueProcess_p          Entry to be added to queue process table
-
-\return The function returns tDualprocReturn error code.
-*/
-/*
-//------------------------------------------------------------------------------
-static tDualprocReturn addQueueProcess (tDualprocDrvInstance Instance_p,
-        tQueueProcess QueueProcess_p)
-{
-    // TODO : @gks check this implementation
-    tDualprocReturn ret = kDualprocNoResource;
-    tDualProcDrv *pDrvInst = (tDualProcDrv *)Instance_p;
-    int index;
-
-    for(index = 0; index < DUALPROCSHM_QUEUE_COUNT; index++)
-    {
-        if(pDrvInst->aQueueProcessTable[index].pInstance == NULL)
-        {
-            pDrvInst->aQueueProcessTable[index] = QueueProcess_p;
-            pDrvInst->iQueueProcessEntries++;
-            ret = kDualprocSuccessful;
-            goto Exit;
-        }
-    }
-
-Exit:
-    return ret;
-}
-*/
-//------------------------------------------------------------------------------
-/**
-\brief  Remove queue instance from processing list
-
-This function removes a queue instance from the processing table of the host
-interface instance.
-
-\param  Instance_p              driver instance
-\param  QueueProcess_p          Entry to be removed from queue process table
-
-\return The function returns tDualprocReturn error code.
-*/
-/*//------------------------------------------------------------------------------
-static tDualprocReturn removeQueueProcess (tDualprocDrvInstance Instance_p,
-        tQueueProcess QueueProcess_p)
-{
-    tDualprocReturn ret = kDualprocNoResource;
-    tDualProcDrv *pDrvInst = (tDualProcDrv *)Instance_p;
-    int index;
-
-    for(index = 0; index < DUALPROCSHM_QUEUE_COUNT; index++)
-    {
-        if(pDrvInst->aQueueProcessTable[i].pInstance ==
-                QueueProcess_p.pInstance)
-        {
-            memset(&pDrvInst->aQueueProcessTable[i], 0, sizeof(tQueueProcess));
-            pDrvInst->iQueueProcessEntries--;
-            ret = kDualprocSuccessful;
-            goto Exit;
-        }
-    }
-
-Exit:
-    return ret;
-}
-*/

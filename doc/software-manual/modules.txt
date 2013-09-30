@@ -8,6 +8,17 @@
 
 //==============================================================================
 /**
+\defgroup module_api Application programming interface module (api)
+
+The API module implements the application programming interface of the
+openPOWERLINK stack. It provides all functions used by an application to
+interact with the openPOWERLINK stack.
+
+\ingroup user_layer
+*/
+
+//==============================================================================
+/**
 \defgroup module_ctrlu User control module (ctrlu)
 
 The user control module is the module responsible for startup and shutdown
@@ -127,8 +138,7 @@ abstraction layer (PDO CAL) is used.
 The user PDO CAL module provides the communication abstraction layer (CAL)
 for the user PDO module. The CAL module provides a communication mechanism
 for the user layer PDO module. Multiple implementations for this communication
-could be implemented. Currently the following implementations are available:
-\li Shared Buffers - \ref pdoucal-shb.c
+could be implemented.
 
 \see module_pdou
 \see module_pdok
@@ -207,6 +217,16 @@ SyncRequest/SyncResponse frames used by poll response chaining.
 
 The configuration file manager (CFM) module is responsible for reading the
 CDC file and configure the CNs using SDO transfers.
+
+\ingroup user_layer
+*/
+
+//==============================================================================
+/**
+\defgroup module_ledu User LED module (ledu)
+
+The user LED module is responsible to control the POWERLIK status and error
+LEDs. Depending on the status of the stack the LEDs will be controlled.
 
 \ingroup user_layer
 */

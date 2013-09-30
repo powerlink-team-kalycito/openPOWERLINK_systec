@@ -79,7 +79,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct
 {
     tDualprocDrvInstance    dualProcDrvInstance;  ///< dual processor driver instance
-    BYTE                    queueId;
+    BOOL                    fAlloc;
 }tCircBufArchInstance;
 //------------------------------------------------------------------------------
 // local types
@@ -115,47 +115,9 @@ tCircBufInstance* circbuf_createInstance(UINT8 id_p)
 {
     tCircBufInstance*           pInstance;
     tCircBufArchInstance*       pArch;
-    UINT                        queueId;
     pArch = EPL_MALLOC(sizeof(tCircBufArchInstance));
 
     EPL_MEMSET(pArch,0,sizeof(tCircBufArchInstance));
-
-    switch(id_p)
-    {
-        case CIRCBUF_USER_TO_KERNEL_QUEUE:
-        {
-            queueId = kDualprocResIdU2KQueue;
-            break;
-        }
-        case CIRCBUF_KERNEL_TO_USER_QUEUE:
-        {
-            queueId = kDualprocResIdK2UQueue;
-            break;
-        }
-        case CIRCBUF_DLLCAL_TXGEN:
-        {
-            queueId = kDualprocResIdTxGenQueue;
-            break;
-        }
-        case CIRCBUF_DLLCAL_TXNMT:
-        {
-            queueId = kDualprocResIdTxNmtQueue;
-            break;
-        }
-        case CIRCBUF_DLLCAL_TXSYNC:
-        {
-            queueId = kDualprocResIdTxSyncQueue;
-            break;
-        }
-        default:
-        {
-            queueId = kDualprocResIdLast;
-            break;
-        }
-
-    }
-
-    pArch->queueId = queueId;
 
     pInstance = &instance_l[id_p];
 
@@ -200,11 +162,11 @@ tCircBufError circbuf_allocBuffer(tCircBufInstance* pInstance_p, size_t size_p)
     tDualprocReturn             Ret;
     size_t                      size;
     tDualprocDrvInstance        dualProcDrvInst;
-    BYTE                        *pBuffAddr;
+    UINT8                       *pBuffAddr;
     tCircBufArchInstance        *pArch = (tCircBufArchInstance*)pInstance_p->pCircBufArchInstance;
     size = size_p + sizeof(tCircBufHeader);
 
-    dualProcDrvInst = dualprocshm_getInstance(kDualProcPcp);
+    dualProcDrvInst = dualprocshm_getDrvInst(kDualProcPcp);
 
     if(dualProcDrvInst == NULL)
     {
@@ -212,8 +174,8 @@ tCircBufError circbuf_allocBuffer(tCircBufInstance* pInstance_p, size_t size_p)
     }
 
     pArch->dualProcDrvInstance = dualProcDrvInst;
-
-    Ret = dualprocshm_getDynRes(pArch->dualProcDrvInstance,pArch->queueId,&pBuffAddr,(UINT16 *)&size);
+    pArch->fAlloc = TRUE;
+    Ret = dualprocshm_getMemory(pArch->dualProcDrvInstance,pInstance_p->bufferId,&pBuffAddr,&size,pArch->fAlloc);
     if(Ret != kDualprocSuccessful)
     {
         TRACE("%s() Memory Not available error %X!\n", __func__,Ret);
@@ -221,12 +183,13 @@ tCircBufError circbuf_allocBuffer(tCircBufInstance* pInstance_p, size_t size_p)
     }
 
     pInstance_p->pCircBufHeader = (tCircBufHeader*)pBuffAddr;
+
     if (pInstance_p->pCircBufHeader == NULL)
     {
         return kCircBufNoResource;
     }
 
-    pInstance_p->pCircBuf = ((BYTE*)pInstance_p->pCircBufHeader) + sizeof(tCircBufHeader);
+    pInstance_p->pCircBuf = ((UINT8*)pInstance_p->pCircBufHeader) + sizeof(tCircBufHeader);
 
     return kCircBufOk;
 }
@@ -244,6 +207,15 @@ The function frees the allocated memory used by the circular buffer.
 //------------------------------------------------------------------------------
 void circbuf_freeBuffer(tCircBufInstance* pInstance_p)
 {
+    tDualprocReturn             Ret;
+    tCircBufArchInstance        *pArch = (tCircBufArchInstance*)pInstance_p->pCircBufArchInstance;
+
+    Ret = dualprocshm_freeMemory(pArch->dualProcDrvInstance,pInstance_p->bufferId,pArch->fAlloc);
+    if(Ret != kDualprocSuccessful)
+    {
+        TRACE("%s() unable to free Memory error %X!\n", __func__,Ret);
+    }
+
     pInstance_p->pCircBufHeader = NULL;
 }
 
@@ -265,10 +237,10 @@ tCircBufError circbuf_connectBuffer(tCircBufInstance* pInstance_p)
     tDualprocReturn             Ret;
     size_t                      size;
     tDualprocDrvInstance        dualProcDrvInst;
-    BYTE                        *pBuffAddr;
+    UINT8                        *pBuffAddr;
     tCircBufArchInstance        *pArch = (tCircBufArchInstance*)pInstance_p->pCircBufArchInstance;
 
-    dualProcDrvInst = dualprocshm_getInstance(kDualProcHost);
+    dualProcDrvInst = dualprocshm_getDrvInst(kDualProcHost);
 
     if(dualProcDrvInst == NULL)
     {
@@ -276,8 +248,8 @@ tCircBufError circbuf_connectBuffer(tCircBufInstance* pInstance_p)
     }
 
     pArch->dualProcDrvInstance = dualProcDrvInst;
-
-    Ret = dualprocshm_getDynRes(pArch->dualProcDrvInstance,pArch->queueId,&pBuffAddr,(UINT16 *)&size);
+    pArch->fAlloc = FALSE;
+    Ret = dualprocshm_getMemory(pArch->dualProcDrvInstance,pInstance_p->bufferId,&pBuffAddr,&size,pArch->fAlloc);
     if(Ret != kDualprocSuccessful)
     {
         TRACE("%s() Memory Not available error %X!\n", __func__,Ret);
@@ -290,7 +262,7 @@ tCircBufError circbuf_connectBuffer(tCircBufInstance* pInstance_p)
         return kCircBufNoResource;
     }
 
-    pInstance_p->pCircBuf = ((BYTE*)pInstance_p->pCircBufHeader) + sizeof(tCircBufHeader);
+    pInstance_p->pCircBuf = ((UINT8*)pInstance_p->pCircBufHeader) + sizeof(tCircBufHeader);
 
     return kCircBufOk;
 }
@@ -327,7 +299,7 @@ void circbuf_lock(tCircBufInstance* pInstance_p)
     tDualprocReturn         Ret;
     tCircBufArchInstance    *pArch = (tCircBufArchInstance*)pInstance_p->pCircBufArchInstance;
 
-    Ret = dualprocshm_acquireQueueLock(pArch->queueId);
+    Ret = dualprocshm_acquireBuffLock(pArch->dualProcDrvInstance,pInstance_p->bufferId);
     if(Ret != kDualprocSuccessful)
     {
         TRACE("%s() Failed to acquire lock for bufffer 0x%X error 0x%X!\n", \
@@ -351,7 +323,7 @@ void circbuf_unlock(tCircBufInstance* pInstance_p)
 
     tCircBufArchInstance    *pArch = (tCircBufArchInstance*)pInstance_p->pCircBufArchInstance;
 
-    dualprocshm_releaseQueueLock(pArch->queueId);
+    dualprocshm_releaseBuffLock(pArch->dualProcDrvInstance,pInstance_p->bufferId);
 
 }
 

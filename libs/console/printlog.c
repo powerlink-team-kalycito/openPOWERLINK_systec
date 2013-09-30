@@ -66,13 +66,13 @@ void console_printlog(char *fmt, ...)
     struct tm           *p_timeVal;
     char                timeStr[20];
 
-    time(&timeStamp);
+   // time(&timeStamp);
     p_timeVal = localtime(&timeStamp);
     strftime(timeStr, 20, "%Y/%m/%d %H:%M:%S", p_timeVal);
 
-    fprintf (stderr, "%s - ", timeStr);
+   fprintf (stderr, "%s - ", timeStr);
     va_start(arglist, fmt);
-    vfprintf(stderr, fmt, arglist);
+  vfprintf(stderr, fmt, arglist);
     va_end(arglist);
 }
 

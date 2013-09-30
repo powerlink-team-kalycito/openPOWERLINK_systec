@@ -75,7 +75,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-
+#define DUALPROCSHM_BUFF_ID_ERRHDLR     7
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -110,9 +110,9 @@ The function initializes the user layer CAL module of the error handler.
 tEplKernel errhnducal_init (tErrHndObjects *pLocalObjects_p)
 {
     tDualprocReturn dualRet;
-    tDualprocDrvInstance pInstance = dualprocshm_getInstance(kDualProcHost);
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcHost);
     UINT8*               pBase;
-    UINT16               span;
+    size_t               span;
 
     if(pInstance == NULL)
     {
@@ -122,10 +122,11 @@ tEplKernel errhnducal_init (tErrHndObjects *pLocalObjects_p)
     if (pErrHndMem_l != NULL)
         return kEplNoFreeInstance;
 
-    dualRet = dualprocshm_getDynRes(pInstance, kDualprocResIdErrCount, &pBase, &span );
+    dualRet =  dualprocshm_getMemory(pInstance, DUALPROCSHM_BUFF_ID_ERRHDLR,
+                                                            &pBase,&span,FALSE);
     if(dualRet != kDualprocSuccessful)
     {
-        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Error counter buffer details (%d)\n",
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Error counter buffer(%d)\n",
                 __func__, dualRet);
         return kEplNoResource;
     }
@@ -156,8 +157,11 @@ CAL module of the error handler.
 //------------------------------------------------------------------------------
 void errhnducal_exit (void)
 {
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcHost);
+
     if (pErrHndMem_l != NULL)
     {
+        dualprocshm_freeMemory(pInstance, DUALPROCSHM_BUFF_ID_ERRHDLR, FALSE);
         pErrHndMem_l = NULL;
     }
 }

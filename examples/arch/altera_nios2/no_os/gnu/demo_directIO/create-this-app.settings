@@ -11,16 +11,6 @@
 #       For release DBG_MODE=NDEBUG
 
 ##################################
-# Settings for Debugging
-#DBG_MODE=_DEBUG
-#OPT_LEVEL=-O0
-
-##################################
-# Settings for Debugging with optimized compilation
-#DBG_MODE=_DEBUG
-#OPT_LEVEL=-O2
-
-##################################
 # Settings for Release
 DBG_MODE=NDEBUG
 OPT_LEVEL=-O2
@@ -39,17 +29,24 @@ DEF_DEBUG_LVL=0xEC000000L
 TC_I_MEM=pcp_0_tc_i_mem
 
 ##################################
+# Name of Qsys subsystem and CPU
+QSYS_SUB=pcp_0
+QSYS_SUB_CPU=cpu_0
+
+##################################
+# Relative path to openPOWERLINK root directory
+# (Is converted to absolute)
+STACKROOT_REL_DIR=../../../../../..
+STACKROOT_DIR=`readlink -n -f ${STACKROOT_REL_DIR}`
+
+##################################
 # SW is for CN
 PLK_NODE_IS=CONFIG_CN
 
 ##################################
 # Relative path to SOPC file
-SOPC_DIR=../../../../../../fpga/boards/altera/TERASIC_DE2-115/cn_directIO/
-#SOPC_DIR=../../../../../../fpga/boards/altera/SYSTEC_ECUcore-EP3C/design_nios2_directIO
-
-##################################
-# Relative path to openPOWERLINK root directory
-STACKROOT_DIR=../../../../../..
+SOPC_DIR=${STACKROOT_DIR}/fpga/boards/altera/TERASIC_DE2-115/cn_directIO/
+#SOPC_DIR=${STACKROOT_DIR}/fpga/boards/altera/SYSTEC_ECUcore-EP3C/design_nios2_directIO
 
 ##################################
 # Relative path to bsp
@@ -58,16 +55,19 @@ BSP_DIR=./bsp
 ##################################
 # Include path
 INCLUDES=". \
+${STACKROOT_DIR}/examples/arch/altera_nios2/no_os/gnu/generic \
 ${STACKROOT_DIR}/include \
 ${STACKROOT_DIR}/libs/omethlib \
 ${STACKROOT_DIR}/libs/circbuf \
 ${STACKROOT_DIR}/stack/include/target/openmac \
 ${STACKROOT_DIR}/objdicts/CiA401_CN \
+${STACKROOT_DIR}/stack/src/arch/altera_nios2 \
 ${STACKROOT_DIR}/stack/src"
 
 ##################################
 # Source files
-SRCFILES="${STACKROOT_DIR}/libs/ami/amiarm.c \
+SRCFILES="\
+${STACKROOT_DIR}/libs/ami/amiarm.c \
 ${STACKROOT_DIR}/libs/omethlib/omethlib.c \
 ${STACKROOT_DIR}/libs/omethlib/omethlibint.c \
 ${STACKROOT_DIR}/libs/omethlib/omethlib_phycfg_generic.c \
@@ -76,6 +76,7 @@ ${STACKROOT_DIR}/libs/circbuf/circbuf-noos.c \
 ${STACKROOT_DIR}/libs/trace/trace-printf.c \
 ${STACKROOT_DIR}/objdicts/CiA401_CN/Objdict.c \
 ${STACKROOT_DIR}/stack/src/arch/altera_nios2/target-nios2.c \
+${STACKROOT_DIR}/stack/src/arch/altera_nios2/lock-localnoos.c \
 ${STACKROOT_DIR}/stack/src/common/debug.c \
 ${STACKROOT_DIR}/stack/src/common/errstring.c \
 ${STACKROOT_DIR}/stack/src/common/dll/dllcal-direct.c \
@@ -127,7 +128,8 @@ ${STACKROOT_DIR}/stack/src/user/sdo/sdo-asndu.c \
 ${STACKROOT_DIR}/stack/src/user/sdo/sdo-asysequ.c \
 ${STACKROOT_DIR}/stack/src/user/sdo/sdo-comu.c \
 ${STACKROOT_DIR}/stack/src/user/ledu.c \
+${STACKROOT_DIR}/examples/arch/altera_nios2/no_os/gnu/generic/lcd.c \
+${STACKROOT_DIR}/examples/arch/altera_nios2/no_os/gnu/generic/lcdl-16207.c \
 demo_main.c \
-lcd.c \
-Cmp_Lcd.c \
-systemComponents.c"
+systemComponents.c\
+"

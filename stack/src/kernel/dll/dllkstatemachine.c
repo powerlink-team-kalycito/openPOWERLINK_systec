@@ -183,6 +183,7 @@ tEplKernel dllk_changeState(tNmtEvent nmtEvent_p, tNmtState nmtState_p)
         case kNmtMsPreOperational2:
         case kNmtMsReadyToOperate:
         case kNmtMsOperational:
+            //printf("nmtState_p %x\n",nmtState_p);
             if ((ret = processNmtMsFullCycle(nmtState_p, nmtEvent_p, &dllEvent)) != kEplSuccessful)
                 return ret;
             break;
@@ -219,6 +220,7 @@ tEplKernel dllk_changeState(tNmtEvent nmtEvent_p, tNmtState nmtState_p)
             break;
 
         case kNmtMsPreOperational1:
+           // printf("Mspreop1\n");
             if ((ret = processNmtMsPreop1(nmtState_p, nmtEvent_p, &dllEvent)) != kEplSuccessful)
                 return ret;
             break;

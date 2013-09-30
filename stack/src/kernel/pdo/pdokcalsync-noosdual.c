@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <EplInc.h>
 #include <pdo.h>
 #include <kernel/pdokcal.h>
-
+#include <kernel/ctrlkcal.h>
 #include <dualprocshm.h>
 
 //============================================================================//
@@ -71,7 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-
+#define TARGET_SYNC_INTERRUPT_ID    1
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -79,12 +79,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
-static tDualprocDrvInstance pDrvInstance_l;
 
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-static tEplKernel enableSyncIrq(BOOL fEnable_p);
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -103,15 +101,7 @@ The function initializes the kernel PDO CAL sync module.
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_initSync(void)
 {
-    pDrvInstance_l = dualprocshm_getInstance(kDualProcPcp);
-
-    if(pDrvInstance_l == NULL)
-    {
-        EPL_DBGLVL_ERROR_TRACE("%s: Could not find dual proc driver instance!\n", __func__);
-        return kEplNoResource;
-    }
-
-    return enableSyncIrq(FALSE);
+    return ctrlkcal_enableIrq(TARGET_SYNC_INTERRUPT_ID, FALSE);
 }
 
 //------------------------------------------------------------------------------
@@ -125,13 +115,7 @@ The function cleans up the PDO CAL sync module
 //------------------------------------------------------------------------------
 void pdokcal_exitSync(void)
 {
-    if(pDrvInstance_l == NULL)
-    {
-        EPL_DBGLVL_ERROR_TRACE("%s: Could not find Driver instance!\n", __func__);
-        return;
-    }
-
-    enableSyncIrq(FALSE);
+    ctrlkcal_enableIrq(TARGET_SYNC_INTERRUPT_ID, FALSE);
 }
 
 //------------------------------------------------------------------------------
@@ -147,7 +131,7 @@ The function sends a sync event
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_sendSyncEvent(void)
 {
-    return kEplSuccessful;
+    return ctrlkcal_setIrq(TARGET_SYNC_INTERRUPT_ID,TRUE);
 }
 
 //------------------------------------------------------------------------------
@@ -165,40 +149,10 @@ The function enables sync events
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_controlSync(BOOL fEnable_p)
 {
-    if(pDrvInstance_l == NULL)
-    {
-        EPL_DBGLVL_ERROR_TRACE("%s: Could not find Driver instance!\n", __func__);
-        return kEplNoResource;
-    }
-
-    return enableSyncIrq(fEnable_p);
+    return  ctrlkcal_enableIrq(TARGET_SYNC_INTERRUPT_ID, fEnable_p);
 }
 
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
 //============================================================================//
 
-//------------------------------------------------------------------------------
-/**
-\brief  Enable sync interrupt source in host interface ipcore
-
-\param  fEnable_p               enable/disable sync interrupt source
-
-\return The function returns a tEplKernel error code.
-*/
-//------------------------------------------------------------------------------
-static tEplKernel enableSyncIrq(BOOL fEnable_p)
-{
-    tDualprocReturn dualRet;
-
-    dualRet = dualprocshm_irqSourceEnable(pDrvInstance_l, kDualprocIrqSrcSync, fEnable_p);
-
-    if(dualRet != kDualprocSuccessful)
-    {
-        EPL_DBGLVL_ERROR_TRACE("%s irq not possible (%d)!\n",
-                   fEnable_p ? "enable" : "disable", dualRet);
-        return kEplNoResource;
-    }
-
-    return kEplSuccessful;
-}

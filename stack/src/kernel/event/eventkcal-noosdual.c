@@ -227,11 +227,12 @@ This function will be called by the systems process function.
 //------------------------------------------------------------------------------
 void eventkcal_process(void)
 {
-    // TODO: gks: can user event processing be done here
+    // process user->kernel events
     if(eventkcal_getEventCountCircbuf(kEventQueueU2K) > 0)
     {
-       // printf("pk\n");
+       // EplTgtEnableGlobalInterrupt(FALSE);
         eventkcal_processEventCircbuf(kEventQueueU2K);
+      //  EplTgtEnableGlobalInterrupt(TRUE);
     }
 }
 //============================================================================//

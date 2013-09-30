@@ -1681,7 +1681,7 @@ static tEplKernel startBootStep1(BOOL fNmtResetAllIssued_p)
     tNmtMnuNodeInfo*    pNodeInfo;
 
     // $$$ d.k.: save current time for 0x1F89/2 MNTimeoutPreOp1_U32
-
+//printf("%s\n",__func__);
     // start network scan
     nmtMnuInstance_g.mandatorySlaveCount = 0;
     nmtMnuInstance_g.signalSlaveCount = 0;
@@ -1773,7 +1773,7 @@ static tEplKernel doPreop1(tEventNmtStateChange nmtStateChange_p)
     tEplEvent       event;
     BOOL            fNmtResetAllIssued = FALSE;
     tEplKernel      ret = kEplSuccessful;
-
+   // printf("%s\n",__func__);
     // reset IdentResponses and running IdentRequests and StatusRequests
     ret = identu_reset();
     ret = statusu_reset();
@@ -1861,7 +1861,7 @@ static tEplKernel startBootStep2(void)
     tEplObdSize         obdSize;
     UINT8               nmtState;
     tNmtState           expNmtState;
-
+   // printf("%s\n",__func__);
     if ((nmtMnuInstance_g.flags & NMTMNU_FLAG_HALTED) == 0)
     {   // boot process is not halted
         nmtMnuInstance_g.mandatorySlaveCount = 0;
@@ -1952,7 +1952,7 @@ static tEplKernel nodeBootStep2(UINT nodeId_p, tNmtMnuNodeInfo* pNodeInfo_p)
     UINT8               bNmtState;
     tNmtState           nmtState;
     tEplObdSize         obdSize;
-
+   // printf("%s\n",__func__);
     if (pNodeInfo_p->nodeCfg & EPL_NODEASSIGN_ASYNCONLY_NODE)
     {   // node is async-only
         // read object 0x1F8E NMT_MNNodeCurrState_AU8
@@ -2387,7 +2387,7 @@ static INT processNodeEventConfigured(UINT nodeId_p, tNmtState nodeNmtState_p, t
                                       UINT16 errorCode_p, tEplKernel* pRet_p)
 {
     tNmtMnuNodeInfo*    pNodeInfo;
-
+//printf("%s\n",__func__);
     UNUSED_PARAMETER(errorCode_p);
     UNUSED_PARAMETER(nodeNmtState_p);
 
@@ -2437,15 +2437,17 @@ INT processNodeEventNoIdentResponse(UINT nodeId_p, tNmtState nodeNmtState_p, tNm
 {
     tEplTimerArg        timerArg;
     tNmtMnuNodeInfo*    pNodeInfo;
-
+  //  printf("%s-%x-",__func__,nmtState_p);
     pNodeInfo = NMTMNU_GET_NODEINFO(nodeId_p);
 
     if ((nmtState_p == kNmtMsPreOperational1) &&
         ((pNodeInfo->flags & NMTMNU_NODE_FLAG_NOT_SCANNED) != 0))
     {
         // decrement only signal slave count
+
         nmtMnuInstance_g.signalSlaveCount--;
         pNodeInfo->flags &= ~NMTMNU_NODE_FLAG_NOT_SCANNED;
+      //  printf("%d\n",nmtMnuInstance_g.signalSlaveCount);
     }
 
     if ((pNodeInfo->nodeState != kNmtMnuNodeStateResetConf) &&
@@ -3008,7 +3010,7 @@ static tEplKernel processInternalEvent(UINT nodeId_p, tNmtState nodeNmtState_p,
     nmtState = nmtu_getNmtState();
     if (nmtState <= kNmtMsNotActive)        // MN is not active
         goto Exit;
-
+   // printf("%s-%x-%x\n",__func__,nmtState,nodeEvent_p);
     // call internal node event handler
     if (apfnNodeEventFuncs_l[nodeEvent_p](nodeId_p, nodeNmtState_p, nmtState, errorCode_p, &ret) < 0)
         goto Exit;
@@ -3016,6 +3018,7 @@ static tEplKernel processInternalEvent(UINT nodeId_p, tNmtState nodeNmtState_p,
     // check if network is ready to change local NMT state and this was not done before
     if ((nmtMnuInstance_g.flags & (NMTMNU_FLAG_HALTED | NMTMNU_FLAG_APP_INFORMED)) == 0)
     {   // boot process is not halted
+    //    printf("switch-%x\n",nmtMnuInstance_g.mandatorySlaveCount);
         switch (nmtState)
         {
             case kNmtMsPreOperational1:
@@ -3024,6 +3027,7 @@ static tEplKernel processInternalEvent(UINT nodeId_p, tNmtState nodeNmtState_p,
                 {   // all optional CNs scanned once and all mandatory CNs configured successfully
                     nmtMnuInstance_g.flags |= NMTMNU_FLAG_APP_INFORMED;
                     // inform application
+              //      printf("Hey hey\n");
                     ret = nmtMnuInstance_g.pfnCbBootEvent(kNmtBootEventBootStep1Finish,
                                                           nmtState, EPL_E_NO_ERROR);
                     if (ret != kEplSuccessful)
@@ -3034,6 +3038,7 @@ static tEplKernel processInternalEvent(UINT nodeId_p, tNmtState nodeNmtState_p,
                         break;
                     }
                     // enter PreOp2
+                 //   printf("AP Mspreop1\n");
                     ret = nmtu_postNmtEvent(kNmtEventAllMandatoryCNIdent);
                 }
                 break;

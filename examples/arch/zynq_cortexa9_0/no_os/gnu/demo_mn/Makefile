@@ -31,6 +31,12 @@ else
 endif
 
 ##################################
+# Specific for Zynq to enable prints
+ifeq ($(BOARD_NAME),zynq)
+	MACROS+= -D__ZYNQ__
+endif
+
+##################################
 #general compile defines
 
 ifeq ($(PROCESSOR_NAME),ps7_cortexa9_0)
@@ -53,7 +59,7 @@ PERL=xilperl
 EXECUTABLE=demo_mn
 LSSCRIPT=lscript_$(BOARD_NAME)_$(BUS_INTERFACE)_$(DESIGN).ld
 MACROS+=-D${DBG_MODE} -DDEF_DEBUG_LVL=${DEF_DEBUG_LVL} 
-CFLAGS=$(DEBUG_FLAG) -Wall -fmessage-length=0 ${MACROS} -D_AP_
+CFLAGS=$(DEBUG_FLAG) -Wall -fmessage-length=0 ${MACROS} -D__ZYNQ__
 CPPFLAGS=-MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)"
 LDFLAGS=-Wl,-T -Wl,${LSSCRIPT} -Wl,-Map,${EXECUTABLE}.map
 
@@ -77,12 +83,11 @@ BITSTREAM= download
 ##################################
 # Include directory
 INCLUDES=-I${APP_DIR} \
--I${APP_DIR}/sd_fat16 \
 -I${STACK_ROOT}/include \
 -I${STACK_ROOT}/libs/dualprocshm \
 -I${STACK_ROOT}/libs/circbuf \
 -I${STACK_ROOT}/libs/sharedbuff \
--I${STACK_ROOT}/stack/include/target/openmac \
+-I${STACK_ROOT}/libs \
 -I${STACK_ROOT}/stack/src \
 -I${STACK_ROOT}/objdicts/CiA302-4_MN \
 -I$(BSP_PATH)/${PROCESSOR_NAME}/include \
@@ -91,7 +96,6 @@ INCLUDES=-I${APP_DIR} \
 ##################################
 # Dependencies 
 DEPS = ${APP_DIR}/EplCfg.h \
-${APP_DIR}/mnobd.txt \
 ${APP_DIR}/makefile.settings \
 ${APP_DIR}/systemComponents.h \
 ${STACK_ROOT}/include \
@@ -105,20 +109,26 @@ $(BSP_PATH)/${PROCESSOR_NAME}
 ##################################
 # Source files
 
-SRCFILES=${STACK_ROOT}/libs/ami/amiarm.c \
-${STACK_ROOT}/libs/dualprocshm/dualprocshm-arm.c \
+SRCFILES=${STACK_ROOT}/examples/arch/zynq_cortexa9_0/no_os/gnu/demo_mn/systemComponents.c \
+${STACK_ROOT}/examples/arch/zynq_cortexa9_0/no_os/gnu/demo_mn/demo_main.c \
+${STACK_ROOT}/examples/demo_mn_console/event.c \
+${STACK_ROOT}/libs/sd_fat16/ff.c \
+${STACK_ROOT}/libs/sd_fat16/mmc.c \
+${STACK_ROOT}/libs/sd_fat16/fs_sdcard.c \
+${STACK_ROOT}/libs/ami/amiarm.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm-zynq.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-noos.c \
-${STACK_ROOT}/libs/dualprocshm/dualprocshm_l.c \
 ${STACK_ROOT}/libs/circbuf/circbuffer.c \
 ${STACK_ROOT}/libs/circbuf/circbuf-noosdual.c \
+${STACK_ROOT}/libs/console/printlog.c \
 ${STACK_ROOT}/libs/trace/trace-printf.c \
-${STACK_ROOT}/objdicts/CiA302-4_MN/EplApiProcessImageSetup.c \
+${STACK_ROOT}/stack/src/user/api/processimage-cia302.c \
 ${STACK_ROOT}/objdicts/CiA302-4_MN/Objdict.c \
 ${STACK_ROOT}/stack/src/arch/xilinx_arm/target_arm.c \
-${STACK_ROOT}/stack/src/common/event/event.c \
 ${STACK_ROOT}/stack/src/common/timer/timer-generic.c \
 ${STACK_ROOT}/stack/src/common/debug.c \
 ${STACK_ROOT}/stack/src/common/errstring.c \
+${STACK_ROOT}/stack/src/common/event/event.c \
 ${STACK_ROOT}/stack/src/user/api/generic.c \
 ${STACK_ROOT}/stack/src/user/api/processimage.c \
 ${STACK_ROOT}/stack/src/user/ctrl/ctrlu.c \
@@ -147,16 +157,14 @@ ${STACK_ROOT}/stack/src/user/sdo/sdo-asndu.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-asysequ.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-comu.c \
 ${STACK_ROOT}/stack/src/user/cfmu.c \
-${STACK_ROOT}/stack/src/user/ledu.c \
-${APP_DIR}/systemComponents.c \
-${APP_DIR}/demo_main.c \
-${APP_DIR}/sd_fat16/ff.c \
-${APP_DIR}/sd_fat16/mmc.c \
-${APP_DIR}/sd_fat16/fs_sdcard.c 
+${STACK_ROOT}/stack/src/user/ledu.c 
 
+#${STACK_ROOT}/libs/console/printlog.c \
 LIBRARIES = libxil.a
 
-VPATH=$(sort $(patsubst " ", :, $(dir $(SRCFILES))))
+SRC_DIR = $(subst ${STACK_ROOT},,$(SRCFILES))
+SRC_FILES = $(subst ./,,$(SRC_DIR))
+VPATH=$(sort $(patsubst " ", :, $(dir $(SRC_FILES))))
 
 ###################################
 # set Optimization level macro
@@ -199,11 +207,15 @@ LIBS=-Wl,--start-group,-lxil,-lc -W1,--end-group
 
 ###################################
 # objects
-OBJ = $(addprefix $(OBJDIR)/,$(notdir $(patsubst %.c, %.o, $(SRCFILES))))
-OBJD = $(addprefix $(OBJDIR)/,$(notdir $(patsubst %.c, %.d, $(SRCFILES))))
+# objects
+
+
+OBJ = $(addprefix $(OBJDIR)/,$(patsubst %.c, %.o, $(SRC_FILES)))
+OBJD = $(addprefix $(OBJDIR)/,$(patsubst %.c, %.d, $(SRC_FILES)))
 
 OUTPUT_OPTION = -o $@
 
+	
 CFLAGS += ${INCLUDES}
 
 .PHONY:	header
@@ -244,14 +256,13 @@ application: builddir ${EXECUTABLE}.elf ${EXECUTABLE}.size ${EXECUTABLE}.elfchec
 .PHONY: builddir
 builddir:
 	$(shell mkdir $(OBJDIR))
-
-$(OBJDIR)/%.o: %.c $(DEPS)
-	@echo Building file: $<
-	@echo Invoking: ARM gcc compiler
+	
+$(OBJDIR)/%.o: ${STACK_ROOT}%.c $(DEPS)
+	@echo Building file Stack: $<
+	@$(shell mkdir $(subst /,\,$(@D)))
 	$(CC) -c ${OPT_LEVEL} $(CFLAGS) $(CPPFLAGS) $< $(OUTPUT_OPTION)
 	@echo Finished building: $<
 	@echo ' '
-
 # extra rule for usleep to set opt level to zero
 $(OBJDIR)/xilinx_usleep.o: xilinx_usleep.c xilinx_usleep.h $(BSP_PATH)/$(PROCESSOR_NAME)
 	@echo Building file: $<
@@ -305,6 +316,7 @@ clean_sw:
 	-@echo "Cleaning software parts..."
 	 @touch $(EXECUTABLE)
 	-${RM} -rf $(EXECUTABLE).* $(OBJ) $(OBJD)
+	 ${RM} -rf $(OBJDIR)
 	-@echo ' '
 
 .PHONY: clean_hw

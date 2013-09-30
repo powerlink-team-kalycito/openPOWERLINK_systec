@@ -161,6 +161,7 @@
 
     #elif defined (__MICROBLAZE__)
         #define TARGET_SYSTEM   _NO_OS_
+
         // Microblaze could be either big or little endian
         #if (__BIG_ENDIAN__ == 1)
             #define DEV_SYSTEM      _DEV_MICROBLAZE_BIG_
@@ -565,7 +566,7 @@ typedef int (*INTFUNCPTR)(void);
 //  definition of TRACE
 //---------------------------------------------------------------------------
 #ifndef NDEBUG
-    #define TRACE(...) trace(__VA_ARGS__)
+    #define TRACE(...) printf(__VA_ARGS__)
     #ifdef __cplusplus
         extern "C"
         {

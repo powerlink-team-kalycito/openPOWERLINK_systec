@@ -271,6 +271,7 @@ tEplKernel nmtk_process(tEplEvent* pEvent_p)
     oldState = nmtkInstance_g.stateIndex;
 
     // process NMT-State-Maschine
+  //  printf("%s-%x\n",__func__,nmtEvent);
     ret = nmtkStates_g[nmtkInstance_g.stateIndex].pfnState(nmtEvent);
 
     // inform higher layer about State-Change if needed
@@ -323,8 +324,10 @@ The function processes the NMT state GS_OFF.
 //------------------------------------------------------------------------------
 static tEplKernel doStateGsOff(tNmtEvent nmtEvent_p)
 {
+        //printf("%s\n",__func__);
     if (nmtEvent_p == kNmtEventSwReset)
     {   // NMT_GT8, NMT_GT1 -> new state kNmtGsInitialising
+
         nmtkInstance_g.stateIndex = kNmtkGsInitialising;
     }
     return kEplSuccessful;
@@ -344,6 +347,7 @@ In this state the first init of the hardware will be done.
 //------------------------------------------------------------------------------
 static tEplKernel doStateGsInitialising(tNmtEvent nmtEvent_p)
 {
+      //  printf("%s\n",__func__);
     switch(nmtEvent_p)
     {
         // 2006/07/31 d.k.: react also on NMT reset commands in ResetApp state
@@ -394,6 +398,7 @@ static tEplKernel doStateGsResetApplication(tNmtEvent nmtEvent_p)
         // NMT Command SwReset
         case kNmtEventSwReset:
             // NMT_GT8
+          //  printf("kNmtEventSwReset");
             nmtkInstance_g.stateIndex = kNmtkGsInitialising;
             break;
 
@@ -1146,6 +1151,7 @@ In this state the MN processes the reduced POWERLINK cycle.
 //------------------------------------------------------------------------------
 static tEplKernel doStateMsPreOperational1(tNmtEvent nmtEvent_p)
 {
+    //    printf("%s - %x\n",__func__,nmtEvent_p);
     switch(nmtEvent_p)
     {
         // NMT Command SwitchOff

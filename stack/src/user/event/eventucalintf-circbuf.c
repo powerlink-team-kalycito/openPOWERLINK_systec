@@ -211,7 +211,7 @@ tEplKernel eventucal_exitQueueCircbuf (tEventQueue eventQueue_p)
 
 This function posts an event to the provided queue instance.
 
-\param  pEventQueue_p           Pointer to event queue instance
+\param  eventQueue_p            Event queue to which the event should be posted.
 \param  pEvent_p                Pointer to event
 
 \return The function returns a tEplKernel error code.
@@ -364,12 +364,15 @@ static tEplKernel postEvent (tCircBufInstance* pCircBufInstance_p, tEplEvent *pE
 
     if (pEvent_p->m_uiSize == 0)
     {
+           // printf("write\n");
         circError = circbuf_writeData(pCircBufInstance_p, pEvent_p, sizeof(tEplEvent));
     }
     else
     {
+        //    printf("write\n");
         circError = circbuf_writeMultipleData(pCircBufInstance_p, pEvent_p, sizeof(tEplEvent),
                                         pEvent_p->m_pArg, (ULONG)pEvent_p->m_uiSize);
+        //printf("writeafter\n");
     }
     if(circError != kCircBufOk)
     {

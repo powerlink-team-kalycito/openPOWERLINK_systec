@@ -11,19 +11,9 @@
 #       For release DBG_MODE=NDEBUG
 
 ##################################
-# Settings for Debugging
-#DBG_MODE=_DEBUG
-#OPT_LEVEL=-O0
-
-##################################
-# Settings for Debugging with optimized compilation
-DBG_MODE=_DEBUG
-OPT_LEVEL=-O2
-
-##################################
 # Settings for Release
-#DBG_MODE=NDEBUG
-#OPT_LEVEL=-O2
+DBG_MODE=NDEBUG
+OPT_LEVEL=-O2
 
 ##################################
 # DEF_DEBUG_LVL = [
@@ -35,12 +25,23 @@ DEF_DEBUG_LVL=0xEC000000L
 ################################################################################
 
 ##################################
+# FPGA download cable
+DOWNLOAD_CABLE="USB-Blaster [USB-0]"
+
+##################################
 # Name of M9K for tightly-coupled memory
 TC_I_MEM=host_0_tc_i_mem
 
 ##################################
+# Name of Qsys subsystem and CPU
+QSYS_SUB=host_0
+QSYS_SUB_CPU=cpu_1
+
+##################################
 # Relative path to openPOWERLINK root directory
-STACKROOT_DIR=../../../../../..
+# (Is converted to absolute)
+STACKROOT_REL_DIR=../../../../../..
+STACKROOT_DIR=`readlink -n -f ${STACKROOT_REL_DIR}`
 
 ##################################
 # Relative path to bsp
@@ -57,20 +58,25 @@ INCLUDES=". \
 ${STACKROOT_DIR}/include \
 ${STACKROOT_DIR}/libs/hostif \
 ${STACKROOT_DIR}/objdicts/CiA302-4_MN \
+${STACKROOT_DIR}/stack/src/arch/altera_nios2 \
 ${STACKROOT_DIR}/stack/src"
 
 ##################################
 # Source files
-SRCFILES="demo_main.c \
+SRCFILES="\
+demo_main.c \
+${STACKROOT_DIR}/examples/demo_mn_console/event.c \
+${STACKROOT_DIR}/libs/console/printlog.c \
 ${STACKROOT_DIR}/libs/ami/amiarm.c \
 ${STACKROOT_DIR}/libs/hostif/hostiflib.c \
 ${STACKROOT_DIR}/libs/hostif/hostiflib_l.c \
 ${STACKROOT_DIR}/libs/hostif/lfqueue.c \
 ${STACKROOT_DIR}/libs/hostif/linmem.c \
 ${STACKROOT_DIR}/libs/trace/trace-printf.c \
-${STACKROOT_DIR}/objdicts/CiA302-4_MN/EplApiProcessImageSetup.c \
+${STACKROOT_DIR}/stack/src/user/api/processimage-cia302.c \
 ${STACKROOT_DIR}/objdicts/CiA302-4_MN/Objdict.c \
 ${STACKROOT_DIR}/stack/src/arch/altera_nios2/target-nios2.c \
+${STACKROOT_DIR}/stack/src/arch/altera_nios2/lock-dualprocnoos.c \
 ${STACKROOT_DIR}/stack/src/common/dll/dllcal-hostif.c \
 ${STACKROOT_DIR}/stack/src/common/event/event.c \
 ${STACKROOT_DIR}/stack/src/common/timer/timer-generic.c \
@@ -103,4 +109,5 @@ ${STACKROOT_DIR}/stack/src/user/sdo/sdo-asndu.c \
 ${STACKROOT_DIR}/stack/src/user/sdo/sdo-asysequ.c \
 ${STACKROOT_DIR}/stack/src/user/sdo/sdo-comu.c \
 ${STACKROOT_DIR}/stack/src/user/cfmu.c \
-${STACKROOT_DIR}/stack/src/user/ledu.c"
+${STACKROOT_DIR}/stack/src/user/ledu.c \
+"

@@ -75,7 +75,7 @@
 #include "EplInc.h"
 #include "EplSdo.h"
 #include "EplObd.h"
-#include "EplLed.h"
+#include "led.h"
 #include "cfm.h"
 #include "event.h"
 
@@ -122,7 +122,7 @@ typedef struct
 
 typedef struct
 {
-    tEplLedType         m_LedType;      // type of the LED (e.g. Status or Error)
+    tLedType            m_LedType;      // type of the LED (e.g. Status or Error)
     BOOL                m_fOn;          // state of the LED (e.g. on or off)
 
 } tEplApiEventLed;
@@ -290,149 +290,75 @@ typedef struct
 
 } tEplApiProcessImageCopyJob;
 
-typedef struct
-{
-    tEplApiInitParam    m_InitParam;
-
-#if (EPL_OBD_USE_LOAD_CONCISEDCF != FALSE)
-    BYTE*               m_pbCdc;
-    unsigned int        m_uiCdcSize;
-    char*               m_pszCdcFilename;
-#endif
-
-} tEplApiInstance;
-
-typedef struct {
-    tEplKernel (PUBLIC* pfnCbCnCheckEvent)  (tNmtEvent NmtEvent_p);
-
-    tEplKernel (PUBLIC* pfnCbNmtStateChange)(tEventNmtStateChange NmtStateChange_p);
-
-    tEplKernel (PUBLIC* pfnCbNodeEvent)     (unsigned int uiNodeId_p, tNmtNodeEvent NodeEvent_p,
-                                            tNmtState NmtState_p, WORD wErrorCode_p,
-                                            BOOL fMandatory_p);
-
-    tEplKernel (PUBLIC* pfnCbBootEvent)     (tNmtBootEvent BootEvent_p, tNmtState NmtState_p,
-                                            WORD wErrorCode_p);
-
-    tEplKernel (PUBLIC* pfnCbCfmProgress)   (tCfmEventCnProgress* pEventCnProgress_p);
-
-    tEplKernel (PUBLIC* pfnCbCfmResult)     (unsigned int uiNodeId_p, tNmtNodeCommand NodeCommand_p);
-
-    tEplKernel (PUBLIC* pfnCbProcessEvent)  (tEplEvent* pEplEvent_p);
-
-    tEplKernel (PUBLIC* pfnCbLedStateChange)(tEplLedType LedType_p, BOOL fOn_p);
-} tEplApiCbFuncs;
-
 //---------------------------------------------------------------------------
 // function prototypes
 //---------------------------------------------------------------------------
 
-EPLDLLEXPORT tEplKernel PUBLIC EplApiInitialize(tEplApiInitParam* pInitParam_p);
+//------------------------------------------------------------------------------
+// Compatibility macros for old API function names - to be removed in future versions!!
+#define EplApiInitialize                oplk_init
+#define EplApiShutdown                  oplk_shutdown
+#define EplApiExecNmtCommand            oplk_execNmtCommand
+#define EplApiLinkObject                oplk_linkObject
+#define EplApiReadObject                oplk_readObject
+#define EplApiWriteObject               oplk_writeObject
+#define EplApiFreeSdoChannel            oplk_freeSdoChannel
+#define EplApiAbortSdo                  oplk_abortSdo
+#define EplApiReadLocalObject           oplk_readLocalObject
+#define EplApiWriteLocalObject          oplk_writeLocalObject
+#define EplApiSendAsndFrame             oplk_sendAsndFrame
+#define EplApiSetAsndForward            oplk_setAsndForward
+#define EplApiPostUserEvent             oplk_postUserEvent
+#define EplApiMnTriggerStateChange      oplk_triggerMnStateChange
+#define EplApiSetCdcBuffer              oplk_setCdcBuffer
+#define EplApiSetCdcFilename            oplk_setCdcFilename
+#define EplApiProcess                   oplk_process
+#define EplApiGetIdentResponse          oplk_getIdentResponse
 
-EPLDLLEXPORT tEplKernel PUBLIC EplApiShutdown(void);
+#define EplApiProcessImageFree          oplk_freeProcessImage
+#define EplApiProcessImageAlloc         oplk_allocProcessImage
+#define EplApiProcessImageLinkObject    oplk_linkProcessImageObject
+//------------------------------------------------------------------------------
 
-EPLDLLEXPORT tEplKernel PUBLIC EplApiReadObject(
-            tEplSdoComConHdl* pSdoComConHdl_p,
-            unsigned int      uiNodeId_p,
-            unsigned int      uiIndex_p,
-            unsigned int      uiSubindex_p,
-            void*             pDstData_le_p,
-            unsigned int*     puiSize_p,
-            tEplSdoType       SdoType_p,
-            void*             pUserArg_p);
+// Generic API functions
+EPLDLLEXPORT tEplKernel oplk_init(tEplApiInitParam* pInitParam_p);
+EPLDLLEXPORT tEplKernel oplk_shutdown(void);
+EPLDLLEXPORT tEplKernel oplk_execNmtCommand(tNmtEvent NmtEvent_p);
+EPLDLLEXPORT tEplKernel oplk_linkObject(UINT objIndex_p, void* pVar_p, UINT* pVarEntries_p,
+                                        tEplObdSize* pEntrySize_p, UINT firstSubindex_p);
+EPLDLLEXPORT tEplKernel oplk_readObject(tEplSdoComConHdl* pSdoComConHdl_p, UINT  nodeId_p, UINT index_p,
+                                        UINT subindex_p, void* pDstData_le_p, UINT* pSize_p,
+                                        tEplSdoType sdoType_p, void* pUserArg_p);
+EPLDLLEXPORT tEplKernel oplk_writeObject(tEplSdoComConHdl* pSdoComConHdl_p, UINT nodeId_p, UINT index_p,
+                                         UINT subindex_p, void* pSrcData_le_p, UINT size_p,
+                                         tEplSdoType sdoType_p, void* pUserArg_p);
+EPLDLLEXPORT tEplKernel oplk_freeSdoChannel(tEplSdoComConHdl sdoComConHdl_p);
+EPLDLLEXPORT tEplKernel oplk_abortSdo(tEplSdoComConHdl sdoComConHdl_p, UINT32 abortCode_p);
+EPLDLLEXPORT tEplKernel oplk_readLocalObject(UINT index_p, UINT subindex_p, void* pDstData_p, UINT* pSize_p);
+EPLDLLEXPORT tEplKernel oplk_writeLocalObject(UINT index_p, UINT subindex_p, void* pSrcData_p, UINT size_p);
+EPLDLLEXPORT tEplKernel oplk_sendAsndFrame(UINT8 dstNodeId_p, tEplAsndFrame *pAsndFrame_p, size_t asndSize_p);
+EPLDLLEXPORT tEplKernel oplk_setAsndForward(UINT8 serviceId_p, tEplApiAsndFilter FilterType_p);
+EPLDLLEXPORT tEplKernel oplk_postUserEvent(void* pUserArg_p);
+EPLDLLEXPORT tEplKernel oplk_triggerMnStateChange(UINT nodeId_p, tNmtNodeCommand nodeCommand_p);
+EPLDLLEXPORT tEplKernel oplk_setCdcBuffer(BYTE* pbCdc_p, UINT cdcSize_p);
+EPLDLLEXPORT tEplKernel oplk_setCdcFilename(char* pszCdcFilename_p);
+EPLDLLEXPORT tEplKernel oplk_process(void);
+EPLDLLEXPORT tEplKernel oplk_getIdentResponse(UINT nodeId_p, tEplIdentResponse** ppIdentResponse_p);
+EPLDLLEXPORT BOOL       oplk_checkKernelStack(void);
+EPLDLLEXPORT tEplKernel oplk_waitSyncEvent(ULONG timeout_p);
 
-EPLDLLEXPORT tEplKernel PUBLIC EplApiWriteObject(
-            tEplSdoComConHdl* pSdoComConHdl_p,
-            unsigned int      uiNodeId_p,
-            unsigned int      uiIndex_p,
-            unsigned int      uiSubindex_p,
-            void*             pSrcData_le_p,
-            unsigned int      uiSize_p,
-            tEplSdoType       SdoType_p,
-            void*             pUserArg_p);
+// Process image API functions
+EPLDLLEXPORT tEplKernel oplk_allocProcessImage(UINT sizeProcessImageIn_p, UINT sizeProcessImageOut_p);
+EPLDLLEXPORT tEplKernel oplk_freeProcessImage(void);
+EPLDLLEXPORT tEplKernel oplk_linkProcessImageObject(UINT objIndex_p, UINT firstSubindex_p, UINT offsetPI_p,
+                                                    BOOL fOutputPI_p, tEplObdSize entrySize_p, UINT* pVarEntries_p);
+EPLDLLEXPORT tEplKernel oplk_exchangeProcessImageIn(void);
+EPLDLLEXPORT tEplKernel oplk_exchangeProcessImageOut(void);
+EPLDLLEXPORT void*      oplk_getProcessImageIn(void);
+EPLDLLEXPORT void*      oplk_getProcessImageOut(void);
 
-EPLDLLEXPORT tEplKernel PUBLIC EplApiFreeSdoChannel(
-            tEplSdoComConHdl SdoComConHdl_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiAbortSdo(
-            tEplSdoComConHdl SdoComConHdl_p,
-            DWORD            dwAbortCode_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiReadLocalObject(
-            unsigned int      uiIndex_p,
-            unsigned int      uiSubindex_p,
-            void*             pDstData_p,
-            unsigned int*     puiSize_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiWriteLocalObject(
-            unsigned int      uiIndex_p,
-            unsigned int      uiSubindex_p,
-            void*             pSrcData_p,
-            unsigned int      uiSize_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiCbObdAccess(tEplObdCbParam MEM* pParam_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiLinkObject( unsigned int    uiObjIndex_p,
-                                    void*           pVar_p,
-                                    unsigned int*   puiVarEntries_p,
-                                    tEplObdSize*    pEntrySize_p,
-                                    unsigned int    uiFirstSubindex_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiExecNmtCommand(tNmtEvent NmtEvent_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiProcess(void);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiPostUserEvent(void* pUserArg_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiSendAsndFrame
-(
-    BYTE            bDstNodeId_p,
-    tEplAsndFrame   *pAsndFrame_p,
-    size_t          uiAsndSize_p
-);
-
-tEplKernel PUBLIC EplApiSetAsndForward
-(
-    BYTE                bServiceId_p,
-    tEplApiAsndFilter   FilterType_p
-);
-
-
-#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_NMT_MN)) != 0)
-EPLDLLEXPORT tEplKernel PUBLIC EplApiMnTriggerStateChange(unsigned int uiNodeId_p,
-                                             tNmtNodeCommand  NodeCommand_p);
-#endif
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiGetIdentResponse(
-                                    unsigned int        uiNodeId_p,
-                                    tEplIdentResponse** ppIdentResponse_p);
-
-EPLDLLEXPORT tEplKernel PUBLIC EplApiSetCdcBuffer(BYTE* pbCdc_p, unsigned int uiCdcSize_p);
-EPLDLLEXPORT tEplKernel PUBLIC EplApiSetCdcFilename(char* pszCdcFilename_p);
-
-// functions for process image are implemented in separate file
-EPLDLLEXPORT tEplKernel PUBLIC api_processImageAlloc(
-    unsigned int uiSizeProcessImageIn_p,
-    unsigned int uiSizeProcessImageOut_p);
-EPLDLLEXPORT tEplKernel PUBLIC api_processImageFree(void);
-EPLDLLEXPORT tEplKernel PUBLIC api_processImageExchangeOut(void);
-EPLDLLEXPORT tEplKernel PUBLIC api_processImageExchangeIn(void);
-EPLDLLEXPORT tEplKernel PUBLIC api_processImageLinkObject(
-    unsigned int    uiObjIndex_p,
-    unsigned int    uiFirstSubindex_p,
-    unsigned int    uiOffsetPI_p,
-    BOOL            fOutputPI_p,
-    tEplObdSize     EntrySize_p,
-    unsigned int*   puiVarEntries_p);
-
-// objdict specific setup function
-EPLDLLEXPORT tEplKernel PUBLIC EplApiProcessImageSetup(void);
-
-EPLDLLEXPORT void * PUBLIC api_processImageGetInputImage(void);
-EPLDLLEXPORT void * PUBLIC api_processImageGetOutputImage(void);
-
-EPLDLLEXPORT BOOL PUBLIC api_checkKernelStack(void);
-EPLDLLEXPORT tEplKernel PUBLIC api_waitSyncEvent(ULONG timeout_p);
+// objdict specific process image functions
+EPLDLLEXPORT tEplKernel oplk_setupProcessImage(void);
 
 // functions for getting cleartext values of stack states and events
 EPLDLLEXPORT char* EplGetNmtEventStr(tNmtEvent nmtEvent_p);
@@ -451,6 +377,8 @@ EPLDLLEXPORT const char* EplGetEmergErrCodeStr( WORD EmergErrCode_p);
 EPLDLLEXPORT tEplKernel target_init(void);
 EPLDLLEXPORT tEplKernel target_cleanup(void);
 EPLDLLEXPORT void target_msleep(UINT32 milliSeconds_p);
+EPLDLLEXPORT int target_regSyncIrqHdl( void* callback_p,void* pArg_p);
+EPLDLLEXPORT void target_enableSyncIrq(BOOL fEnable_p);
 
 #ifdef __cplusplus
     }

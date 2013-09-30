@@ -85,7 +85,6 @@ BITSTREAM= download
 # Include directory
 INCLUDES=-I${APP_DIR} \
 -I${STACK_ROOT}/include \
--I${STACK_ROOT}/include/kernel \
 -I${STACK_ROOT}/libs/dualprocshm \
 -I${STACK_ROOT}/libs/circbuf \
 -I${STACK_ROOT}/libs/omethlib \
@@ -100,9 +99,8 @@ SRCFILES=${STACK_ROOT}/libs/omethlib/omethlib.c \
 ${STACK_ROOT}/libs/omethlib/omethlibint.c \
 ${STACK_ROOT}/libs/omethlib/omethlib_phycfg_generic.c \
 ${STACK_ROOT}/libs/trace/trace-printf.c \
-${STACK_ROOT}/libs/dualprocshm/dualprocshm-microblaze.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm-zynq.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-noos.c \
-${STACK_ROOT}/libs/dualprocshm/dualprocshm_l.c \
 ${STACK_ROOT}/libs/circbuf/circbuffer.c \
 ${STACK_ROOT}/libs/circbuf/circbuf-noosdual.c \
 ${STACK_ROOT}/stack/src/arch/xilinx_microblaze/xilinx_irq.c \
@@ -119,7 +117,7 @@ ${STACK_ROOT}/stack/src/kernel/dll/dllkstatemachine.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllkframe.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllkevent.c \
 ${STACK_ROOT}/stack/src/kernel/dll/dllkcal.c \
-${STACK_ROOT}/stack/src/common/dll/dllkcal-circbuf.c \
+${STACK_ROOT}/stack/src/kernel/dll/dllkcal-circbuf.c \
 ${STACK_ROOT}/stack/src/kernel/edrv/edrvcyclic-openmac.c \
 ${STACK_ROOT}/stack/src/kernel/edrv/edrv-openmac.c \
 ${STACK_ROOT}/stack/src/kernel/errhnd/errhndk.c \
@@ -137,13 +135,13 @@ ${STACK_ROOT}/stack/src/kernel/pdo/pdokcalsync-noosdual.c \
 ${STACK_ROOT}/stack/src/kernel/timestamp/timestamp-openmac.c \
 ${APP_DIR}/daemon.c \
 ${APP_DIR}/systemComponents.c 
+
 #####################################
 # Dependencies
 DEPS = ${APP_DIR}/EplCfg.h \
 ${APP_DIR}/makefile.settings \
 ${APP_DIR}/systemComponents.h \
 ${STACK_ROOT}/include \
-${STACK_ROOT}/libs/hostif \
 ${STACK_ROOT}/libs/sharedbuff \
 ${STACK_ROOT}/stack/include/target/openmac \
 ${STACK_ROOT}/stack/src \
@@ -296,6 +294,7 @@ clean_sw:
 	-@echo "Cleaning software parts..."
 	@touch $(EXECUTABLE)
 	-${RM} -rf $(EXECUTABLE).* $(OBJ) $(OBJD)
+	 ${RM} -rf $(OBJDIR)
 	-@echo ' '
 
 .PHONY: clean_hw

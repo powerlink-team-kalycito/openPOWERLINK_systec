@@ -71,15 +71,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-
+#define DUALPROCSHM_BUFF_ID_PDO     8
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
 typedef struct
 {
     tDualprocDrvInstance    pDrvInstance;
-    BYTE*                   pBase;
-    WORD                    span;
 } tMemInstance;
 
 //------------------------------------------------------------------------------
@@ -109,25 +107,16 @@ starting of the stack.
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_openMem(void)
 {
-    tDualprocReturn dualRet;
-    tDualprocDrvInstance pInstance = dualprocshm_getInstance(kDualProcPcp);
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcPcp);
 
     if(pInstance == NULL)
     {
-        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Pcp dual proc driver instance\n",
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get PCP dual proc driver instance\n",
                 __func__);
         return kEplNoResource;
     }
 
     memPdo_l.pDrvInstance = pInstance;
-
-    dualRet = dualprocshm_getDynRes(pInstance, kDualprocResIdPdo, &memPdo_l.pBase, &memPdo_l.span );
-    if(dualRet != kDualprocSuccessful)
-    {
-        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Pdo buffer details (%d)\n",
-                __func__, dualRet);
-        return kEplNoResource;
-    }
 
     return kEplSuccessful;
 }
@@ -146,10 +135,8 @@ shutdown.
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_closeMem(void)
 {
-    memPdo_l.pBase = NULL;
     memPdo_l.pDrvInstance = NULL;
-    memPdo_l.span = 0;
-    EPL_MEMSET(&memPdo_l, 0, sizeof(memPdo_l));
+    return kEplSuccessful;
 
     return kEplSuccessful;
 }
@@ -170,14 +157,16 @@ The function allocates shared memory for the kernel needed to transfer the PDOs.
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_allocateMem(size_t memSize_p, BYTE** ppPdoMem_p)
 {
-    if(memSize_p > memPdo_l.span)
+    tDualprocReturn dualRet;
+
+    dualRet = dualprocshm_getMemory(memPdo_l.pDrvInstance, \
+                                    DUALPROCSHM_BUFF_ID_PDO,ppPdoMem_p,&memSize_p,TRUE);
+    if(dualRet != kDualprocSuccessful)
     {
-        EPL_DBGLVL_ERROR_TRACE("%s() out of memory (%d > %d)\n",
-                __func__, memSize_p, memPdo_l.span);
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't allocate Pdo buffer (%d)\n",
+                __func__, dualRet);
         return kEplNoResource;
     }
-
-    *ppPdoMem_p = memPdo_l.pBase;
 
     return kEplSuccessful;
 }
@@ -199,11 +188,22 @@ transferring the PDOs.
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_freeMem(BYTE* pMem_p, size_t memSize_p)
 {
+    tDualprocReturn dualRet;
+
     UNUSED_PARAMETER(pMem_p);
     UNUSED_PARAMETER(memSize_p);
 
-    TRACE("%s() try to free address %p (%p)\n",
-            __func__, pMem_p, memPdo_l.pBase);
+    TRACE("%s() try to free address %p\n",
+            __func__, pMem_p);
+
+
+    dualRet = dualprocshm_freeMemory(memPdo_l.pDrvInstance, DUALPROCSHM_BUFF_ID_PDO,TRUE);
+    if(dualRet != kDualprocSuccessful)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't free Pdo buffer (%d)\n",
+                __func__, dualRet);
+        return kEplNoResource;
+    }
 
     return kEplSuccessful;
 }

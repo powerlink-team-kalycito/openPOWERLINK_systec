@@ -82,49 +82,6 @@ typedef enum eDualProcInstance
 } tDualProcInstance;
 
 /**
-\brief Interrupt source
-
-The enum determines the address interrupt source
-*/
-typedef enum eDualprocIrqSrc
-{
-    kDualprocIrqSrcSync       = 0,        ///< sync irq
-    kDualprocIrqSrcEvent      = 1,        ///< event irq
-    kDualprocIrqSrcAsyncTx    = 2,        ///< async tx irq
-    kDualprocIrqSrcAsyncRx    = 3,        ///< async rx irq
-    kDualprocIrqSrcLast                   ///< last entry in enum
-} tDualprocIrqSrc;
-
-/**
-\brief Function type definition for interrupt callback
-
-This function callback is called for a given interrupt source, registered by the
-host.
-*/
-typedef void (*tDualprocIrqCb) (void *pArg_p);
-
-/**
-\brief Resource Id
-
-The Resource ids for the resources.
-*/
-typedef enum eDualprocResourceId
-{
-    kDualprocResIdDynBuff0 = 0,   ///< dynamic buffer 1
-    kDualprocResIdDynBuff1,       ///< dynamic buffer 2
-    kDualprocResIdErrCount ,      ///< error counters
-    kDualprocResIdTxNmtQueue,     ///< NMT TX queue
-    kDualprocResIdTxGenQueue,     ///< generic TX queue
-    kDualprocResIdTxSyncQueue,    ///< sync TX queue
-    kDualprocResIdTxVethQueue,    ///< VEth TX queue
-    kDualprocResIdRxVethQueue,    ///< VEth RX queue
-    kDualprocResIdK2UQueue,       ///< K2U Queue
-    kDualprocResIdU2KQueue,       ///< U2K Queue
-    kDualprocResIdPdo,            ///< Pdo
-    kDualprocResIdLast            ///< last instance id
-} tDualprocResourceId;
-
-/**
 \brief Driver instance configuration
 
 Configures the driver instance.
@@ -132,13 +89,24 @@ Configures the driver instance.
 typedef struct sDualprocConfig
 {
     tDualProcInstance   ProcInstance; ///< Processor instance (Pcp/Host)
+    UINT16              commMemSize;  ///< minimum size of common memory
+    UINT8               procId;
 
 } tDualprocConfig;
+
+typedef struct sDualprocMemInst
+{
+    UINT16     span;   ///< span of the dynamic buffer
+    UINT8      lock;   ///< lock for memory
+    UINT8      resv;   ///< reserved byte;
+}tDualprocMemInst;
+
 
 /**
 \brief Driver Instance
 */
 typedef void* tDualprocDrvInstance;
+
 
 //------------------------------------------------------------------------------
 // function prototypes
@@ -150,31 +118,23 @@ extern "C" {
 
 tDualprocReturn dualprocshm_create (tDualprocConfig *pConfig_p, tDualprocDrvInstance *ppInstance_p);
 tDualprocReturn dualprocshm_delete (tDualprocDrvInstance pInstance_p);
-tDualprocDrvInstance dualprocshm_getInstance (tDualProcInstance Instance_p);
+tDualprocDrvInstance dualprocshm_getDrvInst (tDualProcInstance Instance_p);
+tDualprocReturn dualprocshm_getMemory(tDualprocDrvInstance pInstance_p, UINT8 Id_p,
+                                      UINT8 **ppAddr_p, size_t *pSize_p, BOOL fAlloc_p);
+tDualprocReturn dualprocshm_freeMemory(tDualprocDrvInstance pInstance_p, UINT8 Id_p,
+                                                                    BOOL fFree_p);
+tDualprocReturn dualprocshm_writeData(tDualprocDrvInstance pInstance_p, UINT8 Id_p,
+                                        UINT32 offset_p,size_t Size_p, UINT8* pData_p);
+tDualprocReturn dualprocshm_readData(tDualprocDrvInstance pInstance_p, UINT8 Id_p,
+                                        UINT32 offset_p,size_t Size_p, UINT8* pData_p);
+tDualprocReturn dualprocshm_readDataCommon(tDualprocDrvInstance pInstance_p,UINT32 offset_p,
+                                                            size_t Size_p,UINT8* pData_p);
+tDualprocReturn dualprocshm_writeDataCommon(tDualprocDrvInstance pInstance_p,UINT32 offset_p,
+                                                            size_t  Size_p, UINT8* pData_p);
 
-tDualprocReturn dualprocshm_process (tDualprocDrvInstance pInstance_p);
 
-tDualprocReturn dualprocshm_irqRegHdl (tDualprocDrvInstance pInstance_p,
-        tDualprocIrqSrc irqSrc_p, tDualprocIrqCb pfnCb_p);
-tDualprocReturn dualprocshm_irqSourceEnable (tDualprocDrvInstance pInstance_p,
-        tDualprocIrqSrc irqSrc_p, BOOL fEnable_p);
-tDualprocReturn dualprocshm_irqMasterEnable (tDualprocDrvInstance pInstance_p,
-        BOOL fEnable_p);
-
-tDualprocReturn dualprocshm_setMagic (tDualprocDrvInstance pInstance_p, UINT16 magic_p);
-tDualprocReturn dualprocshm_getMagic (tDualprocDrvInstance pInstance_p, UINT16 *pMagic_p);
-tDualprocReturn dualprocshm_setCommand (tDualprocDrvInstance pInstance_p, UINT16 cmd_p);
-tDualprocReturn dualprocshm_getCommand (tDualprocDrvInstance pInstance_p, UINT16 *pCmd_p);
-tDualprocReturn dualprocshm_setStatus (tDualprocDrvInstance pInstance_p, UINT16 status_p);
-tDualprocReturn dualprocshm_getStatus (tDualprocDrvInstance pInstance_p, UINT16 *pStatus_p);
-tDualprocReturn dualprocshm_setRetVal (tDualprocDrvInstance pInstance_p, UINT16 retval_p);
-tDualprocReturn dualprocshm_getRetVal (tDualprocDrvInstance pInstance_p, UINT16 *pRetval_p);
-tDualprocReturn dualprocshm_setHeartbeat (tDualprocDrvInstance pInstance_p, UINT16 heartbeat_p);
-tDualprocReturn dualprocshm_getHeartbeat (tDualprocDrvInstance pInstance_p, UINT16 *pHeartbeat_p);
-tDualprocReturn dualprocshm_getDynRes(tDualprocDrvInstance pInstance_p,tDualprocResourceId resId_p,
-                                        UINT8 **ppAddr_p, UINT16 *pSize_p);
-tDualprocReturn dualprocshm_acquireQueueLock(UINT8 queueId_p);
-tDualprocReturn dualprocshm_releaseQueueLock(UINT8 queueId_p);
+tDualprocReturn dualprocshm_acquireBuffLock(tDualprocDrvInstance pInstance_p, UINT8 Id_p);
+tDualprocReturn dualprocshm_releaseBuffLock(tDualprocDrvInstance pInstance_p, UINT8 Id_p);
 
 #ifdef __cplusplus
 }

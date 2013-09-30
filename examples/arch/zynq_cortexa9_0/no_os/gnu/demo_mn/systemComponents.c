@@ -21,7 +21,6 @@ subject to the License Agreement located at the end of this file below.
 #include "xil_types.h"
 #include "xil_io.h"
 #include "xil_exception.h"
-//#include "dualprocshm-arm.h"
 #include "EplTarget.h"
 #include <unistd.h>
 
@@ -65,9 +64,9 @@ controller.
 *******************************************************************************/
 void SysComp_initPeripheral(void)
 {
-	/*Release MB!*/
+    /*Release MB!*/
 
-	Xil_Out32(SLCR_UNLOCK, SLCR_UNLOCK_VAL);
+    Xil_Out32(SLCR_UNLOCK, SLCR_UNLOCK_VAL);
     Xil_Out32(FPGA_RST_CNTRL,0);
     Xil_Out32(SLCR_LOCK, SLCR_LOCK_VAL);
 
@@ -75,7 +74,7 @@ void SysComp_initPeripheral(void)
     Xil_DCacheEnable();
 
     // Initialize Interrupts
-	SysComp_InitInterrupts();
+    SysComp_InitInterrupts();
 
 }
 
@@ -87,11 +86,11 @@ This function enables the interrupts of the Host processor on ARM
 *******************************************************************************/
 inline void SysComp_enableInterrupts(void)
 {
-	//Global interrupt enable
-	//Distributor global enable
-	Xil_Out32((XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET), XSCUGIC_EN_INT_MASK);	
-	//CPU interface global enable
-	Xil_Out32((XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET), XSCUGIC_CNTR_EN_S_MASK);
+    //Global interrupt enable
+    //Distributor global enable
+    Xil_Out32((XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET), XSCUGIC_EN_INT_MASK);
+    //CPU interface global enable
+    Xil_Out32((XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET), XSCUGIC_CNTR_EN_S_MASK);
 }
 
 /**
@@ -102,10 +101,10 @@ This function disables the interrupts of the Host processor on ARM
 *******************************************************************************/
 inline void SysComp_disableInterrupts(void)
 {
-	// Disable all interrupts from the distributor
-	Xil_Out32((XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET), 0UL);
-	// Reset the DP (Distributor) and CP (CPU interface)
-	Xil_Out32((XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET), 0UL);
+    // Disable all interrupts from the distributor
+    Xil_Out32((XPAR_PS7_SCUGIC_0_DIST_BASEADDR + XSCUGIC_DIST_EN_OFFSET), 0UL);
+    // Reset the DP (Distributor) and CP (CPU interface)
+    Xil_Out32((XPAR_SCUGIC_0_CPU_BASEADDR + XSCUGIC_CONTROL_OFFSET), 0UL);
 }
 
 /**
@@ -128,12 +127,12 @@ int SysComp_initSyncInterrupt(int Int_p,Xil_InterruptHandler callbackFunc_p,void
 {
 
 #ifdef _USE_HIGH_PRIO_
-	//If priority value is not set, then interrupts are dispatched based on IDs
-	XScuGic_SetPriorityTriggerType(&sGicInstance_l, SYNC_INTR_ID, 
-								SYNC_INTR_PRIORITY, TRIGGER_VALUE);
+    //If priority value is not set, then interrupts are dispatched based on IDs
+    XScuGic_SetPriorityTriggerType(&sGicInstance_l, SYNC_INTR_ID,
+                                SYNC_INTR_PRIORITY, TRIGGER_VALUE);
 #endif
 
-	//register sync irq handler
+    //register sync irq handler
     XScuGic_RegisterHandler(ARM_IRQ_IC_BASE, Int_p,	callbackFunc_p, Arg_p);
     //enable the sync interrupt
     XScuGic_EnableIntr(ARM_IRQ_IC_DIST_BASE, Int_p);
@@ -164,8 +163,7 @@ SysComp_disableSyncInterrupt() disable the synchronous interrupt.
 inline void SysComp_disableSyncInterrupt(void)
 {
 #ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_SYNCIRQ_VEC_ID
-	XScuGic_Disable(&sGicInstance_l, SYNC_IRQ_NUM);
-	//TODO: Check if we have to disconnect handler
+    XScuGic_Disable(&sGicInstance_l, SYNC_IRQ_NUM);
 #endif
 }
 /**
@@ -185,13 +183,13 @@ int SysComp_initAsyncInterrupt(void (*callbackFunc)(void*))
 {
 
 #ifdef _USE_HIGH_PRIO_
-	//If priority value is not set, then interrupts are dispatched based on IDs
-	XScuGic_SetPriorityTriggerType(&sGicInstance_l, SYNC_INTR_ID, 
-								ASYNC_INTR_PRIORITY, TRIGGER_VALUE);
+    //If priority value is not set, then interrupts are dispatched based on IDs
+    XScuGic_SetPriorityTriggerType(&sGicInstance_l, SYNC_INTR_ID,
+                                    ASYNC_INTR_PRIORITY, TRIGGER_VALUE);
 #endif
 
 #ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_VEC_ID
-	/* register interrupt handler */
+    /* register interrupt handler */
     XScuGic_Connect(&sGicInstance_l, ASYNC_IRQ_NUM,
             (Xil_InterruptHandler)callbackFunc, 0);
 
@@ -223,8 +221,7 @@ SysComp_disableSyncInterrupt() disable the synchronous interrupt.
 inline void SysComp_disableAsyncInterrupt(void)
 {
 #ifdef XPAR_FABRIC_AXI_POWERLINK_0_AP_ASYNCIRQ_VEC_ID
-	XScuGic_Disable(&sGicInstance_l, ASYNC_IRQ_NUM);
-	//TODO: Check if we have to disconnect handler
+    XScuGic_Disable(&sGicInstance_l, ASYNC_IRQ_NUM);
 #endif
 }
 
@@ -246,8 +243,8 @@ alt_avalon_spi_command function
 *******************************************************************************/
 int SysComp_SPICommand(unsigned char *pTxBuf_p, unsigned char *pRxBuf_p, int iBytes_p)
 {
-	//TODO: to be integrated later	 
-	return OK;
+    //TODO: to be integrated later
+    return OK;
 }
 #endif //CN_API_USING_SPI
 
@@ -288,149 +285,147 @@ DWORD SysComp_readInputPort(void)
 
 /**
 *****************************************************************************
-\brief		This function initializes the distributor of the GIC on ARM
+\brief      This function initializes the distributor of the GIC on ARM
 
-				- Write the trigger mode, priority and target CPU
-				- All interrupt sources are disabled
-				- Enable the distributor
+            - Write the trigger mode, priority and target CPU
+            - All interrupt sources are disabled
+            - Enable the distributor
 
 
-\param	pConfig_p		
-\param	iCpuID_p		
+\param	pConfig_p
+\param	iCpuID_p
 ******************************************************************************/
 static void Gic_InitDistributor (XScuGic_Config *pConfig_p, int iCpuID_p)
 {
-	int iIntId;
+    int iIntId;
 
-	XScuGic_WriteReg(pConfig_p->DistBaseAddress, XSCUGIC_DIST_EN_OFFSET, 0UL);
+    XScuGic_WriteReg(pConfig_p->DistBaseAddress, XSCUGIC_DIST_EN_OFFSET, 0UL);
 
-	/*
-	 * Set the security domains in the int_security registers for non-secure
-	 * interrupts. All are secure, so leave at the default. Set to 1 for
-	 * non-secure interrupts.
-	 */
+    /*
+     * Set the security domains in the int_security registers for non-secure
+     * interrupts. All are secure, so leave at the default. Set to 1 for
+     * non-secure interrupts.
+     */
 
 
-	/*
-	 * For the Shared Peripheral Interrupts INT_ID[MAX..32], set:
-	 */
+    /*
+     * For the Shared Peripheral Interrupts INT_ID[MAX..32], set:
+     */
 
-	/*
-	 * 1. The trigger mode in the int_config register
-	 * Only write to the SPI interrupts, so start at 32
-	 */
-	for (iIntId = 32; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId+=16)
-	{
-	/*
-	 * Each INT_ID uses two bits, or 16 INT_ID per register
-	 * Set them all to be level sensitive, active HIGH.
-	 */
-		XScuGic_WriteReg(pConfig_p->DistBaseAddress,
-			XSCUGIC_INT_CFG_OFFSET_CALC(iIntId), 0UL);
-	}
+    /*
+     * 1. The trigger mode in the int_config register
+     * Only write to the SPI interrupts, so start at 32
+     */
+    for (iIntId = 32; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId+=16)
+    {
+        /*
+         * Each INT_ID uses two bits, or 16 INT_ID per register
+         * Set them all to be level sensitive, active HIGH.
+         */
+        XScuGic_WriteReg(pConfig_p->DistBaseAddress,
+        XSCUGIC_INT_CFG_OFFSET_CALC(iIntId), 0UL);
+    }
 
-	for (iIntId = 0; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId+=4)
-	{
-		/*
-		 * 2. The priority using int the priority_level register
-		 * The priority_level and spi_target registers use one byte per
-		 * INT_ID.
-		 * Write a default value that can be changed elsewhere.
-		 */
-		XScuGic_WriteReg(pConfig_p->DistBaseAddress,
-				XSCUGIC_PRIORITY_OFFSET_CALC(iIntId),
-				DEFAULT_PRIORITY);
-	}
+    for (iIntId = 0; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId+=4)
+    {
+        /*
+         * 2. The priority using int the priority_level register
+         * The priority_level and spi_target registers use one byte per
+         * INT_ID.
+         * Write a default value that can be changed elsewhere.
+         */
+        XScuGic_WriteReg(pConfig_p->DistBaseAddress,
+                    XSCUGIC_PRIORITY_OFFSET_CALC(iIntId), DEFAULT_PRIORITY);
+    }
 
-	for (iIntId = 32; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId+=4)
-	{
-		/*
-		 * 3. The CPU interface in the spi_target register
-		 * Only write to the SPI interrupts, so start at 32
-		 */
-		iCpuID_p |= iCpuID_p << 8;
-		iCpuID_p |= iCpuID_p << 16;
+    for (iIntId = 32; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId+=4)
+    {
+        /*
+         * 3. The CPU interface in the spi_target register
+         * Only write to the SPI interrupts, so start at 32
+         */
+        iCpuID_p |= iCpuID_p << 8;
+        iCpuID_p |= iCpuID_p << 16;
 
-		XScuGic_WriteReg(pConfig_p->DistBaseAddress,
- 				XSCUGIC_SPI_TARGET_OFFSET_CALC(iIntId), iCpuID_p);
-	}
+        XScuGic_WriteReg(pConfig_p->DistBaseAddress,
+        XSCUGIC_SPI_TARGET_OFFSET_CALC(iIntId), iCpuID_p);
+    }
 
-	for (iIntId = 0; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId+=32)
-	{
-	/*
-	 * 4. Enable the SPI using the enable_set register. Leave all disabled
-	 * for now.
-	 */
-		XScuGic_WriteReg(pConfig_p->DistBaseAddress,
-		XSCUGIC_ENABLE_DISABLE_OFFSET_CALC(XSCUGIC_DISABLE_OFFSET,
-				iIntId),
-		0xFFFFFFFFUL);
+    for (iIntId = 0; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId+=32)
+    {
+        /*
+         * 4. Enable the SPI using the enable_set register. Leave all disabled
+         * for now.
+         */
+        XScuGic_WriteReg(pConfig_p->DistBaseAddress,
+                        XSCUGIC_ENABLE_DISABLE_OFFSET_CALC(XSCUGIC_DISABLE_OFFSET,
+                        iIntId),
+                        0xFFFFFFFFUL);
 
-	}
+    }
 
-	XScuGic_WriteReg(pConfig_p->DistBaseAddress, XSCUGIC_DIST_EN_OFFSET,
-						XSCUGIC_EN_INT_MASK);
+    XScuGic_WriteReg(pConfig_p->DistBaseAddress, XSCUGIC_DIST_EN_OFFSET,
+            XSCUGIC_EN_INT_MASK);
 }
 
 /**
 *****************************************************************************
-\brief		This function initializes the CPU Interface of the GIC
+\brief  This function initializes the CPU Interface of the GIC
 
-					-Set the priority of the CPU
-					-Enable the CPU interface
+          -Set the priority of the CPU
+          -Enable the CPU interface
 
-\param		Config	 Pointer to config structure
+\param     Config Pointer to config structure
 ******************************************************************************/
 static void Gic_InitCpuInterface (XScuGic_Config *Config)
 {
-	/*
-	 * Program the priority mask of the CPU using the Priority mask
-	 * register
-	 */
-	XScuGic_WriteReg(Config->CpuBaseAddress, XSCUGIC_CPU_PRIOR_OFFSET,
-									0xF0);
+    /*
+     * Program the priority mask of the CPU using the Priority mask
+     * register
+     */
+    XScuGic_WriteReg(Config->CpuBaseAddress, XSCUGIC_CPU_PRIOR_OFFSET, 0xF0);
 
-	/*
-	 * If the CPU operates in both security domains, set parameters in the
-	 * control_s register.
-	 * 1. Set FIQen=1 to use FIQ for secure interrupts,
-	 * 2. Program the AckCtl bit
-	 * 3. Program the SBPR bit to select the binary pointer behavior
-	 * 4. Set EnableS = 1 to enable secure interrupts
-	 * 5. Set EnbleNS = 1 to enable non secure interrupts
-	 */
+    /*
+     * If the CPU operates in both security domains, set parameters in the
+     * control_s register.
+     * 1. Set FIQen=1 to use FIQ for secure interrupts,
+     * 2. Program the AckCtl bit
+     * 3. Program the SBPR bit to select the binary pointer behavior
+     * 4. Set EnableS = 1 to enable secure interrupts
+     * 5. Set EnbleNS = 1 to enable non secure interrupts
+     */
 
-	/*
-	 * If the CPU operates only in the secure domain, setup the
-	 * control_s register.
-	 * 1. Set FIQen=1,
-	 * 2. Set EnableS=1, to enable the CPU interface to signal secure .
-	 * interrupts Only enable the IRQ output unless secure interrupts
-	 * are needed.
-	 */
-	XScuGic_WriteReg(Config->CpuBaseAddress, XSCUGIC_CONTROL_OFFSET, 0x07);
+    /*
+     * If the CPU operates only in the secure domain, setup the
+     * control_s register.
+     * 1. Set FIQen=1,
+     * 2. Set EnableS=1, to enable the CPU interface to signal secure .
+     * interrupts Only enable the IRQ output unless secure interrupts
+     * are needed.
+     */
+    XScuGic_WriteReg(Config->CpuBaseAddress, XSCUGIC_CONTROL_OFFSET, 0x07);
 }
 
 /**
 *****************************************************************************
-\brief	callback stub
+\brief  callback stub
 
 A stub for the asynchronous callback. The stub is here in case the upper
 layers forget to set the handler.
 
-\param	CallBackRef 		is a pointer to the upper layer callback reference
+\param  CallBackRef         is a pointer to the upper layer callback reference
 ******************************************************************************/
 static void Gic_StubHandler(void *CallBackRef)
 {
-	/*
-	 * verify that the inputs are valid
-	 */
-	Xil_AssertVoid(CallBackRef != NULL);
+    /*
+     * verify that the inputs are valid
+     */
+    Xil_AssertVoid(CallBackRef != NULL);
 
-	/*
-	 * Indicate another unhandled interrupt for stats
-	 */
-	((XScuGic *)CallBackRef)->UnhandledInterrupts++;
+    /*
+     * Indicate another unhandled interrupt for stats
+     */
+    ((XScuGic *)CallBackRef)->UnhandledInterrupts++;
 }
 
 
@@ -455,7 +450,7 @@ all of the interrupts is honored. If nested interrupts are enabled, the
 standard interrupt processing will always only service one interrupt and then
 return.
 
- \param		InstancePtr 		Is a pointer to the XScuGic instance.
+ \param     InstancePtr     Is a pointer to the XScuGic instance.
 ******************************************************************************/
 static void Gic_InterruptHandler(XScuGic *InstancePtr)
 {
@@ -477,7 +472,7 @@ static void Gic_InterruptHandler(XScuGic *InstancePtr)
     IntIDFull = XScuGic_CPUReadReg(InstancePtr, XSCUGIC_INT_ACK_OFFSET);
     IntID = IntIDFull & XSCUGIC_ACK_INTID_MASK;
     if(XSCUGIC_MAX_NUM_INTR_INPUTS < IntID){
-    	goto IntrExit;
+       goto IntrExit;
     }
 
     /*
@@ -517,59 +512,59 @@ IntrExit:
 *****************************************************************************
 \brief	This function initializes a specific interrupt controller instance
 
-			- initialize fields of the XScuGic structure
-			- initial vector table with stub function calls
-			- init Distributor and CPU interface
+            - initialize fields of the XScuGic structure
+            - initial vector table with stub function calls
+            - init Distributor and CPU interface
 
-\param	pInstancePtr_p		Instance of GIC
-\param	uiDeviceID			Device ID of GIC
-\return	int
-\retval XST_SUCCESS			On success
-\retval XST_FAILURE			On error
+\param  pInstancePtr_p      Instance of GIC
+\param  uiDeviceID          Device ID of GIC
+\return int
+\retval XST_SUCCESS         On success
+\retval XST_FAILURE         On error
 ******************************************************************************/
 static int Gic_CfgInitialize(XScuGic *pInstancePtr_p, unsigned int uiDeviceID)
 {
-	static XScuGic_Config *pConfig;
-	int iIntId;
-	int iStatus = XST_SUCCESS;
+    static XScuGic_Config *pConfig;
+    int iIntId;
+    int iStatus = XST_SUCCESS;
 
-	if (NULL == pInstancePtr_p)
-	{
-		iStatus = XST_FAILURE;
-	}
+    if (NULL == pInstancePtr_p)
+    {
+        iStatus = XST_FAILURE;
+    }
 
-	pConfig = &XScuGic_ConfigTable[uiDeviceID];
-	pInstancePtr_p->IsReady = 0;
-	pInstancePtr_p->Config = pConfig;
+    pConfig = &XScuGic_ConfigTable[uiDeviceID];
+    pInstancePtr_p->IsReady = 0;
+    pInstancePtr_p->Config = pConfig;
 
-	for (iIntId = 0; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId ++)
-	{
-		/*
-		 * Initalize the handler to point to a stub to handle an
-		 * interrupt which has not been connected to a handler. Only
-		 * initialize it if the handler is 0 which means it was not
-		 * initialized statically by the tools/user. Set the callback
-		 * reference to this instance so that unhandled interrupts
-		 * can be tracked.
-		 */
-		if ((pInstancePtr_p->Config->HandlerTable[iIntId].Handler == 0))
-		{
-			pInstancePtr_p->Config->HandlerTable[iIntId].Handler =
-							Gic_StubHandler;
-		}
-		pInstancePtr_p->Config->HandlerTable[iIntId].CallBackRef =
-								pInstancePtr_p;
-	}
+    for (iIntId = 0; iIntId < XSCUGIC_MAX_NUM_INTR_INPUTS; iIntId ++)
+    {
+        /*
+         * Initalize the handler to point to a stub to handle an
+         * interrupt which has not been connected to a handler. Only
+         * initialize it if the handler is 0 which means it was not
+         * initialized statically by the tools/user. Set the callback
+         * reference to this instance so that unhandled interrupts
+         * can be tracked.
+         */
+        if ((pInstancePtr_p->Config->HandlerTable[iIntId].Handler == 0))
+        {
+            pInstancePtr_p->Config->HandlerTable[iIntId].Handler =
+                                        Gic_StubHandler;
+        }
+        pInstancePtr_p->Config->HandlerTable[iIntId].CallBackRef =
+                pInstancePtr_p;
+    }
 
 
 
-	Gic_InitDistributor(pConfig, TARGET_CPU_VALUE);
+    Gic_InitDistributor(pConfig, TARGET_CPU_VALUE);
 
-	Gic_InitCpuInterface(pConfig);
+    Gic_InitCpuInterface(pConfig);
 
-	pInstancePtr_p->IsReady = XIL_COMPONENT_IS_READY;
+    pInstancePtr_p->IsReady = XIL_COMPONENT_IS_READY;
 
-	return iStatus;
+    return iStatus;
 }
 
 /**
@@ -580,29 +575,29 @@ This function sets up the interrupt and exception handling for interrupt control
 ********************************************************************************************/
 void SysComp_InitInterrupts(void)
 {
-	int iStatus;
+    int iStatus;
 
-	iStatus = Gic_CfgInitialize(&sGicInstance_l,XPAR_PS7_SCUGIC_0_DEVICE_ID);
-	if (iStatus != XST_SUCCESS)
-	{
-		return;
-	}
+    iStatus = Gic_CfgInitialize(&sGicInstance_l,XPAR_PS7_SCUGIC_0_DEVICE_ID);
+    if (iStatus != XST_SUCCESS)
+    {
+        return;
+    }
 
     // CPU interrupt interface & distributor has been enabled before this point
-	Xil_ExceptionInit();
+    Xil_ExceptionInit();
 
-	/*
-	 * Connect the interrupt controller interrupt handler to the hardware
-	 * interrupt handling logic in the processor.
-	 */
-	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_DATA_ABORT_INT,
-				(Xil_ExceptionHandler)Gic_InterruptHandler,
-				&sGicInstance_l);
-	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_IRQ_INT,
-				(Xil_ExceptionHandler)Gic_InterruptHandler,
-				&sGicInstance_l);
+    /*
+     * Connect the interrupt controller interrupt handler to the hardware
+     * interrupt handling logic in the processor.
+     */
+    Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_DATA_ABORT_INT,
+            (Xil_ExceptionHandler)Gic_InterruptHandler,
+            &sGicInstance_l);
+    Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_IRQ_INT,
+            (Xil_ExceptionHandler)Gic_InterruptHandler,
+            &sGicInstance_l);
 
-	Xil_ExceptionEnable();
+    Xil_ExceptionEnable();
 }
 
 /*******************************************************************************

@@ -59,7 +59,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include "circbuf-arch.h"
-
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -328,10 +327,12 @@ tCircBufError circbuf_writeData (tCircBufInstance* pInstance_p, const void* pDat
 
         pHeader->writeOffset = blockSize - chunkSize;
     }
+
     pHeader->freeSize -= fullBlockSize;
     pHeader->dataCount++;
 
     TARGET_FLUSH_DCACHE(pHeader,sizeof(tCircBufHeader));
+
     circbuf_unlock(pInstance_p);
 
     if (pInstance_p->pfnSigCb != NULL)
@@ -370,6 +371,7 @@ tCircBufError circbuf_writeMultipleData(tCircBufInstance* pInstance_p,
     tCircBufHeader*     pHeader = pInstance_p->pCircBufHeader;
     BYTE*               pCircBuf = pInstance_p->pCircBuf;
 
+
     if ((pData_p == NULL) || (size_p == 0) || (pData2_p == NULL) || (size2_p == 0))
     {
         TRACE("%s() Invalid pointer or size!\n");
@@ -379,15 +381,14 @@ tCircBufError circbuf_writeMultipleData(tCircBufInstance* pInstance_p,
     blockSize       = (size_p + size2_p + (CIRCBUF_BLOCK_ALIGNMENT - 1)) & ~(CIRCBUF_BLOCK_ALIGNMENT - 1);
     fullBlockSize  = blockSize + sizeof(UINT32);
 
-    //TRACE("%s() size:%d wroff:%d\n", __func__, pHeader->bufferSize, pHeader->writeOffset);
-    //TRACE("%s() ptr1:%p size1:%d ptr2:%p size2:%d\n", __func__, pData_p, size_p, pData2_p, size2_p);
     circbuf_lock(pInstance_p);
 
     TARGET_INVALIDATE_DCACHE(pHeader,sizeof(tCircBufHeader));
-
     if (fullBlockSize > pHeader->freeSize)
     {
         circbuf_unlock(pInstance_p);
+
+        printf("fullBlockSize > pHeader->freeSize\n");
         return kCircBufOutOfMem;
     }
 
@@ -400,7 +401,9 @@ tCircBufError circbuf_writeMultipleData(tCircBufInstance* pInstance_p,
         memcpy (pCircBuf + pHeader->writeOffset + sizeof(UINT32) + size_p,
                 pData2_p, size2_p);
 
+
         TARGET_FLUSH_DCACHE((pCircBuf + pHeader->writeOffset),fullBlockSize);
+
         if (pHeader->writeOffset + fullBlockSize == pHeader->bufferSize)
             pHeader->writeOffset = 0;
         else
@@ -441,10 +444,12 @@ tCircBufError circbuf_writeMultipleData(tCircBufInstance* pInstance_p,
         pHeader->writeOffset = blockSize - chunkSize;
 
     }
+
     pHeader->freeSize -= fullBlockSize;
     pHeader->dataCount++;
 
     TARGET_FLUSH_DCACHE(pHeader,sizeof(tCircBufHeader));
+
     circbuf_unlock(pInstance_p);
 
     if (pInstance_p->pfnSigCb != NULL)
@@ -500,12 +505,16 @@ tCircBufError circbuf_readData(tCircBufInstance* pInstance_p, void* pData_p,
     fullBlockSize  = blockSize + sizeof(UINT32);
 
     if (dataSize > size_p)
-        return kCircBufReadsizeTooSmall;
+    {
+            circbuf_unlock(pInstance_p);
+            return kCircBufReadsizeTooSmall;
+    }
+
 
     if (pHeader->readOffset + fullBlockSize <= pHeader->bufferSize)
     {
         TARGET_INVALIDATE_DCACHE((pCircBuf + pHeader->readOffset + sizeof(UINT32)) \
-                                    ,dataSize);
+                                    ,blockSize);
         memcpy (pData_p, pCircBuf + pHeader->readOffset + sizeof(UINT32),
                 dataSize);
         if (pHeader->readOffset + fullBlockSize == pHeader->bufferSize)
@@ -519,18 +528,22 @@ tCircBufError circbuf_readData(tCircBufInstance* pInstance_p, void* pData_p,
 
         TARGET_INVALIDATE_DCACHE((pCircBuf + pHeader->readOffset + sizeof(UINT32)), \
                                     chunkSize);
-        memcpy (pData_p, pCircBuf + pHeader->readOffset + sizeof(UINT32),
+        memcpy (pData_p, (pCircBuf + pHeader->readOffset + sizeof(UINT32)),
                 chunkSize);
 
         TARGET_INVALIDATE_DCACHE(pCircBuf, dataSize - chunkSize);
 
         memcpy ((UINT8*)pData_p + chunkSize, pCircBuf, dataSize - chunkSize);
+
         pHeader->readOffset = blockSize - chunkSize;
     }
+
     pHeader->freeSize += fullBlockSize;
     pHeader->dataCount--;
 
+
     TARGET_FLUSH_DCACHE(pHeader,sizeof(tCircBufHeader));
+
     circbuf_unlock(pInstance_p);
 
     *pDataBlockSize_p = dataSize;
@@ -554,9 +567,7 @@ The function returns the available data count
 UINT32 circbuf_getDataCount(tCircBufInstance* pInstance_p)
 {
     tCircBufHeader*     pHeader = pInstance_p->pCircBufHeader;
-
     TARGET_INVALIDATE_DCACHE(&pHeader->dataCount,sizeof(UINT32));
-
     return pHeader->dataCount;
 }
 

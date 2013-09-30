@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <EplInc.h>
 #include <pdo.h>
 #include <user/pdoucal.h>
-
+#include <user/ctrlucal.h>
 #include <dualprocshm.h>
 
 //============================================================================//
@@ -71,7 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-
+#define TARGET_SYNC_INTERRUPT_ID    1
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -84,7 +84,7 @@ static tEplSyncCb pfnSyncCb_l = NULL;
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-static void dualprocshmIrqSyncCb(void *pArg_p);
+static void IrqSyncCb(void );
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -105,17 +105,10 @@ The function initializes the PDO user CAL sync module
 //------------------------------------------------------------------------------
 tEplKernel pdoucal_initSync(tEplSyncCb pfnSyncCb_p)
 {
-    tDualprocReturn dualRet;
-    tDualprocDrvInstance pDrvInstance = dualprocshm_getInstance(kDualProcHost);
+    tEplKernel ret;
 
-    if(pDrvInstance == NULL)
-    {
-        EPL_DBGLVL_ERROR_TRACE("%s: Could not find Driver instance!\n", __func__);
-        return kEplNoResource;
-    }
-
-    dualRet = dualprocshm_irqRegHdl(pDrvInstance, kDualprocIrqSrcSync, dualprocshmIrqSyncCb);
-    if(dualRet != kDualprocSuccessful)
+    ret = ctrlucal_registerHandler(TARGET_SYNC_INTERRUPT_ID, IrqSyncCb);
+    if(ret != kEplSuccessful)
     {
         EPL_DBGLVL_ERROR_TRACE("%s: Enable irq not possible!\n", __func__);
         return kEplNoResource;
@@ -135,18 +128,7 @@ The function cleans up the PDO user CAL sync module
 //------------------------------------------------------------------------------
 void pdoucal_exitSync(void)
 {
-    tDualprocReturn dualRet;
-    tDualprocDrvInstance pDrvInstance = dualprocshm_getInstance(kDualProcHost);
-
-    if(pDrvInstance == NULL)
-    {
-        EPL_DBGLVL_ERROR_TRACE("%s: Could not find Driver instance!\n", __func__);
-        return;
-    }
-
-    dualRet = dualprocshm_irqRegHdl(pDrvInstance, kDualprocIrqSrcSync, NULL);
-    if(dualRet != kDualprocSuccessful)
-        EPL_DBGLVL_ERROR_TRACE("%s: Disable irq not possible (%d)!\n", __func__, dualRet);
+   ctrlucal_registerHandler(TARGET_SYNC_INTERRUPT_ID, NULL);
 }
 
 //------------------------------------------------------------------------------
@@ -181,9 +163,7 @@ tEplKernel pdoucal_waitSyncEvent(ULONG timeout_p)
                                 instance
 */
 //------------------------------------------------------------------------------
-static void dualprocshmIrqSyncCb(void *pArg_p)
+static void IrqSyncCb()
 {
-    UNUSED_PARAMETER(pArg_p);
-
     pfnSyncCb_l();
 }

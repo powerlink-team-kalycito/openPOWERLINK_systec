@@ -1,6 +1,6 @@
 /**
 ********************************************************************************
-\file   pdokcal-tripleBufShm.c
+\file   pdokcal-triplebufshm.c
 
 \brief  Shared memory triple buffer implementation for kernel PDO CAL module
 
@@ -154,6 +154,8 @@ tEplKernel pdokcal_initPdoMem(tPdoChannelSetup* pPdoChannels, size_t rxPdoMemSiz
     memset (pPdoMem_l, 0, pdoMemRegionSize_l);
     setupPdoMemInfo(pPdoChannels, pPdoMem_l);
 
+    OPLK_ATOMIC_INIT(pPdoMem_l);
+
     return kEplSuccessful;
 }
 
@@ -198,21 +200,22 @@ The function writes a received RXPDO into the PDO memory range.
 tEplKernel pdokcal_writeRxPdo(UINT channelId_p, BYTE *pPayload_p, UINT16 pdoSize_p)
 {
     BYTE*           pPdo;
-    ATOMIC_T        temp;
+    OPLK_ATOMIC_T   temp;
 
+    TARGET_INVALIDATE_DCACHE((u32)&pPdoMem_l->rxChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
     pPdo = pTripleBuf_l[pPdoMem_l->rxChannelInfo[channelId_p].writeBuf] +
            pPdoMem_l->rxChannelInfo[channelId_p].channelOffset;
     //TRACE ("%s() chan:%d wi:%d\n", __func__, channelId_p, pPdoMem_l->rxChannelInfo[channelId_p].writeBuf);
 
     memcpy(pPdo, pPayload_p, pdoSize_p);
-
+    TARGET_FLUSH_DCACHE((u32)pPdo,pdoSize_p);
     temp = pPdoMem_l->rxChannelInfo[channelId_p].writeBuf;
-    ATOMIC_EXCHANGE(&pPdoMem_l->rxChannelInfo[channelId_p].cleanBuf,
+    OPLK_ATOMIC_EXCHANGE(&pPdoMem_l->rxChannelInfo[channelId_p].cleanBuf,
                     temp,
                     pPdoMem_l->rxChannelInfo[channelId_p].writeBuf);
 
     pPdoMem_l->rxChannelInfo[channelId_p].newData = 1;
-
+    TARGET_FLUSH_DCACHE((u32)&pPdoMem_l->rxChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
     //TRACE ("%s() chan:%d new wi:%d\n", __func__, channelId_p, pPdoMem_l->rxChannelInfo[channelId_p].writeBuf);
     //TRACE ("%s() *pPayload_p:%02x\n", __func__, *pPayload_p);
     return kEplSuccessful;
@@ -236,12 +239,14 @@ The function reads a TXPDO to be sent from the PDO memory range.
 tEplKernel pdokcal_readTxPdo(UINT channelId_p, BYTE* pPayload_p, UINT16 pdoSize_p)
 {
     BYTE*           pPdo;
-    ATOMIC_T        readBuf;
+    OPLK_ATOMIC_T   readBuf;
+
+    TARGET_INVALIDATE_DCACHE((u32)&pPdoMem_l->txChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
 
     if (pPdoMem_l->txChannelInfo[channelId_p].newData)
     {
         readBuf = pPdoMem_l->txChannelInfo[channelId_p].readBuf;
-        ATOMIC_EXCHANGE(&pPdoMem_l->txChannelInfo[channelId_p].cleanBuf,
+        OPLK_ATOMIC_EXCHANGE(&pPdoMem_l->txChannelInfo[channelId_p].cleanBuf,
                         readBuf,
                         pPdoMem_l->txChannelInfo[channelId_p].readBuf);
         pPdoMem_l->txChannelInfo[channelId_p].newData = 0;
@@ -252,6 +257,10 @@ tEplKernel pdokcal_readTxPdo(UINT channelId_p, BYTE* pPayload_p, UINT16 pdoSize_
     //TRACE ("%s() chan:%d ri:%d\n", __func__, channelId_p, pPdoMem_l->txChannelInfo[channelId_p].readBuf);
     pPdo =  pTripleBuf_l[pPdoMem_l->txChannelInfo[channelId_p].readBuf] +
             pPdoMem_l->txChannelInfo[channelId_p].channelOffset;
+
+    TARGET_FLUSH_DCACHE((u32)&pPdoMem_l->txChannelInfo[channelId_p],sizeof(tPdoBufferInfo ));
+
+    TARGET_INVALIDATE_DCACHE((u32)pPdo,pdoSize_p);
 
     memcpy (pPayload_p, pPdo, pdoSize_p);
 
@@ -271,7 +280,7 @@ The function sets up the PDO memory info. For each channel the offset in the
 shared buffer and the size is stored.
 
 \param  pPdoChannels_p      Pointer to PDO channel setup.
-\param  pPdoMemReagion_p    Pointer to shared PDO memory region.
+\param  pPdoMemRegion_p     Pointer to shared PDO memory region.
 
 \return The function returns the size of the used PDO memory
 */
@@ -309,6 +318,8 @@ static void setupPdoMemInfo(tPdoChannelSetup* pPdoChannels_p, tPdoMemRegion* pPd
         offset += pPdoChannel->pdoSize;
     }
     pPdoMemRegion_p->pdoMemSize = offset;
+
+    TARGET_FLUSH_DCACHE((u32)pPdoMemRegion_p,sizeof(tPdoMemRegion));
 }
 ///\}
 

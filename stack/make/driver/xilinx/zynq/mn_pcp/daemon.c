@@ -12,6 +12,7 @@ master demo application.
 
 /*------------------------------------------------------------------------------
 Copyright (c) 2012, Bernecker+Rainer Industrie-Elektronik Ges.m.b.H. (B&R)
+Copyright (c) 2013, Kalycito Infotech Private Ltd.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -158,14 +159,21 @@ static tEplKernel initPlk (void)
 
     if (Ret != kEplSuccessful)
     {
-        printf ("Could not initialize control module\n");
+        PRINTF ("Could not initialize control module\n");
         goto Exit;
     }
 
 Exit:
     return Ret;
 }
+//------------------------------------------------------------------------------
+/**
+\brief    openPOWERLINK stack shutdown
 
+This function stops the kernel stack.
+
+*/
+//------------------------------------------------------------------------------
 static void shtdPlk (void)
 {
     ctrlk_exit();

@@ -117,8 +117,8 @@
                                         MessageBox (NULL, string, "Assertion failed", MB_OK | MB_ICONERROR); \
                                         exit (-1);}
 
-    #define ATOMIC_T    ULONG
-    #define ATOMIC_EXCHANGE(address, newval, oldval) \
+    #define OPLK_ATOMIC_T    ULONG
+    #define OPLK_ATOMIC_EXCHANGE(address, newval, oldval) \
                 oldval = InterlockedExchange(address, newval);
 
 #elif (TARGET_SYSTEM == _WINCE_)
@@ -154,15 +154,24 @@
     #endif
 
     #if (DEV_SYSTEM == _DEV_NIOS2_)
-        //FIXME jz Find way for atomic exchange!!!
-        // NOTE: THIS IS NO ATOMIC EXCHANGE!!!
+        /* NOTE:
+         * Nios II does not support atomic instructions, hence, pseudo atomic
+         * macro is applied with locking.
+         */
         #include <alt_types.h>
         #include <io.h>
+        #include <lock.h>
 
-        #define ATOMIC_T    alt_u8
-        #define ATOMIC_EXCHANGE(address, newval, oldval) \
+        #define OPLK_ATOMIC_T    alt_u8
+        #define OPLK_LOCK_T      LOCK_T
+        #define OPLK_ATOMIC_INIT(base) \
+                                if(target_initLock(&base->lock) != 0) \
+                                    return kEplNoResource
+        #define OPLK_ATOMIC_EXCHANGE(address, newval, oldval) \
+                                target_lock(); \
                                 oldval = IORD(address, 0); \
-                                IOWR(address, 0, newval)
+                                IOWR(address, 0, newval); \
+                                target_unlock()
 
         #define TARGET_FLUSH_DCACHE
         #define TARGET_INVALIDATE_DCACHE
@@ -176,16 +185,17 @@
         #include <xil_io.h>
         #include <xil_cache.h>
 
-        #define ATOMIC_T    u8
-        #define ATOMIC_EXCHANGE(address, newval, oldval) \
-                                oldval = Xil_In8(address); \
-                                Xil_Out8(address, newval)
+        #define OPLK_ATOMIC_T    u8
+        #define OPLK_ATOMIC_EXCHANGE(address, newval, oldval) \
+                                oldval = Xil_In8((UINT32)address); \
+                                Xil_Out8((UINT32)address, newval)
 
-        #define TARGET_FLUSH_DCACHE(base, range)        \
-                                microblaze_flush_dcache_range((UINT32)base, (UINT32)range);
+            #define TARGET_FLUSH_DCACHE(base, range)        \
+                     microblaze_flush_dcache_range((UINT32)base, (UINT32)range);
 
-        #define TARGET_INVALIDATE_DCACHE(base, range)   \
-                                microblaze_invalidate_dcache_range((UINT32)base, (UINT32)range);
+            #define TARGET_INVALIDATE_DCACHE(base, range)   \
+                     microblaze_invalidate_dcache_range((UINT32)base,(UINT32)range);
+
     #endif
 
 #if (DEV_SYSTEM == _DEV_ARM_)
@@ -194,17 +204,19 @@
         #include <xil_types.h>
         #include <xil_io.h>
         #include <xil_cache.h>
-        #define ATOMIC_T    u8
-        #define ATOMIC_EXCHANGE(address, newval, oldval) \
-                                oldval = Xil_In8(address); \
-                                Xil_Out8(address, newval)
+        #define OPLK_ATOMIC_T    u8
+        #define OPLK_ATOMIC_EXCHANGE(address, newval, oldval) \
+                                oldval = Xil_In8((UINT32)address); \
+                                Xil_Out8((UINT32)address, newval)
         //////////////////////////////////////////////////////////////////////
 
-        #define TARGET_FLUSH_DCACHE(base, range)        \
-                                Xil_DCacheFlushRange((UINT32)base, (UINT32)range);
+            #define TARGET_FLUSH_DCACHE(base, range)        \
+                         Xil_DCacheFlushRange((UINT32)base, (UINT32)range);
 
-        #define TARGET_INVALIDATE_DCACHE(base, range)   \
-                                Xil_DCacheInvalidateRange((UINT32)base, (UINT32)range);
+            #define TARGET_INVALIDATE_DCACHE(base, range)   \
+                         Xil_DCacheInvalidateRange((UINT32)base, (UINT32)range);
+
+
     #endif
 
 #elif (TARGET_SYSTEM == _LINUX_)
@@ -238,8 +250,8 @@
         #define PRINTF(...)                 printf(__VA_ARGS__)
     #endif
 
-    #define ATOMIC_T    UINT8
-    #define ATOMIC_EXCHANGE(address, newval, oldval) \
+    #define OPLK_ATOMIC_T    UINT8
+    #define OPLK_ATOMIC_EXCHANGE(address, newval, oldval) \
         oldval = __sync_lock_test_and_set(address, newval);
 
 #elif (TARGET_SYSTEM == _VXWORKS_)
@@ -268,6 +280,9 @@
     #define EPL_FREE(ptr)               free(ptr)
 #endif
 
+#ifndef OPLK_ATOMIC_INIT
+    #define OPLK_ATOMIC_INIT(ignore)    ((void)0)
+#endif
 
 #define EPL_TGT_INTMASK_ETH     0x0001  // ethernet interrupt
 #define EPL_TGT_INTMASK_DMA     0x0002  // DMA interrupt

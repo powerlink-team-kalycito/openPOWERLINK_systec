@@ -4,7 +4,7 @@ Software Architecture {#software-architecture}
 The following picture shows the generel software architecture of the openPOWERLINK
 stack.
 
-![](../../images/openpowerlink_architecture.png)
+![](\ref openpowerlink_architecture.png)
 
 ## openPOWERLINK User Layer
 
@@ -17,7 +17,7 @@ stack.
 - \ref module_pdoucal
 
 ### Control
--\ref module_ctrlu
+- \ref module_ctrlu
 
 ## openPOWERLINK Kernel Layer
 
@@ -36,6 +36,6 @@ stack.
 ## Common Modules
 
 ### Event Handler
--\ref module_event
--\ref module_eventcal
+- \ref module_event
+- \ref module_eventcal
 

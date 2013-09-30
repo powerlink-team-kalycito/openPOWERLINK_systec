@@ -42,6 +42,7 @@ IF(CFG_POWERLINK_MN)
     SET (LIB_SOURCES
          ${LIB_SOURCES}
          ${USER_SOURCE_DIR}/obd/obdcdc.c
+         ${USER_SOURCE_DIR}/api/processimage-cia302.c
          )
 
     SET (LIB_USER_SOURCES
@@ -159,6 +160,7 @@ SET (LIB_HEADERS
      ${POWERLINK_INCLUDE_DIR}/EplInstDef.h
      ${POWERLINK_INCLUDE_DIR}/nmt.h
      ${POWERLINK_INCLUDE_DIR}/EplObd.h
+     ${POWERLINK_INCLUDE_DIR}/obdcdc.h
      ${POWERLINK_INCLUDE_DIR}/EplObdMacro.h
      ${POWERLINK_INCLUDE_DIR}/EplObjDef.h
      ${POWERLINK_INCLUDE_DIR}/pdo.h
@@ -210,7 +212,7 @@ SET (LIB_USER_HEADERS
      ${USER_INCLUDE_DIR}/ctrlu.h
      ${USER_INCLUDE_DIR}/ctrlucal.h
      ${USER_INCLUDE_DIR}/identu.h
-     ${USER_INCLUDE_DIR}/EplLedu.h
+     ${USER_INCLUDE_DIR}/ledu.h
      ${USER_INCLUDE_DIR}/nmtcnu.h
      ${USER_INCLUDE_DIR}/nmtmnu.h
      ${USER_INCLUDE_DIR}/nmtu.h

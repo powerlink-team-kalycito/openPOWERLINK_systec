@@ -138,13 +138,16 @@
 			<type>1</type>
 			<locationURI>OPLK_LOC/objdicts/CiA401_CN/Objdict.c</locationURI>
 		</link>
-        
 		<link>
 			<name>target-nios2.c</name>
 			<type>1</type>
 			<locationURI>OPLK_LOC/stack/src/arch/altera_nios2/target-nios2.c</locationURI>
 		</link>
-        
+		<link>
+			<name>lock-localnoos.c</name>
+			<type>1</type>
+			<locationURI>OPLK_LOC/stack/src/arch/altera_nios2/lock-localnoos.c</locationURI>
+		</link>
 		<link>
 			<name>debug.c</name>
 			<type>1</type>
@@ -184,6 +187,26 @@
 			<name>dllk.c</name>
 			<type>1</type>
 			<locationURI>OPLK_LOC/stack/src/kernel/dll/dllk.c</locationURI>
+		</link>
+		<link>
+			<name>dllkfilter.c</name>
+			<type>1</type>
+			<locationURI>OPLK_LOC/stack/src/kernel/dll/dllkfilter.c</locationURI>
+		</link>
+		<link>
+			<name>dllkstatemachine.c</name>
+			<type>1</type>
+			<locationURI>OPLK_LOC/stack/src/kernel/dll/dllkstatemachine.c</locationURI>
+		</link>
+		<link>
+			<name>dllkevent.c</name>
+			<type>1</type>
+			<locationURI>OPLK_LOC/stack/src/kernel/dll/dllkevent.c</locationURI>
+		</link>
+		<link>
+			<name>dllkframe.c</name>
+			<type>1</type>
+			<locationURI>OPLK_LOC/stack/src/kernel/dll/dllkframe.c</locationURI>
 		</link>
 		<link>
 			<name>dllkcal.c</name>
@@ -388,12 +411,12 @@
 		<link>
 			<name>lcd.c</name>
 			<type>1</type>
-			<locationURI>OPLK_LOC/Examples/arch/altera_nios2/no_os/gnu/demo_directIO/lcd.c</locationURI>
+			<locationURI>OPLK_LOC/examples/arch/altera_nios2/no_os/gnu/generic/lcd.c</locationURI>
 		</link>
 		<link>
-			<name>Cmp_Lcd.c</name>
+			<name>lcdl-16207.c</name>
 			<type>1</type>
-			<locationURI>OPLK_LOC/Examples/arch/altera_nios2/no_os/gnu/demo_directIO/Cmp_Lcd.c</locationURI>
+			<locationURI>OPLK_LOC/examples/arch/altera_nios2/no_os/gnu/generic/lcdl-16207.c</locationURI>
 		</link>
 		<link>
 			<name>systemComponents.c</name>

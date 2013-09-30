@@ -49,7 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <xparameters.h>
 // include section header file for special functions in
 // tightly-coupled memory
-#include <section-microblaze.h> // TODO : Is this needed in absence
+#include <section-microblaze.h> // TODO gks:Is this needed in absence
                                 //        of TCM?
 
 /// cache
@@ -62,14 +62,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DPSHM_READ8(base)                   Xil_In8((UINT32)base);
 #define DPSHM_WRITE8(base,val)                   Xil_Out8((UINT32)base,val);
-#ifdef USE_CACHE
+
 #define DUALPROCSHM_FLUSH_DCACHE_RANGE(base,range) \
                     microblaze_flush_dcache_range(base, range);
 
 #define DUALPROCSHM_INVALIDATE_DCACHE_RANGE(base,range) \
                     microblaze_invalidate_dcache_range(base, range);
-#else
-#define DUALPROCSHM_FLUSH_DCACHE_RANGE(base,range)
-#define DUALPROCSHM_INVALIDATE_DCACHE_RANGE(base,range)
-#endif
+
 #endif /* _INC_DUALPROCSHM_MICROBLAZE_H_ */

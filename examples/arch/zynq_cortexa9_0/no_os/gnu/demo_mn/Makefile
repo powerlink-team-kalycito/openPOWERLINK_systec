@@ -59,7 +59,7 @@ PERL=xilperl
 EXECUTABLE=demo_mn
 LSSCRIPT=lscript_$(BOARD_NAME)_$(BUS_INTERFACE)_$(DESIGN).ld
 MACROS+=-D${DBG_MODE} -DDEF_DEBUG_LVL=${DEF_DEBUG_LVL} 
-CFLAGS=$(DEBUG_FLAG) -Wall -fmessage-length=0 ${MACROS} -D__ZYNQ__ -DUSE_CACHE
+CFLAGS=$(DEBUG_FLAG) -Wall -fmessage-length=0 ${MACROS} -D__ZYNQ__
 CPPFLAGS=-MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)"
 LDFLAGS=-Wl,-T -Wl,${LSSCRIPT} -Wl,-Map,${EXECUTABLE}.map
 
@@ -162,7 +162,9 @@ ${STACK_ROOT}/stack/src/user/ledu.c
 #${STACK_ROOT}/libs/console/printlog.c \
 LIBRARIES = libxil.a
 
-VPATH=$(sort $(patsubst " ", :, $(dir $(SRCFILES))))
+SRC_DIR = $(subst ${STACK_ROOT},,$(SRCFILES))
+SRC_FILES = $(subst ./,,$(SRC_DIR))
+VPATH=$(sort $(patsubst " ", :, $(dir $(SRC_FILES))))
 
 ###################################
 # set Optimization level macro
@@ -207,12 +209,10 @@ LIBS=-Wl,--start-group,-lxil,-lc -W1,--end-group
 # objects
 # objects
 
-COMPILE_DIR = $(subst ${STACK_ROOT},,$(SRCFILES))
-COMPILE = $(subst ./,,$(COMPILE_DIR))
-OBJ = $(addprefix $(OBJDIR)/,$(patsubst %.c, %.o, $(COMPILE)))
-OBJD = $(addprefix $(OBJDIR)/,$(patsubst %.c, %.d, $(COMPILE)))
 
-VPATH=$(sort $(patsubst " ", :, $(dir $(COMPILE))))
+OBJ = $(addprefix $(OBJDIR)/,$(patsubst %.c, %.o, $(SRC_FILES)))
+OBJD = $(addprefix $(OBJDIR)/,$(patsubst %.c, %.d, $(SRC_FILES)))
+
 OUTPUT_OPTION = -o $@
 
 	

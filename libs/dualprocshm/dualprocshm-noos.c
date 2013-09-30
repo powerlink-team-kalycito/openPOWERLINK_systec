@@ -90,7 +90,7 @@ address register.
 typedef UINT32 (*tGetDynRes) (tDualprocDrvInstance  pDrvInst_p, UINT16 index_p);
 
 /**
-\brief Structure for dual processor dynamic resources(queue/buffers)
+\brief Structure for dual processor dynamic resources(buffers)
 
 This structure defines for each dynamic resources instance the set and get
 functions. Additionally the base and span is provided.
@@ -137,7 +137,7 @@ This array holds all Dual Processor Driver instances available.
 */
 static tDualProcDrv *paDualProcDrvInstance[DUALPROC_INSTANCE_COUNT] =
 {
-    NULL
+    NULL,NULL
 };
 //------------------------------------------------------------------------------
 // local function prototypes
@@ -177,7 +177,7 @@ tDualprocReturn dualprocshm_create (tDualprocConfig *pConfig_p, tDualprocDrvInst
     int              iIndex;
     if(pConfig_p->ProcInstance != kDualProcPcp && pConfig_p->ProcInstance != kDualProcHost )
     {
-        TRACE("Inst %x\n",pConfig_p->ProcInstance);
+        //TRACE("Inst %x\n",pConfig_p->ProcInstance);
         return kDualprocInvalidParameter;
     }
 
@@ -211,6 +211,7 @@ tDualprocReturn dualprocshm_create (tDualprocConfig *pConfig_p, tDualprocDrvInst
         pDrvInst->pDynResTbl[iIndex].pfnSetDynAddr = setDynBuffAddr;
         pDrvInst->pDynResTbl[iIndex].pfnGetDynAddr = getDynBuffAddr;
     }
+
     // store driver instance in array
     for(iIndex = 0; iIndex < DUALPROC_INSTANCE_COUNT; iIndex++)
     {
@@ -594,12 +595,9 @@ tDualprocReturn dualprocshm_acquireBuffLock(tDualprocDrvInstance pInstance_p, UI
 
     if(pInstance_p == NULL )
         return kDualprocInvalidParameter;
-    //printf("b4\n");
-    target_acquireMasterLock(pDrvInst->config.procId,Id_p);
-    dualprocshm_targetAcquireLock(&pDrvInst->pDynResTbl[Id_p].memInst->lock,pDrvInst->config.procId,Id_p);
-    target_releaseMasterLock();
 
-   // printf("after\n");
+    dualprocshm_targetAcquireLock(&pDrvInst->pDynResTbl[Id_p].memInst->lock,pDrvInst->config.procId);
+
     return kDualprocSuccessful;
 }
 //------------------------------------------------------------------------------
@@ -620,9 +618,9 @@ tDualprocReturn dualprocshm_acquireBuffLock(tDualprocDrvInstance pInstance_p, UI
 tDualprocReturn dualprocshm_releaseBuffLock(tDualprocDrvInstance pInstance_p, UINT8 Id_p)
 {
     tDualProcDrv    *pDrvInst = (tDualProcDrv *) pInstance_p;
-    //target_acquireMasterLock(pDrvInst->config.procId);
+
     dualprocshm_targetReleaseLock(&pDrvInst->pDynResTbl[Id_p].memInst->lock);
-   // target_releaseMasterLock();
+
     return kDualprocSuccessful;
 }
 

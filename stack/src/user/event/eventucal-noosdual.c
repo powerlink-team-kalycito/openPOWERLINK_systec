@@ -93,7 +93,6 @@ static tEventuCalInstance       instance_l;             ///< Instance variable o
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-void signalKernelEvent(void);
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
 //============================================================================//
@@ -120,9 +119,6 @@ tEplKernel eventucal_init (void)
         goto Exit;
     if (eventucal_initQueueCircbuf(kEventQueueK2U) != kEplSuccessful)
         goto Exit;
-
-    //if (eventucal_setSignalingCircbuf(kEventQueueU2K,signalKernelEvent) != kEplSuccessful)
-    //        goto Exit;
 
     instance_l.fInitialized = TRUE;
     return kEplSuccessful;
@@ -245,8 +241,4 @@ void eventucal_process(void)
 /// \{
 
 /// \}
-//void signalKernelEvent(void)
-//{
-    //printf("signal\n");
-   // ctrlucal_signalKernelEvent();
-//}
+

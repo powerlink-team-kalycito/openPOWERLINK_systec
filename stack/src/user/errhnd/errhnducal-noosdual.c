@@ -122,7 +122,7 @@ tEplKernel errhnducal_init (tErrHndObjects *pLocalObjects_p)
     if (pErrHndMem_l != NULL)
         return kEplNoFreeInstance;
 
-    dualRet = dualRet = dualprocshm_getMemory(pInstance, DUALPROCSHM_BUFF_ID_ERRHDLR,
+    dualRet =  dualprocshm_getMemory(pInstance, DUALPROCSHM_BUFF_ID_ERRHDLR,
                                                             &pBase,&span,FALSE);
     if(dualRet != kDualprocSuccessful)
     {

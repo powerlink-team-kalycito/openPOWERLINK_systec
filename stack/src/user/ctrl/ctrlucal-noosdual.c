@@ -96,7 +96,6 @@ typedef struct sCtrlBuff
     volatile UINT16     retval;     ///< return word
     UINT16              resv;        ///< reserved
     UINT16              irqEnable;  ///< enable irqs
-  //  UINT32              keventCount;
     union
     {
        volatile UINT16 irqSet;      ///< set irq (Pcp)
@@ -120,7 +119,6 @@ typedef struct
     size_t               initParamBuffSize;
     BOOL                 fIrqMasterEnable;
     tTargetIrqCb         apfnIrqCb[TARGET_MAX_INTERRUPTS];
- //   UINT32               keventCount;
 }tCtrluCalInstance;
 
 
@@ -520,17 +518,6 @@ tEplKernel ctrlucal_registerHandler(UINT8 irqId_p,void* pfnIrqHandler_p)
 
     return kEplSuccessful;
 }
-/*
-tEplKernel ctrlucal_signalKernelEvent(void)
-{
-    instance_l.keventCount++;
-    if(dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,keventCount), \
-                    sizeof(instance_l.keventCount),(UINT8 *)&instance_l.keventCount) != kDualprocSuccessful)
-    {
-        return kEplInvalidOperation;
-    }
-    //printf("Ctrl Signal %d\n",instance_l.keventCount);
-}*/
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //
 //============================================================================//
@@ -539,7 +526,7 @@ tEplKernel ctrlucal_signalKernelEvent(void)
 \brief  Control Interrupt Handler
 
 This is the host interrupt handler which should by called by the system if the
-irq signal is asserted PCP. This will be used to handle multiple interrupts sources
+irq signal is asserted by PCP. This will be used to handle multiple interrupts sources
 with a single interrupt line available. This handler acknowledges the processed
 interrupt sources and calls the corresponding callbacks registered with
 ctrlucal_registerHandler().

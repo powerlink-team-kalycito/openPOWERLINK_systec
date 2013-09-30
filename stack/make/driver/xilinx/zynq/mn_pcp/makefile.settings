@@ -87,7 +87,7 @@ PROC_FEATURES_ARM=-mcpu=cortex-a9 -mabi=aapcs -mapcs-frame -march=armv7-a -mlitt
 # Pattern compare instructions: [-mno-xl-pattern-compare = don't use them, -mxl-pattern-compare = use them ]
 # Bootstrap option: [-xl-mode-bootstrap = needed when a bootloader is used]
 PROC_FEATURES_MB= -mcpu=v8.20.a -mno-xl-pattern-compare -mno-xl-barrel-shift -mxl-soft-mul -mxl-soft-div
-#check it -fno-short-enums
+
 
 ##################################
 # Settings for Debugging
@@ -97,13 +97,13 @@ PROC_FEATURES_MB= -mcpu=v8.20.a -mno-xl-pattern-compare -mno-xl-barrel-shift -mx
 
 ##################################
 # Settings for Debugging with optimized compilation
-DBG_MODE=_DEBUG
-OPT_LEVEL=-O2
+#DBG_MODE=_DEBUG
+#OPT_LEVEL=-O2
 
 ##################################
 # Settings for Release
-#DBG_MODE=NDEBUG
-#OPT_LEVEL=-O2
+DBG_MODE=NDEBUG
+OPT_LEVEL=-O2
 
 ##################################
 # DEF_DEBUG_LVL = [

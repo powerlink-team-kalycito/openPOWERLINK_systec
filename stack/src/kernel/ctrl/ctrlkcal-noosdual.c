@@ -93,7 +93,6 @@ typedef struct sCtrlBuff
     volatile UINT16     retval;     ///< return word
     UINT16              resv;        ///< reserved
     UINT16              irqEnable;  ///< enable irqs
-  //  UINT32              keventCount;
     union
     {
        volatile UINT16 irqSet;      ///< set irq (Pcp)
@@ -107,7 +106,6 @@ typedef struct
     tDualprocDrvInstance dualProcDrvInst;
     UINT8*               initParamBase;
     size_t               initParamBuffSize;
-  //  UINT32               keventCountLocal;
 }tCtrlkCalInstance;
 //------------------------------------------------------------------------------
 // local vars
@@ -229,18 +227,8 @@ This function provides processing time for the CAL module.
 tEplKernel ctrlkcal_process (void)
 {
     // process kernel events
-    UINT32 count;
 
-//    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,keventCount), \
-//                sizeof(count),(UINT8 *)&count) != kDualprocSuccessful)
-//        return kEplGeneralError;
- //printf("count %d\n",count);
- //   if(count > instance_l.keventCountLocal)
- //   {
-      //  printf("count %d %d\n",count,instance_l.keventCountLocal);
-        eventkcal_process();
- //       instance_l.keventCountLocal++;
- //   }
+    eventkcal_process();
 
     return kEplSuccessful;
 }

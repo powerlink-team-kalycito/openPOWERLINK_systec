@@ -281,9 +281,6 @@ tCircBufError circbuf_writeData (tCircBufInstance* pInstance_p, const void* pDat
     tCircBufHeader*     pHeader = pInstance_p->pCircBufHeader;
     BYTE*               pCircBuf = pInstance_p->pCircBuf;
 
-    tEplEvent           *event;
-    size_t              freesize;
-    UINT32              datacount;
     if ((pData_p == NULL) || (size_p == 0))
         return kCircBufOk;
 
@@ -373,9 +370,7 @@ tCircBufError circbuf_writeMultipleData(tCircBufInstance* pInstance_p,
     size_t              partSize;
     tCircBufHeader*     pHeader = pInstance_p->pCircBufHeader;
     BYTE*               pCircBuf = pInstance_p->pCircBuf;
-    tEplEvent           *event;
-    size_t              freesize;
-    UINT32              datacount;
+
 
     if ((pData_p == NULL) || (size_p == 0) || (pData2_p == NULL) || (size2_p == 0))
     {

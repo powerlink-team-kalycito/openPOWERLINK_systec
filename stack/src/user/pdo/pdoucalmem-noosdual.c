@@ -80,8 +80,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct
 {
     tDualprocDrvInstance    pDrvInstance;
-//    UINT8*                  pBase;
-//    size_t                  span;
 } tMemInstance;
 
 //------------------------------------------------------------------------------

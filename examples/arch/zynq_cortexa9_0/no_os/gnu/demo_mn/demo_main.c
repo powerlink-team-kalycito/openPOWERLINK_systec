@@ -375,7 +375,7 @@ tEplKernel PUBLIC AppCbSync(void)
 {
     tEplKernel          EplRet;
     int                 i;
-//printf("sync\n");
+
     EplRet = oplk_exchangeProcessImageOut();
     if (EplRet != kEplSuccessful)
     {
@@ -383,8 +383,7 @@ tEplKernel PUBLIC AppCbSync(void)
     }
 
     uiCnt_g++;
-    pProcessImageIn_l->CN1_M00_Digital_Ouput_32_Bit_DWORD_01 = uiCnt_g;
-/*
+
     nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[1].m_uiInput = pProcessImageOut_l->CN2_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[2].m_uiInput = pProcessImageOut_l->CN3_M00_Digital_Input_8_Bit_Byte_1;
@@ -402,7 +401,7 @@ tEplKernel PUBLIC AppCbSync(void)
     {
         /* Running Leds */
         /* period for LED flashing determined by inputs */
-/*        nodeVar_g[i].m_uiPeriod = (nodeVar_g[i].m_uiInput == 0) ? 20 : (nodeVar_g[i].m_uiInput * 20);
+       nodeVar_g[i].m_uiPeriod = (nodeVar_g[i].m_uiInput == 0) ? 20 : (nodeVar_g[i].m_uiInput * 20);
         if (uiCnt_g % nodeVar_g[i].m_uiPeriod == 0)
         {
             if (nodeVar_g[i].m_uiLeds == 0x00)
@@ -454,7 +453,7 @@ tEplKernel PUBLIC AppCbSync(void)
     pProcessImageIn_l->CN10_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[9].m_uiLeds;
     pProcessImageIn_l->CN11_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[10].m_uiLeds;
     pProcessImageIn_l->CN12_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[11].m_uiLeds;
-*/
+
     EplRet = oplk_exchangeProcessImageIn();
 
     return EplRet;
@@ -525,7 +524,6 @@ tEplKernel AppGetCdc(void)
     sd_close(&fFile);
 
 Exit:
-
     Xil_DCacheEnable();
     return tRet;
 }

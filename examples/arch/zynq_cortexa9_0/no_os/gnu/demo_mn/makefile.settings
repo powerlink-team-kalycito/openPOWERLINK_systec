@@ -93,13 +93,13 @@ PROC_FEATURES_MB= -mcpu=v8.20.a -mno-xl-pattern-compare -mno-xl-barrel-shift -mx
 
 ##################################
 # Settings for Debugging with optimized compilation
-DBG_MODE=_DEBUG
-OPT_LEVEL=-O2
+#DBG_MODE=_DEBUG
+#OPT_LEVEL=-O2
 
 ##################################
 # Settings for Release
-#DBG_MODE=NDEBUG
-#OPT_LEVEL=-O2
+DBG_MODE=NDEBUG
+OPT_LEVEL=-O2
 
 
 ##################################
@@ -108,7 +108,7 @@ OPT_LEVEL=-O2
 # 0x40000000L DEBUG_LVL_ERROR
 # 0x80000000L DEBUG_LVL_ALWAYS ]
 DEF_DEBUG_LVL=0xEC000000L
-#DEF_DEBUG_LVL=0x00000000L
+
 ##################################
 #Debug flag
 # Note: Set this to -g3 when you are debugging. (Increases code size)

@@ -50,7 +50,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // const defines
 //------------------------------------------------------------------------------
 #define DEFAULT_LOCK_ID             0x00
-#define TARGET_LOCK                 0xFF
 //------------------------------------------------------------------------------
 // module global vars
 //------------------------------------------------------------------------------
@@ -66,8 +65,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
-
-static UINT8*      masterLock = (UINT8*) COMMON_MEM_BASE;
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -94,12 +91,12 @@ UINT8* dualprocshm_getCommonMemAddr(UINT16* pSize_p)
         return NULL;
     }
 
-    pAddr = (UINT8 *) (COMMON_MEM_BASE + 1);
+    pAddr = (UINT8 *) (COMMON_MEM_BASE);
 
-    memset(pAddr,0,MAX_COMMON_MEM_SIZE - 1);
+    memset(pAddr,0,MAX_COMMON_MEM_SIZE);
 
     *pSize_p = MAX_COMMON_MEM_SIZE - 1;
-    *masterLock = 0;
+
     return pAddr;
 }
 //------------------------------------------------------------------------------
@@ -207,10 +204,10 @@ such as memory buffers
 \ingroup module_dualprocshm
  */
 //------------------------------------------------------------------------------
-void dualprocshm_targetAcquireLock(UINT8* pBase_p, UINT8 lockToken_p,UINT8 id)
+void dualprocshm_targetAcquireLock(UINT8* pBase_p, UINT8 lockToken_p)
 {
     UINT8 lock = 0;
-int count =0;
+
     if(pBase_p == NULL)
     {
         return;
@@ -227,23 +224,6 @@ int count =0;
             DUALPROCSHM_FLUSH_DCACHE_RANGE((UINT32)pBase_p,sizeof(UINT8));
             continue;
         }
-/*        else
-        {
-            if(lock != lockToken_p)
-            {
-                count++;
-                if(count > 500)
-                {
-#ifdef __MICROBLAZE__
-          //          printf("Lock %x %d t %x\n",*pBase_p,id,lockToken_p);
-#endif
-                    count = 0;
-
-                }
-
-            }
-         //
-        }*/
       }while(lock != lockToken_p);
 
 }
@@ -262,11 +242,12 @@ This routine is used to release a lock acquired before at a address specified
 void dualprocshm_targetReleaseLock(UINT8* pBase_p)
 {
     UINT8   defaultlock = DEFAULT_LOCK_ID;
+
     if(pBase_p == NULL)
     {
         return;
     }
-  //  printf("Ulk %x\n",*pBase_p);
+
     DPSHM_WRITE8((UINT32)pBase_p,defaultlock);
 
     DUALPROCSHM_FLUSH_DCACHE_RANGE((UINT32)pBase_p,sizeof(UINT8));
@@ -274,43 +255,3 @@ void dualprocshm_targetReleaseLock(UINT8* pBase_p)
 /**
  * EOF
  */
-void target_acquireMasterLock(UINT8 token_p,UINT8 id)
-{
-    UINT8 lock = 0;
-    int count = 0;
-    do{
-            DUALPROCSHM_INVALIDATE_DCACHE_RANGE((UINT32)masterLock,sizeof(UINT8));
-            lock = DPSHM_READ8((UINT32)masterLock);
-//printf("Lock %d\n",lock);
-            if(lock == DEFAULT_LOCK_ID)
-            {
-
-                DPSHM_WRITE8((UINT32)masterLock, token_p);
-                DUALPROCSHM_FLUSH_DCACHE_RANGE((UINT32)masterLock,sizeof(UINT8));
-                continue;
-            }
- /*           else
-            {
-                if(lock != token_p)
-                {
-                    count++;
-                    if(count > 500)
-                    {
-#ifdef __MICROBLAZE__
-     //                   printf("mLock %x %d t %x\n",*masterLock,id,token_p);
-#endif
-                        count = 0;
-                    }
-
-                }
-             //
-            }*/
-       }while(lock != token_p);
-}
-void target_releaseMasterLock(void)
-{
-    UINT8 lock = DEFAULT_LOCK_ID;
-   // printf("mUlk %x\n",*masterLock);
-    DPSHM_WRITE8((UINT32)masterLock,lock);
-    DUALPROCSHM_FLUSH_DCACHE_RANGE((UINT32)masterLock,sizeof(UINT8));
-}

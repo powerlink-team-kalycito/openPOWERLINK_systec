@@ -230,9 +230,9 @@ void eventkcal_process(void)
     // process user->kernel events
     if(eventkcal_getEventCountCircbuf(kEventQueueU2K) > 0)
     {
-        EplTgtEnableGlobalInterrupt(FALSE);
+       // EplTgtEnableGlobalInterrupt(FALSE);
         eventkcal_processEventCircbuf(kEventQueueU2K);
-        EplTgtEnableGlobalInterrupt(TRUE);
+      //  EplTgtEnableGlobalInterrupt(TRUE);
     }
 }
 //============================================================================//

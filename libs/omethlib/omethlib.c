@@ -251,7 +251,11 @@ static ometh_internal_typ    omethInternal;    // driver internal data
     if(pDesc->pData != 0)            return 0;    /* descriptor is not free (queue full !) */       \
                                                                                                     \
     len = pPacket->length;    /* padding, ethernet frames must be at least 64 byte long */          \
-    if(len < OMETH_MIN_TX_FRAME) len=OMETH_MIN_TX_FRAME;                                            \
+    if(len < OMETH_MIN_TX_FRAME)                                                                    \
+    {                                                                                               \
+        memset(((unsigned char *)&pPacket->data + len),0,OMETH_MIN_TX_FRAME - len);                                   \
+        len= OMETH_MIN_TX_FRAME;                                                                    \
+    }                                                                                               \
                                                                                                     \
     pDesc->pData    = (unsigned long)&pPacket->data;    /* write buffer ptr to descriptor */        \
     pDesc->len        = len;                                                                        \

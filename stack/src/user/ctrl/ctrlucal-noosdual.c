@@ -77,7 +77,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 #define CTRL_PROC_ID            0xFA
 #define DUALPROCSHM_DYNBUFF_ID  0x09
-#define TARGET_MAX_INTERRUPTS   4
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -95,22 +94,8 @@ typedef struct sCtrlBuff
     volatile UINT16     command;    ///< Command word
     volatile UINT16     retval;     ///< Return word
     UINT16              resv;       ///< Reserved
-    UINT16              irqEnable;  ///< Enable irqs
-    union
-    {
-       volatile UINT16 irqSet;      ///< Set irq (Pcp)
-       volatile UINT16 irqAck;      ///< Acknowledge irq (Host)
-       volatile UINT16 irqPending;  ///< Pending irq
-    };
 } tCtrlBuff;
 
-/**
-\brief Function type definition for target interrupt callback
-
-This function callback is called for a given interrupt source, registered by
-a specific user layer module.
-*/
-typedef void (*tTargetIrqCb) (void);
 
 /**
 \brief Control module instance - User Layer
@@ -124,8 +109,7 @@ typedef struct
     UINT8*               initParamBase;        ///< Pointer to memory for init params
     size_t               initParamBuffSize;    ///< Size of memory for init params
     BOOL                 fIrqMasterEnable;     ///< Master interrupts status
-    tTargetIrqCb         apfnIrqCb[TARGET_MAX_INTERRUPTS];  ///< User applications
-                                                            ///< interrupt callbacks
+
 }tCtrluCalInstance;
 
 
@@ -136,7 +120,7 @@ static tCtrluCalInstance   instance_l;
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-static void targetInterruptHandler ( void* pArg_p );
+
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -190,17 +174,14 @@ tEplKernel ctrlucal_init(void)
     // Disable the Interrupts from PCP
     instance_l.fIrqMasterEnable =  FALSE;
 
-    if(target_regSyncIrqHdl(targetInterruptHandler, (void*)&instance_l) != 0)
+    dualRet = dualprocshm_initInterrupts(instance_l.dualProcDrvInst);
+
+    if(dualRet != kDualprocSuccessful)
     {
-        EPL_DBGLVL_ERROR_TRACE("Interrupt\n ");
+        EPL_DBGLVL_ERROR_TRACE("{%s} Error Initializing interrupts %x\n ",__func__,dualRet);
         ret = kEplNoResource;
         goto Exit;
     }
-
-    // enable system irq
-    target_enableSyncIrq(TRUE);
-
-
 
 Exit:
     return ret;
@@ -489,95 +470,4 @@ tEplKernel ctrlucal_readInitParam(tCtrlInitParam* pInitParam_p)
     return kEplSuccessful;
 }
 
-//------------------------------------------------------------------------------
-/**
-\brief  Register interrupt handler
 
-The function registers a interrupt handler for the specified interrupt.
-
-\param  irqId_p        interrupt id.
-\param  pfnIrqHandler_p  interrpt handler
-
-\return The function returns a tEplKernel error code.
-
-\ingroup module_ctrlucal
-*/
-//------------------------------------------------------------------------------
-tEplKernel ctrlucal_registerHandler(UINT8 irqId_p,void* pfnIrqHandler_p)
-{
-    UINT16 irqEnableVal;
-
-    if(irqId_p > TARGET_MAX_INTERRUPTS)
-        return kEplInvalidOperation;
-
-    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqEnable), \
-                sizeof(irqEnableVal),(UINT8 *)&irqEnableVal) != kDualprocSuccessful)
-    {
-        return kEplInvalidOperation;
-    }
-
-    if(pfnIrqHandler_p != NULL)
-        irqEnableVal |= (1 << irqId_p);
-    else
-        irqEnableVal &= ~(1 << irqId_p);
-
-    instance_l.apfnIrqCb[irqId_p] = (tTargetIrqCb)pfnIrqHandler_p;
-
-    if(dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqEnable), \
-                sizeof(irqEnableVal),(UINT8 *)&irqEnableVal) != kDualprocSuccessful)
-    {
-        return kEplInvalidOperation;
-    }
-
-    return kEplSuccessful;
-}
-//============================================================================//
-//            P R I V A T E   F U N C T I O N S                               //
-//============================================================================//
-//------------------------------------------------------------------------------
-/**
-\brief  Control Interrupt Handler
-
-This is the host interrupt handler which should by called by the system if the
-irq signal is asserted by PCP. This will be used to handle multiple interrupts sources
-with a single interrupt line available. This handler acknowledges the processed
-interrupt sources and calls the corresponding callbacks registered with
-ctrlucal_registerHandler().
-
-\param  pArg_p                  The system caller should provide the control module
-                                instance with this parameter.
-*/
-//------------------------------------------------------------------------------
-static void targetInterruptHandler ( void* pArg_p )
-{
-    UINT16 pendings;
-    UINT16 mask;
-    int i;
-
-    UNUSED_PARAMETER(pArg_p);
-
-    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqPending), \
-                sizeof(pendings),(UINT8 *)&pendings) != kDualprocSuccessful)
-    {
-        return;
-    }
-
-    for(i=0; i < TARGET_MAX_INTERRUPTS; i++)
-    {
-        mask = 1 << i;
-
-        // ack irq source first
-        if(pendings & mask)
-        {
-            pendings &= ~mask;
-            dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqAck), \
-                                        sizeof(pendings),(UINT8 *)&pendings);
-        }
-
-
-        // then try to execute the callback
-        if(instance_l.apfnIrqCb[i] != NULL)
-            instance_l.apfnIrqCb[i]();
-    }
-
-}

@@ -111,7 +111,16 @@ tEplKernel pdoucal_initSync(tEplSyncCb pfnSyncCb_p)
 {
     tEplKernel ret;
 
-    ret = ctrlucal_registerHandler(TARGET_SYNC_INTERRUPT_ID, IrqSyncCb);
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcSecond);
+
+    if(pInstance == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Host dual proc driver instance\n",
+                __func__);
+        return kEplNoResource;
+    }
+
+    ret = dualprocshm_registerHandler(pInstance, TARGET_SYNC_INTERRUPT_ID, IrqSyncCb);
     if(ret != kEplSuccessful)
     {
         EPL_DBGLVL_ERROR_TRACE("%s: Enable irq not possible!\n", __func__);
@@ -134,7 +143,16 @@ The function cleans up the PDO user CAL sync module
 //------------------------------------------------------------------------------
 void pdoucal_exitSync(void)
 {
-   ctrlucal_registerHandler(TARGET_SYNC_INTERRUPT_ID, NULL);
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcSecond);
+
+    if(pInstance == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get Host dual proc driver instance\n",
+                __func__);
+        return kEplNoResource;
+    }
+
+    dualprocshm_registerHandler(pInstance, TARGET_SYNC_INTERRUPT_ID, NULL);
 }
 
 //------------------------------------------------------------------------------

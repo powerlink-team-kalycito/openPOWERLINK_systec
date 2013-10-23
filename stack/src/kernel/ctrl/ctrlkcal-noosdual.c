@@ -77,7 +77,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CTRL_MAGIC                      0xA5A5  ///< Control magic word
 #define CTRL_PROC_ID                    0xFB    ///< Processor Id for kernel layer
 #define DUALPROCSHM_DYNBUFF_ID          0x09    ///< Buffer Id for dynamic buffer
-#define TARGET_MAX_INTERRUPTS           4       ///< Max interrupts supported
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -95,13 +94,6 @@ typedef struct sCtrlBuff
     volatile UINT16     command;    ///< Command word
     volatile UINT16     retval;     ///< Return word
     UINT16              resv;       ///< Reserved
-    UINT16              irqEnable;  ///< Enable irqs
-    union
-    {
-       volatile UINT16 irqSet;      ///< Set irq (Pcp)
-       volatile UINT16 irqAck;      ///< Acknowledge irq (Host)
-       volatile UINT16 irqPending;  ///< Pending irq
-    };
 } tCtrlBuff;
 
 /**
@@ -389,98 +381,7 @@ tEplKernel ctrlkcal_readInitParam(tCtrlInitParam* pInitParam_p)
 
     return kEplSuccessful;
 }
-//------------------------------------------------------------------------------
-/**
-\brief  Enable Interrupt
 
-The function enables the specified interrupt.
-
-\param  irqId_p        Interrupt id.
-\param  fEnable_p      Enable if TRUE, Disable if FALSE
-
-\return The function returns a tEplKernel error code.
-\retval kEplSuccessful          If function executes correctly
-\retval other error codes       If an error occurred
-
-\ingroup module_ctrlkcal
-*/
-//------------------------------------------------------------------------------
-tEplKernel ctrlkcal_enableIrq(UINT8 irqId_p,BOOL fEnable_p)
-{
-    UINT16 irqEnableVal;
-
-    if(irqId_p > TARGET_MAX_INTERRUPTS)
-        return kEplInvalidOperation;
-
-    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqEnable), \
-                sizeof(irqEnableVal),(UINT8 *)&irqEnableVal) != kDualprocSuccessful)
-    {
-        return kEplInvalidOperation;
-    }
-
-    if(fEnable_p)
-        irqEnableVal |= (1 << irqId_p);
-    else
-        irqEnableVal &= ~(1 << irqId_p);
-
-    if(dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqEnable), \
-                sizeof(irqEnableVal),(UINT8 *)&irqEnableVal) != kDualprocSuccessful)
-    {
-        return kEplInvalidOperation;
-    }
-
-    return kEplSuccessful;
-}
-//------------------------------------------------------------------------------
-/**
-\brief  Set a Interrupt
-
-The function triggers the specified interrupt.
-
-\param  irqId_p        Interrupt id.
-\param  fSet_p         Trigger if TRUE, clear if FALSE
-
-\return The function returns a tEplKernel error code.
-
-\ingroup module_ctrlkcal
-*/
-//------------------------------------------------------------------------------
-tEplKernel ctrlkcal_setIrq(UINT8 irqId_p,BOOL fSet_p)
-{
-    UINT16 irqActive;
-    UINT16 irqEnable;
-
-    if(irqId_p > TARGET_MAX_INTERRUPTS)
-        return kEplInvalidOperation;
-
-    if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqEnable), \
-                    sizeof(irqEnable),(UINT8 *)&irqEnable) != kDualprocSuccessful)
-    {
-        return kEplInvalidOperation;
-    }
-
-    if(irqEnable & (1 << irqId_p))
-    {
-        if(dualprocshm_readDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqSet), \
-                sizeof(irqActive),(UINT8 *)&irqActive) != kDualprocSuccessful)
-        {
-            return kEplInvalidOperation;
-        }
-
-        if(fSet_p)
-            irqActive |= (1 << irqId_p);
-        else
-            irqActive &= ~(1 << irqId_p);
-
-        if(dualprocshm_writeDataCommon(instance_l.dualProcDrvInst,offsetof(tCtrlBuff,irqSet), \
-                sizeof(irqActive),(UINT8 *)&irqActive) != kDualprocSuccessful)
-        {
-            return kEplInvalidOperation;
-        }
-    }
-
-    return kEplSuccessful;
-}
 
 //============================================================================//
 //            P R I V A T E   F U N C T I O N S                               //

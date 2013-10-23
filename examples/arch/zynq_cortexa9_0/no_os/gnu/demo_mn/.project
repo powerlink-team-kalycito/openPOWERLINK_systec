@@ -185,6 +185,11 @@
 			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-arm.h</locationURI>
 		</link>
 		<link>
+			<name>libs/dualprocshm/dualprocshm-intr.c</name>
+			<type>1</type>
+			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-intr.c</locationURI>
+		</link>
+		<link>
 			<name>libs/dualprocshm/dualprocshm-noos.c</name>
 			<type>1</type>
 			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-noos.c</locationURI>
@@ -403,6 +408,11 @@
 			<name>stack/src/user/api/generic.c</name>
 			<type>1</type>
 			<locationURI>PARENT-6-PROJECT_LOC/stack/src/user/api/generic.c</locationURI>
+		</link>
+		<link>
+			<name>stack/src/user/api/processimage-cia302.c</name>
+			<type>1</type>
+			<locationURI>STACK_ROOT/stack/src/user/api/processimage-cia302.c</locationURI>
 		</link>
 		<link>
 			<name>stack/src/user/api/processimage.c</name>

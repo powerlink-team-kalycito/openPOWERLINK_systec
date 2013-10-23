@@ -101,7 +101,24 @@ The function initializes the kernel PDO CAL sync module.
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_initSync(void)
 {
-    return ctrlkcal_enableIrq(TARGET_SYNC_INTERRUPT_ID, FALSE);
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcFirst);
+    tDualprocReturn dualRet;
+
+    if(pInstance == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get PCP dual proc driver instance\n",
+                __func__);
+        return kEplNoResource;
+    }
+
+    dualRet = dualprocshm_enableIrq(pInstance, TARGET_SYNC_INTERRUPT_ID, FALSE);
+
+    if(dualRet != kDualprocSuccessful)
+    {
+        return kEplNoResource;
+    }
+
+    return kEplSuccessful;
 }
 
 //------------------------------------------------------------------------------
@@ -115,7 +132,16 @@ The function cleans up the PDO CAL sync module
 //------------------------------------------------------------------------------
 void pdokcal_exitSync(void)
 {
-    ctrlkcal_enableIrq(TARGET_SYNC_INTERRUPT_ID, FALSE);
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcFirst);
+    tDualprocReturn dualRet;
+
+    if(pInstance == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get PCP dual proc driver instance\n",
+                __func__);
+    }
+
+    dualprocshm_enableIrq(pInstance, TARGET_SYNC_INTERRUPT_ID, FALSE);
 }
 
 //------------------------------------------------------------------------------
@@ -131,7 +157,25 @@ The function sends a sync event
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_sendSyncEvent(void)
 {
-    return ctrlkcal_setIrq(TARGET_SYNC_INTERRUPT_ID,TRUE);
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcFirst);
+    tDualprocReturn dualRet;
+
+    if(pInstance == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get PCP dual proc driver instance\n",
+                __func__);
+        return kEplNoResource;
+    }
+
+    dualRet = dualprocshm_setIrq(pInstance, TARGET_SYNC_INTERRUPT_ID, TRUE);
+
+    if(dualRet != kDualprocSuccessful)
+    {
+        return kEplNoResource;
+    }
+
+    return kEplSuccessful;
+
 }
 
 //------------------------------------------------------------------------------
@@ -149,7 +193,24 @@ The function enables sync events
 //------------------------------------------------------------------------------
 tEplKernel pdokcal_controlSync(BOOL fEnable_p)
 {
-    return  ctrlkcal_enableIrq(TARGET_SYNC_INTERRUPT_ID, fEnable_p);
+    tDualprocDrvInstance pInstance = dualprocshm_getDrvInst(kDualProcFirst);
+    tDualprocReturn dualRet;
+
+    if(pInstance == NULL)
+    {
+        EPL_DBGLVL_ERROR_TRACE("%s() couldn't get PCP dual proc driver instance\n",
+                __func__);
+        return kEplNoResource;
+    }
+
+    dualRet = dualprocshm_enableIrq(pInstance, TARGET_SYNC_INTERRUPT_ID, fEnable_p);
+
+    if(dualRet != kDualprocSuccessful)
+    {
+        return kEplNoResource;
+    }
+
+    return kEplSuccessful;
 }
 
 //============================================================================//

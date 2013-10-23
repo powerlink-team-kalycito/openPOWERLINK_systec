@@ -111,6 +111,54 @@ typedef struct sDualprocMemInst
 */
 typedef void* tDualprocDrvInstance;
 
+/**
+\brief Function type to set the address of a Buffer
+
+This function type enables to set the corresponding dynamic shared memory address
+register for a dynamic buffer.
+*/
+typedef void (*tSetDynRes) (tDualprocDrvInstance  pDrvInst_p, UINT16 index_p,UINT32 addr_p);
+
+/**
+\brief Function type to get the address of a Buffer
+
+This function type enables to get the address set in the dynamic shared buffer
+address register.
+*/
+typedef UINT32 (*tGetDynRes) (tDualprocDrvInstance  pDrvInst_p, UINT16 index_p);
+
+/**
+\brief Structure for dual processor dynamic resources(buffers)
+
+This structure defines for each dynamic resources instance the set and get
+functions. Additionally the base and span is provided.
+*/
+typedef struct sDualprocDynRes
+{
+    tSetDynRes        pfnSetDynAddr;   ///< This function sets the dynamic buffer base to hardware
+    tGetDynRes        pfnGetDynAddr;   ///< This function gets the dynamic buffer base from hardware
+    UINT8*            pBase;           ///< Base of the dynamic buffer
+    tDualprocMemInst* memInst;         ///< Pointer to memory instance
+} tDualprocDynResConfig;
+
+
+/**
+\brief Dual Processor Instance
+
+Holds the configuration passed to the instance at creation.
+*/
+typedef struct sDualProcDrv
+{
+    tDualprocConfig         config;         ///< Copy of configuration
+    UINT8                   *pCommMemBase;  ///< Base address of the common memory
+    UINT8                   *pAddrTableBase;///< Base address of the location to place dynamic
+                                            ///< memory address table
+    int                     iMaxDynBuffEntries; ///< Number of dynamic buffers (Pcp/Host)
+    tDualprocDynResConfig*  pDynResTbl;     ///< Dynamic buffer table (Pcp/Host)
+
+} tDualProcDrv;
+
+
 
 //------------------------------------------------------------------------------
 // function prototypes
@@ -139,6 +187,13 @@ tDualprocReturn dualprocshm_writeDataCommon(tDualprocDrvInstance pInstance_p,UIN
 
 tDualprocReturn dualprocshm_acquireBuffLock(tDualprocDrvInstance pInstance_p, UINT8 Id_p);
 tDualprocReturn dualprocshm_releaseBuffLock(tDualprocDrvInstance pInstance_p, UINT8 Id_p);
+
+tDualprocReturn dualprocshm_initInterrupts(tDualprocDrvInstance pInstance_p);
+tDualprocReturn dualprocshm_registerHandler(tDualprocDrvInstance pInstance_p,
+                                            UINT8 irqId_p,void* pfnIrqHandler_p);
+tDualprocReturn dualprocshm_enableIrq(tDualprocDrvInstance pInstance_p, \
+                                                   UINT8 irqId_p,BOOL fEnable_p);
+tDualprocReturn dualprocshm_setIrq(tDualprocDrvInstance pInstance_p, UINT8 irqId_p,BOOL fSet_p);
 
 #ifdef __cplusplus
 }

@@ -118,6 +118,7 @@ ${STACK_ROOT}/libs/sd_fat16/fs_sdcard.c \
 ${STACK_ROOT}/libs/ami/amiarm.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-zynq.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-noos.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm-intr.c \
 ${STACK_ROOT}/libs/circbuf/circbuffer.c \
 ${STACK_ROOT}/libs/circbuf/circbuf-noosdual.c \
 ${STACK_ROOT}/libs/console/printlog.c \

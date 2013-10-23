@@ -138,6 +138,11 @@
 			<locationURI>STACK_ROOT/libs/circbuf/circbuffer.h</locationURI>
 		</link>
 		<link>
+			<name>libs/dualprocshm/dualprocshm-intr.c</name>
+			<type>1</type>
+			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-intr.c</locationURI>
+		</link>
+		<link>
 			<name>libs/dualprocshm/dualprocshm-microblaze.h</name>
 			<type>1</type>
 			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-microblaze.h</locationURI>

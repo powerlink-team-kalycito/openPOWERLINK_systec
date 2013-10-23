@@ -101,6 +101,7 @@ ${STACK_ROOT}/libs/omethlib/omethlib_phycfg_generic.c \
 ${STACK_ROOT}/libs/trace/trace-printf.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-zynq.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-noos.c \
+${STACK_ROOT}/libs/dualprocshm/dualprocshm-intr.c \
 ${STACK_ROOT}/libs/circbuf/circbuffer.c \
 ${STACK_ROOT}/libs/circbuf/circbuf-noosdual.c \
 ${STACK_ROOT}/stack/src/arch/xilinx_microblaze/xilinx_irq.c \

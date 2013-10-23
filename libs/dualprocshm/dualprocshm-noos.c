@@ -86,35 +86,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
-/**
-\brief Function type to set the address of a Buffer
 
-This function type enables to set the corresponding dynamic shared memory address
-register for a dynamic buffer.
-*/
-typedef void (*tSetDynRes) (tDualprocDrvInstance  pDrvInst_p, UINT16 index_p,UINT32 addr_p);
-
-/**
-\brief Function type to get the address of a Buffer
-
-This function type enables to get the address set in the dynamic shared buffer
-address register.
-*/
-typedef UINT32 (*tGetDynRes) (tDualprocDrvInstance  pDrvInst_p, UINT16 index_p);
-
-/**
-\brief Structure for dual processor dynamic resources(buffers)
-
-This structure defines for each dynamic resources instance the set and get
-functions. Additionally the base and span is provided.
-*/
-typedef struct sDualprocDynRes
-{
-    tSetDynRes        pfnSetDynAddr;   ///< This function sets the dynamic buffer base to hardware
-    tGetDynRes        pfnGetDynAddr;   ///< This function gets the dynamic buffer base from hardware
-    UINT8*            pBase;           ///< Base of the dynamic buffer
-    tDualprocMemInst* memInst;         ///< Pointer to memory instance
-} tDualprocDynResConfig;
+//------------------------------------------------------------------------------
+// local vars
+//------------------------------------------------------------------------------
 
 /**
 \brief Dynamic buffer configuration
@@ -123,25 +98,6 @@ Stores the configuration settings for the dynamic buffers
 */
 static tDualprocDynResConfig aDynResInit[MAX_DYNAMIC_BUFF_COUNT];
 
-/**
-\brief Dual Processor Instance
-
-Holds the configuration passed to the instance at creation.
-*/
-typedef struct sDualProcDrv
-{
-    tDualprocConfig         config;         ///< Copy of configuration
-    UINT8                   *pCommMemBase;  ///< Base address of the common memory
-    UINT8                   *pAddrTableBase;///< Base address of the location to place dynamic
-                                            ///< memory address table
-    int                     iMaxDynBuffEntries; ///< Number of dynamic buffers (Pcp/Host)
-    tDualprocDynResConfig*  pDynResTbl;     ///< Dynamic buffer table (Pcp/Host)
-
-} tDualProcDrv;
-
-//------------------------------------------------------------------------------
-// local vars
-//------------------------------------------------------------------------------
 /**
 \brief Instance array
 

@@ -81,7 +81,7 @@ Follow the steps mentioned in following sections to generate binaries and run th
 
 ## Creating First stage Boot loader for AMP {#sect_zynq-mn_fsbl}
   
-1. Select *File* -> *new* -> *Xilinx* -> *Application project*.
+1. Select *File* -> *new* -> *Application project*.
 2. Give the name as *zynq_fsbl_dualProcessor* for Dual processor design.
 3. Change processor to 'ps7_cortexa9_0' and use exiting Board support package *standalone_bsp_zynq_intaxi-host-axi*.
 4. Click *Next* and select existing template 'Zynq FSBL for AMP'. Verify the description starts with 'AMP Modified'.
@@ -106,8 +106,8 @@ to generate bitstream and BOOT.bin files.
 
 - bitstream : It will invoke the xps command line utility to generate fpga configuration file `system.bit` used to \n
               create `BOOT.bin`
-- build-sd  : Generates the `BOOT.bin` file that contains the bit file, FSBL, demo-mn elf (Host application binary),\n
-              and mn_pcp elf (PCP binary).
+- build-sd  : Generates the `BOOT.bin` file that contains the bit file, FSBL, demo-mn elf (Host application binary),
+              and \n mn_pcp elf (PCP binary).
 
 ## How to run the demo {#sect_zynq-mn_run}
 
@@ -116,7 +116,9 @@ to generate bitstream and BOOT.bin files.
    (*demo_mn.elf*, *mn_pcp.elf* & *zynq_fsbl_dualProcessor.elf*)
 3. Build the `BOOT.bin` file using the **build-sd** make target.
 4. Copy the generated `<rootDir>/tools/xilinx/zynq_sdcard/BOOT.bin` file to the SD card.
-5. Plug the SD card into the zc702 then power up the board.
+5. Copy the configuration file (CDC) for the POWERLINK system created by openCONFIGURATOR \n 
+   to the SD card.
+6. Plug the SD card into the zc702 then power up the board.
 
 The demo starts running once the system gets booted.
 

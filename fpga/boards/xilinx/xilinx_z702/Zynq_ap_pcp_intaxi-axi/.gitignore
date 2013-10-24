@@ -6,3 +6,6 @@ synthesis
 *.opt
 hdl
 implementation
+etc/system.filters
+etc/fast_runtime.opt
+etc/system.gui

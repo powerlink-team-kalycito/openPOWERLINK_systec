@@ -14,7 +14,6 @@
  PORT RESET = RESET, DIR = I, SIGIS = RST, RST_POLARITY = 1
  PORT CLK_P = CLK, DIR = I, DIFFERENTIAL_POLARITY = P, SIGIS = CLK, CLK_FREQ = 200000000
  PORT CLK_N = CLK, DIR = I, DIFFERENTIAL_POLARITY = N, SIGIS = CLK, CLK_FREQ = 200000000
-# PORT LEDs_4Bits_TRI_IO = LEDs_4Bits_TRI_IO, DIR = O, VEC = [3:0]
  PORT PW_LEDS_6BIT_TRI_IO = PW_LEDS_6BIT_TRI_IO, DIR = O, VEC = [5:0]
  PORT POWERLINK_LED_TRI_IO = POWERLINK_LED_TRI_IO, DIR = O, VEC = [1:0]
  PORT axi_powerlink_0_phy0_SMIDat_pin = axi_powerlink_0_phy0_SMIDat, DIR = IO
@@ -65,11 +64,9 @@
  PORT Node_Switches_I_pin = Node_Switches_I, DIR = I, VEC = [1:0]
 
 
-# PORT axi_powerlink_0_phyMii1_TxEr_pin = axi_powerlink_0_phyMii1_TxEr, DIR = O
-# PORT axi_powerlink_0_phyMii0_TxEr_pin = axi_powerlink_0_phyMii0_TxEr, DIR = O
 BEGIN processing_system7
  PARAMETER INSTANCE = processing_system7_0
- PARAMETER HW_VER = 4.02.a
+ PARAMETER HW_VER = 4.03.a
  PARAMETER C_DDR_RAM_HIGHADDR = 0x3FFFFFFF
  PARAMETER C_USE_M_AXI_GP0 = 1
  PARAMETER C_EN_EMIO_CAN0 = 0
@@ -133,7 +130,6 @@ BEGIN processing_system7
  PARAMETER C_USE_S_AXI_HP2 = 0
  PARAMETER C_INTERCONNECT_S_AXI_HP0_MASTERS = pcp.M_AXI_DC & pcp.M_AXI_IC & axi_powerlink_0.M_AXI_MAC_DMA
  PARAMETER C_EMIO_GPIO_WIDTH = 64
-# PARAMETER C_EMIO_GPIO_WIDTH = 64
  BUS_INTERFACE M_AXI_GP0 = axi4lite_0
  BUS_INTERFACE S_AXI_GP0 = axi4lite_mb_0
  BUS_INTERFACE S_AXI_HP0 = axi4_0
@@ -206,7 +202,7 @@ END
 
 BEGIN microblaze
  PARAMETER INSTANCE = pcp
- PARAMETER HW_VER = 8.40.b
+ PARAMETER HW_VER = 8.50.b
  PARAMETER C_INTERCONNECT = 2
  PARAMETER C_USE_BARREL = 1
  PARAMETER C_USE_FPU = 1
@@ -257,8 +253,6 @@ BEGIN axi_powerlink
  PARAMETER C_IP_CORE_MODE = 5
  PARAMETER C_USE_2ND_PHY = true
  PARAMETER C_NUM_SMI = 2
-# PARAMETER C_VETH_ENABLE = TRUE
-# PARAMETER C_VETH_RX_PENDING = 3
  PARAMETER C_OBSERVER_ENABLE_USER = true
  PARAMETER C_PACKET_LOCATION = 1
  PARAMETER C_MAC_NUM_RX_BUFFER_USER = 16
@@ -284,7 +278,6 @@ BEGIN axi_powerlink
  PORT phyMii0_TxClk = axi_powerlink_0_phyMii0_TxClk
  PORT phyMii0_TxDat = axi_powerlink_0_phyMii0_TxDat
  PORT phyMii0_TxEn = axi_powerlink_0_phyMii0_TxEn
-# PORT phyMii0_TxEr = axi_powerlink_0_phyMii0_TxEr
  PORT tcp_irq = axi_powerlink_0_tcp_irq
  PORT mac_irq = axi_powerlink_0_mac_irq
  PORT S_AXI_MAC_PKT_ACLK = clk_100_0000MHz
@@ -305,10 +298,9 @@ BEGIN axi_powerlink
  PORT M_AXI_MAC_DMA_aclk = clk_100_0000MHz
 END
 
-# PORT phyMii1_TxEr = axi_powerlink_0_phyMii1_TxEr
 BEGIN axi_intc
  PARAMETER INSTANCE = pcp_intc
- PARAMETER HW_VER = 1.03.a
+ PARAMETER HW_VER = 1.04.a
  PARAMETER C_KIND_OF_INTR = 0xFFFFFFFC
  PARAMETER C_BASEADDR = 0x41800000
  PARAMETER C_HIGHADDR = 0x4180ffff

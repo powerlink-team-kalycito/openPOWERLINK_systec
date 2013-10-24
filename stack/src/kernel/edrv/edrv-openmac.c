@@ -855,7 +855,7 @@ Exit:
 //
 //---------------------------------------------------------------------------
 
-tEplKernel EdrvSendTxMsg              (tEdrvTxBuffer * pBuffer_p)
+tEplKernel EdrvSendTxMsg (tEdrvTxBuffer * pBuffer_p)
 {
 tEplKernel          Ret = kEplSuccessful;
 ometh_packet_typ*   pPacket = NULL;

@@ -204,7 +204,7 @@ endif
 LIBSPATH=-L$(BSP_PATH)/${PROCESSOR_NAME}/lib 
 
 # Note: ARM gcc reports undefined reference unless nested
-LIBS=-Wl,--start-group,-lxil,-lc -W1,--end-group
+LIBS=-Wl,--start-group,-lxil,-lc,--end-group
 
 ###################################
 # objects

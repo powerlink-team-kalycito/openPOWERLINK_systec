@@ -1,0 +1,120 @@
+#  (c) Bernecker + Rainer Industrie-Elektronik Ges.m.b.H.
+#      A-5142 Eggelsberg, B&R Strasse 1
+#      www.br-automation.com
+#
+# Project       : POWERLINK Xilinx Examples
+# Module        : build system settings file
+# Autor         : mairt
+# Date          : 13.02.2012
+# File          : Makefile
+# contents      : Settings file for the build system
+################################################################################
+
+##################################
+#Path to the MNDK root directory
+MNDK_DIR=../../../../../../Workspace
+
+##################################
+#Path to the openPOWERLINK root directory
+STACK_ROOT=../../../../../..
+
+##################################
+#Path to the XPS project
+XPS_DIR=${STACK_ROOT}/fpga/boards/xilinx/xilinx_z702/Zynq_ap_pcp_intaxi-axi
+
+##################################
+#Path to the Board support Package for project
+BSP_PATH=${MNDK_DIR}/standalone_bsp_zynq_intaxi-pcp-axi
+#BSP_PATH=${MNDK_DIR}/standalone_bsp_zynq_intaxi-host-axi
+#BSP_PATH=${MNDK_DIR}/standalone_bsp_lx150t_intplb-pcp-plb
+#BSP_PATH=${MNDK_DIR}/standalone_bsp_lx150t_intaxi-pcp-axi
+#BSP_PATH=${MNDK_DIR}/standalone_bsp_lx150t_spi-pcp-plb
+#BSP_PATH=${MNDK_DIR}/standalone_bsp_s6plkeb_16bitprll-pcp-plb
+#BSP_PATH=${MNDK_DIR}/standalone_bsp_s6plkeb_intplb-pcp-plb
+#BSP_PATH=${MNDK_DIR}/standalone_bsp_s6plkeb_intaxi-pcp-axi
+#BSP_PATH=${MNDK_DIR}/standalone_bsp_s6plkeb_16bitprll-pcp-axi
+
+##################################
+#Path to the Hardware Sprcification
+HW_SPEC=${MNDK_DIR}/hw_platform_zynq_intaxi-axi
+#HW_SPEC=${MNDK_DIR}/hw_platform_lx150t_intplb-plb
+#HW_SPEC=${MNDK_DIR}/hw_platform_lx150t_intaxi-axi
+#HW_SPEC=${MNDK_DIR}/hw_platform_lx150t_spi-plb
+#HW_SPEC=${MNDK_DIR}/hw_platform_s6plkeb_16bitprll-pcp-plb
+#HW_SPEC=${MNDK_DIR}/hw_platform_s6plkeb_intplb-plb
+#HW_SPEC=${MNDK_DIR}/hw_platform_s6plkeb_intaxi-axi
+#HW_SPEC=${MNDK_DIR}/hw_platform_s6plkeb_16bitprll-pcp-axi
+
+
+##################################
+#Path to the SDCARD image files
+SDCARD_DIR=${STACK_ROOT}/tools/xilinx/zynq_sdcard
+
+##################################
+# Board name: [zynq]
+BOARD_NAME=zynq
+
+##################################
+# Bus interface: [plb, axi]
+# Note: This sets correct endian and linker script
+BUS_INTERFACE=axi
+
+##################################
+# Two processors in bitstream: [yes, no]
+# Note: Only Dual processor design available 
+DUAL_PROCESSOR=yes
+
+##################################
+# Processor name: [ps7_cortexa9_0,pcp]
+PROCESSOR_NAME=pcp
+
+###################################
+# Processor features for Zynq Arm core: (For more information refer, gcc options for ARM processor)
+# CPU: [-mcpu = cortex-a9 (name of the target ARM processor)]
+# ARCH: [-march = armv7-a (name of the target ARM architecture)]
+# ABI (Application Binary Interface) : Procedure call standard for ARM architecture 
+# ABI: [aapcs = EABI (embedded ABI), apcs-gnu = OABI (old ABI, for armv4 cores), atpcs = Thumb ABI (16 bit)]
+# Stack Frame : [-mapcs-frame = Stack frame compliant with AAPCS, -mno-apcs-frame = default
+# Enum Size: [-fno-short-enums = use 4 byte for enums] 
+PROC_FEATURES_ARM=-mcpu=cortex-a9 -mabi=aapcs -mapcs-frame -march=armv7-a -mlittle-endian -fno-short-enums
+
+####################################
+# Processor features Microblaze: (more information in the "Embedded Systems Tools Reference Manual")
+# Processor endian: [ -mlittle-endian (axi bus), -mbig-endian (plb bus)]
+# Hardware multiplier: [ -mno-xl-soft-mul = available, -mxl-soft-mul = not available ]
+# Hardware divider: [ -mno-xl-soft-div = available, -mxl-soft-div = not available ]
+# Barel shifter: [ -mno-xl-barrel-shift = available, -mxl-barrel-shift = not available ]
+# Pattern compare instructions: [-mno-xl-pattern-compare = don't use them, -mxl-pattern-compare = use them ]
+# Bootstrap option: [-xl-mode-bootstrap = needed when a bootloader is used]
+PROC_FEATURES_MB= -mcpu=v8.20.a -mno-xl-pattern-compare -mno-xl-barrel-shift -mxl-soft-mul -mxl-soft-div
+
+
+##################################
+# Settings for Debugging
+# [_DEBUG=debug enabled, NDEBUG=debug disabled]
+#DBG_MODE=_DEBUG
+#OPT_LEVEL=-O0
+
+##################################
+# Settings for Debugging with optimized compilation
+#DBG_MODE=_DEBUG
+#OPT_LEVEL=-O2
+
+##################################
+# Settings for Release
+DBG_MODE=NDEBUG
+OPT_LEVEL=-O2
+
+##################################
+# DEF_DEBUG_LVL = [
+# 0x20000000L DEBUG_LVL_ASSERT
+# 0x40000000L DEBUG_LVL_ERROR
+# 0x80000000L DEBUG_LVL_ALWAYS ]
+DEF_DEBUG_LVL=0xEC000000L
+
+##################################
+#Debug flag
+# Note: Set this to -g3 when you are debugging. (Increases code size)
+#       Set this to -g0 to disable debugging.
+DEBUG_FLAG=-g0
+

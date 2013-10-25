@@ -374,6 +374,8 @@ EPLDLLEXPORT const char* EplGetEmergErrCodeStr( WORD EmergErrCode_p);
 EPLDLLEXPORT tEplKernel target_init(void);
 EPLDLLEXPORT tEplKernel target_cleanup(void);
 EPLDLLEXPORT void target_msleep(UINT32 milliSeconds_p);
+EPLDLLEXPORT int target_regSyncIrqHdl( void* callback_p,void* pArg_p);
+EPLDLLEXPORT void target_enableSyncIrq(BOOL fEnable_p);
 
 #ifdef __cplusplus
     }

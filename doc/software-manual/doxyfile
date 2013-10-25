@@ -702,7 +702,10 @@ INPUT                  = ../../stack/src \
                          ../supported-platforms/vxworks.md \
                          ../supported-platforms/altera-mn.md \
                          ../supported-platforms/altera-cn.md \
-                         ../supported-platforms/xilinx.md \
+                         ../supported-platforms/xilinx-mn.md \
+                         ../supported-platforms/xilinx-cn.md \
+                         ../supported-platforms/zynq-mn.md \
+                         ../supported-platforms/xilinx-mb-cn.md \
                          ../supported-platforms/windows.md \
                          ../../readme.md \
                          ../../license.md \

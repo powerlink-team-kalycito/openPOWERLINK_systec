@@ -8,7 +8,8 @@
           <tab type="user" url="\ref page_platform_linux" title="Linux"/>
           <tab type="user" url="\ref page_platform_windows" title="Windows"/>
           <tab type="user" url="\ref page_platform_vxworks" title="VxWorks"/>
-          <tab type="user" url="\ref page_platform_xilinx" title="Xilinx"/>
+          <tab type="user" url="\ref page_platform_xilinx-mn" title="Xilinx(MN)"/>
+          <tab type="user" url="\ref page_platform_xilinx-cn" title="Xilinx(CN)"/>
           <tab type="user" url="\ref page_platform_altera-mn" title="Altera(MN)"/>
           <tab type="user" url="\ref page_platform_altera-cn" title="Altera(CN)"/>
       </tab>

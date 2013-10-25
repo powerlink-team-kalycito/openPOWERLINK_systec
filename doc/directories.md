@@ -49,6 +49,7 @@ omethlib                      | openMAC controller library
 pcap                          | libPcap library implementations
 timer                         | Timer library
 trace                         | Functions for handling trace output
+dualprocshm                   | Dual processor shared memory library
 
 ## Object dictionaries {#sect_directories_objdict}
 

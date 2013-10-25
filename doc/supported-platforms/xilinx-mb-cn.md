@@ -1,9 +1,9 @@
-openPOWERLINK on Xilinx Microblaze {#page_platform_xilinx}
+openPOWERLINK Control Node on Xilinx Microblaze {#page_platform_xilinx-mb-cn}
 ==================================
 
 [TOC]
 
-# Introduction {#sect_xilinx_introduction}
+# Introduction {#sect_xilinx-mb-cn_introduction}
 
 This file contains documentation for the openPOWERLINK stack on Xilinx
 Microblaze. It uses the POWERLINK IP-Core which consists of a optimized MAC
@@ -12,20 +12,20 @@ for POWERLINK (openMAC) and a hub for daisy chaining several controlled nodes.
  The demos and IP-Cores are available for the PLB and AXI bus system.
 
 
-# Contents {#sect_xilinx_contents}
+# Contents {#sect_xilinx-mb-cn_contents}
 
 - FPGA design with Microblaze CPU and POWERLINK IP-Core.
 - Latched I/0 Ports: 4 x 8Bit - plus latch signal.
   Direction (input or output) can be defined by configuration-pin level.
 
-# Performance Data {#sect_xilinx_performance}
+# Performance Data {#sect_xilinx-mb-cn_performance}
 
 - Minimum cycle length: 400 us
 - PReq-PRes Latency: 1 us
 - Process data: 4 bytes input and 4 bytes output.
 - There is 1 RPDOs and 1 TPDO available. Cross-traffic is disabled.
 
-# Requirements {#sect_xilinx_requirements}
+# Requirements {#sect_xilinx-mb-cn_requirements}
 
 - Development Board Industrial Ethernet Kit (IEK, LX150T) with an
   ISMET FMC module or the Microbloard (micro, LX9).
@@ -41,7 +41,7 @@ for POWERLINK (openMAC) and a hub for daisy chaining several controlled nodes.
   * B&R POWERLINK managing node
   * other POWERLINK managing node
 
-# Hardware Setup {#sect_xilinx_hardware-setup}
+# Hardware Setup {#sect_xilinx-mb-cn_hardware-setup}
 
 - Setup for the Industrial Ethernet Kit (IEK, LX150T).
   * Download the user guide for the board from:
@@ -68,7 +68,7 @@ for POWERLINK (openMAC) and a hub for daisy chaining several controlled nodes.
   * Connect the USB cable to J3 and to the USB port of your PC.
   * Connect the Ethernet jack in J1 to the Ethernet port of your PC.
 
-# How to build the binaries {#sect_xilinx_build}
+# How to build the binaries {#sect_xilinx-mb-cn_build}
 
 1. Open the Xilinx Platform Studio (XPS) and set the 'Global Repository Search
    Path' to the POWERLINK IP-Core (ipcore) directory.\n
@@ -88,7 +88,7 @@ for POWERLINK (openMAC) and a hub for daisy chaining several controlled nodes.
    the makefile.settings variables.\n
    `$ make clean`
 
-# How to run the demo {#sect_xilinx_run}
+# How to run the demo {#sect_xilinx-mb-cn_run}
 
 1. Setup the POWERLINK network.
 2. Run 'make download-bits' to download the bitstream to the target.\n
@@ -103,7 +103,7 @@ for POWERLINK (openMAC) and a hub for daisy chaining several controlled nodes.
     e. Flow control: none
 5. Have fun with openPOWERLINK on Xilinx!
 
-# How to import the project into the SDK for debugging purposes {#sect_xilinx_debug}
+# How to import the project into the SDK for debugging purposes {#sect_xilinx-mb-cn_debug}
 
 1. Open the Xilinx Software Development Kit (SDK).
 2. Import the 'demo_directIO' into the SDK by using\n
@@ -127,7 +127,7 @@ for POWERLINK (openMAC) and a hub for daisy chaining several controlled nodes.
 7. `Run` -> `Debug As` -> `Lunch on Hardware` to start the debugger and step through
    the code.
 
-# How to write the program to local flash {#sect_xilinx_flash}
+# How to write the program to local flash {#sect_xilinx-mb-cn_flash}
 
 In order to write the example to the non volatile memory a bootloader is needed
 to read the program from the flash and write it to the external RAM. This
@@ -173,7 +173,7 @@ new C project.
 
 Finally your program should be written to non-volatile memory!
 
-# Troubleshooting {#sect_xilinx_troubleshooting}
+# Troubleshooting {#sect_xilinx-mb-cn_troubleshooting}
 
 1. It is adviced to clean all generated files after switching from one demo to
    the other.\n

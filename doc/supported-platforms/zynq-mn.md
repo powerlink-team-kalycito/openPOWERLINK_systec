@@ -65,7 +65,6 @@ Follow the steps mentioned in following sections to generate binaries and run th
 3. Set repositories
       - select *Xilinx tools* -> *repositories*
       - select *New* for Local repositories
-      - browse to and select `<rootDir>/tools/xilinx/zynq_fsbl_repo`
       - browse to and select `<rootDir>/fpga/ipcore/xilinx`
       - Click *Ok*
 4. Creating Hardware Platform & BSP for the design
@@ -84,7 +83,7 @@ Follow the steps mentioned in following sections to generate binaries and run th
 1. Select *File* -> *new* -> *Application project*.
 2. Give the name as *zynq_fsbl_dualProcessor* for Dual processor design.
 3. Change processor to 'ps7_cortexa9_0' and use exiting Board support package *standalone_bsp_zynq_intaxi-host-axi*.
-4. Click *Next* and select existing template 'Zynq FSBL for AMP'. Verify the description starts with 'AMP Modified'.
+4. Click *Next* and select existing template 'Zynq FSBL'.
 5. Click *Finish* to add *zynq_fsbl_dualProcessor* project.
 
 ## How to import the demo projects into Xilinx Software Development Kit {#sect_zynq-mn_import}

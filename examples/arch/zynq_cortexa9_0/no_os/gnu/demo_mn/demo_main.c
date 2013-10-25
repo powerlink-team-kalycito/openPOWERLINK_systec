@@ -74,7 +74,7 @@ tEplKernel PUBLIC processEvents(tEplApiEventType EventType_p, tEplApiEventArg* p
 // const defines
 //------------------------------------------------------------------------------
 #define NODEID      0xF0                //=> MN
-#define CYCLE_LEN   5000
+#define CYCLE_LEN   UINT_MAX
 #define IP_ADDR     0xc0a86401          // 192.168.100.1
 #define SUBNET_MASK 0xFFFFFF00          // 255.255.255.0
 #define HOSTNAME    "openPOWERLINK Stack    "
@@ -86,11 +86,6 @@ const BYTE abMacAddr[] = {0x00, 0x12, 0x34, 0x56, 0x78, NODEID};
 #define APP_LED_MASK_1          (1 << (APP_LED_COUNT_1 - 1))
 #define MAX_NODES               255
 
-
-//#define   SDO_TEST
-#define SDO_WRITE_TEST_COUNT    5000
-#define SDO_READ_TEST_COUNT     10000
-#define DATA_INTERGRITY_TEST
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
@@ -100,7 +95,7 @@ const BYTE abMacAddr[] = {0x00, 0x12, 0x34, 0x56, 0x78, NODEID};
 //------------------------------------------------------------------------------
 static unsigned int uiNodeId_g = EPL_C_ADR_INVALID;
 static unsigned int uiCycleLen_g = CYCLE_LEN;
-static BOOL fShutdown = TRUE;
+static BOOL fShutdown = FALSE;
 
 static PI_IN* pProcessImageIn_l;
 static PI_OUT* pProcessImageOut_l;
@@ -117,12 +112,6 @@ static unsigned char aCdcBuffer[] =
 {
     #include "mnobd.txt"
 };
-#endif
-#ifdef SDO_TEST
-static unsigned int         dw_SdoHandle_l;
-static unsigned int         dw_SdoHandle_l_1;
-static WORD                 data1;
-static WORD                 data2;
 #endif
 typedef struct
 {
@@ -147,17 +136,11 @@ static APP_NODE_VAR_T       nodeVar_g[MAX_NODES];
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-tEplKernel PUBLIC  EplObdInitRam (tEplObdInitParam MEM* pInitParam_p);
 tEplKernel PUBLIC AppCbSync(void);
 tEplKernel PUBLIC AppInit(void);
 
 #if (EPL_CDC_ON_SD != FALSE)
 tEplKernel AppGetCdc(void);
-#endif
-
-#ifdef SDO_TEST
-void PUBLIC AppSdoTestWrite(void);
-void PUBLIC AppSdoTestRead(void);
 #endif
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -169,7 +152,7 @@ void PUBLIC AppSdoTestRead(void);
 
 Calls the initializes and run POWERLINK and application
 
-\return 0
+\return This function returns error code as integer value
 
 \ingroup module_demo
 */
@@ -180,7 +163,6 @@ int  main (void)
     static tEplApiInitParam     EplApiInitParam;
     char*                       sHostname = HOSTNAME;
     int                         checkStack = 0;
-    int                         SendSdo = 0;
     // Initialize target
     EplRet = target_init();
 
@@ -206,17 +188,17 @@ int  main (void)
 
     EplApiInitParam.m_dwFeatureFlags            = -1;
     EplApiInitParam.m_dwCycleLen                = uiCycleLen_g;     // required for error detection
-    EplApiInitParam.m_uiIsochrTxMaxPayload      = 36;              // const
-    EplApiInitParam.m_uiIsochrRxMaxPayload      = 36;              // const
-    EplApiInitParam.m_dwPresMaxLatency          = 20000;            // const; only required for IdentRes
+    EplApiInitParam.m_uiIsochrTxMaxPayload      = 256;              // const
+    EplApiInitParam.m_uiIsochrRxMaxPayload      = 256;              // const
+    EplApiInitParam.m_dwPresMaxLatency          = 50000;            // const; only required for IdentRes
     EplApiInitParam.m_uiPreqActPayloadLimit     = 36;               // required for initialisation (+28 bytes)
     EplApiInitParam.m_uiPresActPayloadLimit     = 36;               // required for initialisation of Pres frame (+28 bytes)
     EplApiInitParam.m_dwAsndMaxLatency          = 150000;           // const; only required for IdentRes
     EplApiInitParam.m_uiMultiplCycleCnt         = 0;                // required for error detection
     EplApiInitParam.m_uiAsyncMtu                = 1500;             // required to set up max frame size
     EplApiInitParam.m_uiPrescaler               = 2;                // required for sync
-    EplApiInitParam.m_dwLossOfFrameTolerance    = 5000000;
-    EplApiInitParam.m_dwAsyncSlotTimeout        = 30000;
+    EplApiInitParam.m_dwLossOfFrameTolerance    = 500000;
+    EplApiInitParam.m_dwAsyncSlotTimeout        = 3000000;
     EplApiInitParam.m_dwWaitSocPreq             = -1;
     EplApiInitParam.m_dwDeviceType              = -1;               // NMT_DeviceType_U32
     EplApiInitParam.m_dwVendorId                = -1;               // NMT_IdentityObject_REC.VendorId_U32
@@ -227,12 +209,11 @@ int  main (void)
     EplApiInitParam.m_dwSubnetMask              = SUBNET_MASK;
     EplApiInitParam.m_dwDefaultGateway          = 0;
     EPL_MEMCPY(EplApiInitParam.m_sHostname, sHostname, sizeof(EplApiInitParam.m_sHostname));
-    EplApiInitParam.m_uiSyncNodeId              = EPL_C_ADR_SYNC_ON_SOC;
+    EplApiInitParam.m_uiSyncNodeId              = EPL_C_ADR_SYNC_ON_SOA;
     EplApiInitParam.m_fSyncOnPrcNode            = FALSE;
 
     // set callback functions
     EplApiInitParam.m_pfnCbEvent = processEvents;
-    EplApiInitParam.m_pfnObdInitRam = EplObdInitRam;
     EplApiInitParam.m_pfnCbSync  = AppCbSync;
 
 
@@ -280,7 +261,6 @@ int  main (void)
     EplRet = oplk_allocProcessImage(sizeof(PI_IN), sizeof(PI_OUT));
     if (EplRet != kEplSuccessful)
     {
-    	printf("Error in alloc\n");
         goto Exit;
     }
 
@@ -302,7 +282,7 @@ int  main (void)
 
     initEvents(&fShutdown);
 
-    while(fShutdown)
+    while(!fShutdown)
     {
         if((EplRet = oplk_process()) != kEplSuccessful)
             goto ExitShutdown;
@@ -313,20 +293,9 @@ int  main (void)
             if(!oplk_checkKernelStack())
             {
                 printf("Kernel is dead!\n");
-                fShutdown = FALSE;
+                fShutdown = TRUE;
             }
         }
-#ifdef SDO_TEST
-        if(SendSdo++ == SDO_WRITE_TEST_COUNT)
-        {
-            AppSdoTestWrite();
-        }
-        else if(SendSdo++ >= SDO_READ_TEST_COUNT)
-        {
-            SendSdo = 0;
-            AppSdoTestRead();
-        }
-#endif
     }
 
 ExitShutdown:
@@ -399,8 +368,7 @@ tEplKernel PUBLIC AppCbSync(void)
 {
     tEplKernel          EplRet;
     int                 i;
-    UINT8               in;
-    UINT8               out1;
+
     EplRet = oplk_exchangeProcessImageOut();
     if (EplRet != kEplSuccessful)
     {
@@ -423,12 +391,11 @@ tEplKernel PUBLIC AppCbSync(void)
     nodeVar_g[10].m_uiInput = pProcessImageOut_l->CN11_M00_Digital_Input_8_Bit_Byte_1;
     nodeVar_g[11].m_uiInput = pProcessImageOut_l->CN12_M00_Digital_Input_8_Bit_Byte_1;
 
-#ifndef DATA_INTERGRITY_TEST
     for (i = 0; (i < MAX_NODES) && (iUsedNodeIds_g[i] != 0); i++)
     {
         /* Running Leds */
         /* period for LED flashing determined by inputs */
-       nodeVar_g[i].m_uiPeriod = (nodeVar_g[i].m_uiInput == 0) ? 20 : (nodeVar_g[i].m_uiInput * 20);
+        nodeVar_g[i].m_uiPeriod = (nodeVar_g[i].m_uiInput == 0) ? 20 : (nodeVar_g[i].m_uiInput * 20);
         if (uiCnt_g % nodeVar_g[i].m_uiPeriod == 0)
         {
             if (nodeVar_g[i].m_uiLeds == 0x00)
@@ -467,20 +434,7 @@ tEplKernel PUBLIC AppCbSync(void)
             nodeVar_g[i].m_uiLedsOld = nodeVar_g[i].m_uiLeds;
         }
     }
-#else
-    for (i = 0; (i < MAX_NODES) && (iUsedNodeIds_g[i] != 0); i++)
-    {
-        if(nodeVar_g[i].m_uiInput & 0x01)
-        {
-            nodeVar_g[i].m_uiLeds = 0xFF;
-        }
-        else
-        {
-            nodeVar_g[i].m_uiLeds = 0x01;
-        }
-    }
 
-#endif
     pProcessImageIn_l->CN1_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[0].m_uiLeds;
     pProcessImageIn_l->CN2_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[1].m_uiLeds;
     pProcessImageIn_l->CN3_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[2].m_uiLeds;
@@ -493,9 +447,6 @@ tEplKernel PUBLIC AppCbSync(void)
     pProcessImageIn_l->CN10_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[9].m_uiLeds;
     pProcessImageIn_l->CN11_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[10].m_uiLeds;
     pProcessImageIn_l->CN12_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[11].m_uiLeds;
-
-
-
 
     EplRet = oplk_exchangeProcessImageIn();
 
@@ -572,48 +523,3 @@ Exit:
 }
 #endif /* (EPL_CDC_ON_SD != FALSE) */
 
-
-#ifdef SDO_TEST
-void PUBLIC AppSdoTestWrite(void)
-{
-    int                         uisize,i;
-    tEplKernel          EplRet;
-
-
-    data1++;
-if(data1 == 255)
-{
-    data1 =0;
-}
-    //uisize = 4;
-    //EplRet = EplApiReadObject(&dw_SdoHandle_l, 1, 0x1006, 0x00, &dw_le_CycleLen_g, &uisize, kEplSdoTypeUdp, NULL);
-    //if (EplRet != kEplSuccessful)
-
-    //EplRet = EplApiReadObject(&dw_SdoHandle_l, 1, 0x1006, 0x00, &dw_le_CycleLen_g, &uisize, kEplSdoTypeAsnd, NULL);
-    //if (EplRet != kEplSuccessful)
-    //{   // local OD access failed
-        //break;
-    //}
-    uisize = 4;
-    //data1 = 0xDEADBEEF;
-    AmiSetDwordToLe(&data1,0xEFBEADDE);
-    EplRet = EplApiWriteObject(&dw_SdoHandle_l, 4, 0x6000, 0x01, &data1, uisize, kEplSdoTypeAsnd, NULL);
-    if (EplRet != kEplSuccessful)
-    {   // local OD access failed
-       //break;
-    }
-
-}
-
-void PUBLIC AppSdoTestRead(void)
-{
-    UINT32                         uisize;
-    tEplKernel          EplRet;
-    uisize = 1;
-    EplRet = EplApiReadObject(&dw_SdoHandle_l_1, 4, 0x6200, 0x01, &data2, &uisize, kEplSdoTypeAsnd, NULL);
-    if (EplRet != kEplSuccessful)
-    {   // local OD access failed
-        //break;
-    }
-}
-#endif // SDO_TEST

@@ -92,7 +92,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //------------------------------------------------------------------------------
 /**
-\brief    returns current system tick
+\brief    Returns current system tick
 
 This function returns the current system tick determined by the system timer.
 
@@ -116,7 +116,7 @@ UINT32 PUBLIC EplTgtGetTickCountMs(void)
 
 //------------------------------------------------------------------------------
 /**
-\brief    enables global interrupt
+\brief    Enables global interrupt
 
 This function enabels/disables global interrupts.
 
@@ -140,7 +140,7 @@ void EplTgtEnableGlobalInterrupt (UINT8 fEnable_p)
 
 //------------------------------------------------------------------------------
 /**
-\brief    checks if CPU is in interrupt context
+\brief    Checks if CPU is in interrupt context
 
 This function obtains if the CPU is in interrupt context.
 
@@ -253,7 +253,7 @@ int target_regSyncIrqHdl( void* callback_p,void* pArg_p)
 }
 //------------------------------------------------------------------------------
 /**
-\brief Sync interrupt control rroutine
+\brief Sync interrupt control routine
 
 The function is used to enable or disable the sync interrupt
 

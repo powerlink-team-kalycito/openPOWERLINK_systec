@@ -1,10 +1,11 @@
 #  (c) Bernecker + Rainer Industrie-Elektronik Ges.m.b.H.
 #      A-5142 Eggelsberg, B&R Strasse 1
 #      www.br-automation.com
+#  (c) Kalycito Infotech Private Ltd.
 #
 # Project       : POWERLINK Xilinx Examples
 # Module        : build system
-# Autor         : gaurav
+# Autor         : chidrupaya
 # Date          : 13.05.2013
 # File          : Makefile
 # contents      : Controls the build of the Xilinx Zynq examples
@@ -115,16 +116,15 @@ ${STACK_ROOT}/examples/demo_mn_console/event.c \
 ${STACK_ROOT}/libs/sd_fat16/ff.c \
 ${STACK_ROOT}/libs/sd_fat16/mmc.c \
 ${STACK_ROOT}/libs/sd_fat16/fs_sdcard.c \
+${STACK_ROOT}/libs/console/printlog.c \
 ${STACK_ROOT}/libs/ami/amiarm.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-zynq.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-noos.c \
 ${STACK_ROOT}/libs/dualprocshm/dualprocshm-intr.c \
 ${STACK_ROOT}/libs/circbuf/circbuffer.c \
 ${STACK_ROOT}/libs/circbuf/circbuf-noosdual.c \
-${STACK_ROOT}/libs/console/printlog.c \
 ${STACK_ROOT}/libs/trace/trace-printf.c \
 ${STACK_ROOT}/stack/src/user/api/processimage-cia302.c \
-${STACK_ROOT}/objdicts/CiA302-4_MN/Objdict.c \
 ${STACK_ROOT}/stack/src/arch/xilinx_arm/target-arm.c \
 ${STACK_ROOT}/stack/src/common/timer/timer-generic.c \
 ${STACK_ROOT}/stack/src/common/debug.c \
@@ -148,10 +148,11 @@ ${STACK_ROOT}/stack/src/user/nmt/nmtu.c \
 ${STACK_ROOT}/stack/src/user/nmt/statusu.c \
 ${STACK_ROOT}/stack/src/user/nmt/syncu.c \
 ${STACK_ROOT}/stack/src/user/obd/obd.c \
+${STACK_ROOT}/stack/src/user/obd/obdcreate.c \
 ${STACK_ROOT}/stack/src/user/obd/obdcdc.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdou.c \
-${STACK_ROOT}/stack/src/user/pdo/pdoucal-triplebufshm.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdoucal.c \
+${STACK_ROOT}/stack/src/user/pdo/pdoucal-triplebufshm.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdoucalmem-noosdual.c \
 ${STACK_ROOT}/stack/src/user/pdo/pdoucalsync-noosdual.c \
 ${STACK_ROOT}/stack/src/user/sdo/sdo-asndu.c \
@@ -160,7 +161,6 @@ ${STACK_ROOT}/stack/src/user/sdo/sdo-comu.c \
 ${STACK_ROOT}/stack/src/user/cfmu.c \
 ${STACK_ROOT}/stack/src/user/ledu.c 
 
-#${STACK_ROOT}/libs/console/printlog.c \
 LIBRARIES = libxil.a
 
 SRC_DIR = $(subst ${STACK_ROOT},,$(SRCFILES))

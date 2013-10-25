@@ -1,5 +1,2 @@
-*.elf
-*.bit
 BOOT.BIN
-*.exe
-mn_pcp.bin
+

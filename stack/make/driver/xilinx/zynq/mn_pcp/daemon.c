@@ -82,9 +82,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-static tEplKernel initPlk (void);
-static void shtdPlk (void);
-static void bgtPlk (void);
+static tEplKernel initPowerlink (void);
+static void shutdownPowerlink (void);
+static void backgroundProcess (void);
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -116,7 +116,7 @@ int main (void)
     {
         PRINTF("\n");
 
-        Ret = initPlk();
+        Ret = initPowerlink();
 
         PRINTF("Initialization returned with \"%s\" (0x%X)\n",
                 EplErrStrGetMessage(Ret), Ret);
@@ -124,11 +124,11 @@ int main (void)
         if(Ret != kEplSuccessful)
             break;
 
-        bgtPlk();
+        backgroundProcess();
 
         PRINTF("Background loop stopped.\nShutdown Kernel Stack\n");
 
-        shtdPlk();
+        shutdownPowerlink();
 
         usleep(1000000U);
     }
@@ -149,9 +149,11 @@ int main (void)
 This function initializes the communication stack and configures objects.
 
 \return This function returns tEplKernel error codes.
+
+\ingroup module_daemon
 */
 //------------------------------------------------------------------------------
-static tEplKernel initPlk (void)
+static tEplKernel initPowerlink (void)
 {
     tEplKernel Ret;
 
@@ -170,11 +172,13 @@ Exit:
 /**
 \brief    openPOWERLINK stack shutdown
 
-This function stops the kernel stack.
+This function initiates shutdown of the stack by freeing the allocated
+resources and suspending all processes
 
+\ingroup module_daemon
 */
 //------------------------------------------------------------------------------
-static void shtdPlk (void)
+static void shutdownPowerlink (void)
 {
     ctrlk_exit();
 }
@@ -183,10 +187,15 @@ static void shtdPlk (void)
 /**
 \brief    openPOWERLINK stack background tasks
 
-This function runs the background tasks
+Routine to handle background tasks of POWERLINK such as
+- Event handling
+- Packet processing
+- Status and command exchange
+
+\ingroup module_daemon
 */
 //------------------------------------------------------------------------------
-static void bgtPlk (void)
+static void backgroundProcess (void)
 {
     BOOL fExit = FALSE;
 

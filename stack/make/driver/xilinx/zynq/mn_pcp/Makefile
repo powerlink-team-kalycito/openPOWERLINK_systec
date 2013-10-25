@@ -1,6 +1,7 @@
 #  (c) Bernecker + Rainer Industrie-Elektronik Ges.m.b.H.
 #      A-5142 Eggelsberg, B&R Strasse 1
 #      www.br-automation.com
+#  (c) Kalycito Infotech Private Ltd.
 #
 # Project       : POWERLINK Xilinx Examples
 # Module        : build system

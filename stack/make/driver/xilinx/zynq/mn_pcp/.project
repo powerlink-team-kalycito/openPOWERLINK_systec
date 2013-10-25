@@ -118,11 +118,6 @@
 			<locationURI>STACK_ROOT/libs/ami/amiarm.c</locationURI>
 		</link>
 		<link>
-			<name>libs/circbuf/circbuf-arch.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/libs/circbuf/circbuf-arch.h</locationURI>
-		</link>
-		<link>
 			<name>libs/circbuf/circbuf-noosdual.c</name>
 			<type>1</type>
 			<locationURI>STACK_ROOT/libs/circbuf/circbuf-noosdual.c</locationURI>
@@ -133,19 +128,9 @@
 			<locationURI>STACK_ROOT/libs/circbuf/circbuffer.c</locationURI>
 		</link>
 		<link>
-			<name>libs/circbuf/circbuffer.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/libs/circbuf/circbuffer.h</locationURI>
-		</link>
-		<link>
 			<name>libs/dualprocshm/dualprocshm-intr.c</name>
 			<type>1</type>
 			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-intr.c</locationURI>
-		</link>
-		<link>
-			<name>libs/dualprocshm/dualprocshm-microblaze.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-microblaze.h</locationURI>
 		</link>
 		<link>
 			<name>libs/dualprocshm/dualprocshm-noos.c</name>
@@ -153,24 +138,9 @@
 			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-noos.c</locationURI>
 		</link>
 		<link>
-			<name>libs/dualprocshm/dualprocshm-target.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-target.h</locationURI>
-		</link>
-		<link>
 			<name>libs/dualprocshm/dualprocshm-zynq.c</name>
 			<type>1</type>
 			<locationURI>PARENT-6-PROJECT_LOC/libs/dualprocshm/dualprocshm-zynq.c</locationURI>
-		</link>
-		<link>
-			<name>libs/dualprocshm/dualprocshm-zynq.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm-zynq.h</locationURI>
-		</link>
-		<link>
-			<name>libs/dualprocshm/dualprocshm.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/libs/dualprocshm/dualprocshm.h</locationURI>
 		</link>
 		<link>
 			<name>libs/omethlib/omethlib.c</name>
@@ -278,19 +248,9 @@
 			<locationURI>STACK_ROOT/stack/src/arch/xilinx_microblaze/xilinx_irq.c</locationURI>
 		</link>
 		<link>
-			<name>stack/src/arch/xilinx_microblaze/xilinx_irq.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/stack/src/arch/xilinx_microblaze/xilinx_irq.h</locationURI>
-		</link>
-		<link>
 			<name>stack/src/arch/xilinx_microblaze/xilinx_usleep.c</name>
 			<type>1</type>
 			<locationURI>STACK_ROOT/stack/src/arch/xilinx_microblaze/xilinx_usleep.c</locationURI>
-		</link>
-		<link>
-			<name>stack/src/arch/xilinx_microblaze/xilinx_usleep.h</name>
-			<type>1</type>
-			<locationURI>STACK_ROOT/stack/src/arch/xilinx_microblaze/xilinx_usleep.h</locationURI>
 		</link>
 		<link>
 			<name>stack/src/common/event/event.c</name>

@@ -53,14 +53,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The generic defines are valid for the whole openPOWERLINK stack.
 */
 /**@{*/
-#define EPL_USE_DELETEINST_FUNC             TRUE
     ///< use delete instance functions
 #define USE_VAR64
     ///< data type support higher 32 bit
 #define EPL_MAX_INSTANCES                   1
     ///< number of EPL instances
 #define EPL_MODULE_INTEGRATION              (0 \
-                                            | EPL_MODULE_OBDK \
+                                            | EPL_MODULE_OBD \
                                             | EPL_MODULE_PDOU \
                                             | EPL_MODULE_SDOS \
                                             | EPL_MODULE_SDOC \
@@ -110,16 +109,13 @@ The Data Link Layer (DLL) defines determine the POWERLINK DLL module.
 The OBD defines determine the Object Dictionary.
 */
 /**@{*/
-#define EPL_OBD_USE_KERNEL                  TRUE
     ///< enable OBD in kernel layer
-#define EPL_OBD_CHECK_OBJECT_RANGE          FALSE
+#define CONFIG_OBD_CHECK_OBJECT_RANGE              FALSE
     ///< support automatic object range check
-#define EPL_OBD_USE_STRING_DOMAIN_IN_RAM    TRUE
-    ///< support variable size of strings or domains in OD
-#define EPL_OBD_USE_VARIABLE_SUBINDEX_TAB   TRUE
+#define CONFIG_OBD_USE_STRING_DOMAIN_IN_RAM        TRUE
     ///< support variable subindex
-#define EPL_OBD_INCLUDE_A000_TO_DEVICE_PART TRUE
-#define EPL_OBD_USE_LOAD_CONCISEDCF         TRUE
+#define CONFIG_OBD_INCLUDE_A000_TO_DEVICE_PART     TRUE
+#define CONFIG_OBD_USE_LOAD_CONCISEDCF             TRUE
 /**@}*/
 
 /**

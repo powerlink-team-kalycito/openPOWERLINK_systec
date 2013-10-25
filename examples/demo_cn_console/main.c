@@ -84,7 +84,6 @@ static BOOL fGsOff_l;
 tEplKernel selectPcapDevice(char *pDevName_p);
 #endif
 void initEvents (BOOL* pfGsOff_p);
-tEplKernel PUBLIC EplObdInitRam (tEplObdInitParam MEM* pInitParam_p);
 tEplKernel processEvents(tEplApiEventType EventType_p, tEplApiEventArg* pEventArg_p, void GENERIC* pUserArg_p);
 
 //============================================================================//
@@ -216,11 +215,11 @@ static tEplKernel initPowerlink(UINT32 cycleLen_p, const BYTE* macAddr_p, UINT32
 
     initParam.m_dwFeatureFlags            = UINT_MAX;
     initParam.m_dwCycleLen                = cycleLen_p;       // required for error detection
-    initParam.m_uiIsochrTxMaxPayload      = 36;               // const
+    initParam.m_uiIsochrTxMaxPayload      = 40;               // const
     initParam.m_uiIsochrRxMaxPayload      = 36;               // const
     initParam.m_dwPresMaxLatency          = 50000;            // const; only required for IdentRes
     initParam.m_uiPreqActPayloadLimit     = 36;               // required for initialisation (+28 bytes)
-    initParam.m_uiPresActPayloadLimit     = 36;               // required for initialisation of Pres frame (+28 bytes)
+    initParam.m_uiPresActPayloadLimit     = 40;               // required for initialisation of Pres frame (+28 bytes)
     initParam.m_dwAsndMaxLatency          = 150000;           // const; only required for IdentRes
     initParam.m_uiMultiplCycleCnt         = 0;                // required for error detection
     initParam.m_uiAsyncMtu                = 1500;             // required to set up max frame size
@@ -250,8 +249,6 @@ static tEplKernel initPowerlink(UINT32 cycleLen_p, const BYTE* macAddr_p, UINT32
 #else
     initParam.m_pfnCbSync = NULL;
 #endif
-
-    initParam.m_pfnObdInitRam = EplObdInitRam;
 
     // initialize POWERLINK stack
     ret = oplk_init(&initParam);
@@ -346,6 +343,12 @@ static void loopMain(void)
                     break;
                 }
             }
+        }
+
+        if( system_getTermSignalState() == TRUE )
+        {
+            fExit = TRUE;
+            PRINTF("Received termination signal, exiting...\n");
         }
 
         if (oplk_checkKernelStack() == FALSE)

@@ -115,7 +115,7 @@ static DWORD    dw_le_CycleLen_g;
 #endif
 
 static UINT uiNodeId_g = EPL_C_ADR_INVALID;
-static char* pszCdcFilename_g = EPL_OBD_DEF_CONCISEDCF_FILENAME;
+static char* pszCdcFilename_g = CONFIG_OBD_DEF_CONCISEDCF_FILENAME;
 
 #if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_CFM)) != 0)
 static UINT uiCycleLen_g = 0;
@@ -158,13 +158,6 @@ BOOL                        fOpenPowerlinkIsRunning_g;
 //---------------------------------------------------------------------------
 // local function prototypes
 //---------------------------------------------------------------------------
-
-// This function is the entry point for your object dictionary. It is defined
-// in OBJDICT.C by define EPL_OBD_INIT_RAM_NAME. Use this function name to
-// define this function prototype here. If you want to use more than one Epl
-// instances then the function name of each object dictionary has to differ.
-
-tEplKernel PUBLIC  EplObdInitRam (tEplObdInitParam MEM* pInitParam_p);
 
 tEplKernel PUBLIC AppCbEvent(
     tEplApiEventType        EventType_p,   // IN: event type (enum)
@@ -274,7 +267,6 @@ int openPowerlinkInit (char *pszEthName, unsigned int uiDevNumber)
     // set callback functions
     EplApiInitParam.m_pfnCbEvent = AppCbEvent;
     EplApiInitParam.m_pfnCbSync  = AppCbSync;
-    EplApiInitParam.m_pfnObdInitRam = EplObdInitRam;
 
     printf("\n\n Hello, I'm a VxWorks POWERLINK node running as %s!\n"
            "(build: %s / %s)\n\n",
@@ -810,9 +802,9 @@ tEplKernel PUBLIC AppCbSync(void)
 
     uiCnt_g++;
 
-    nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M00_Digital_Input_8_Bit_Byte_1;
-    nodeVar_g[1].m_uiInput = pProcessImageOut_l->CN32_M00_Digital_Input_8_Bit_Byte_1;
-    nodeVar_g[2].m_uiInput = pProcessImageOut_l->CN110_M00_Digital_Input_8_Bit_Byte_1;
+    nodeVar_g[0].m_uiInput = pProcessImageOut_l->CN1_M00_DigitalInput_00h_AU8_DigitalInput;
+    nodeVar_g[1].m_uiInput = pProcessImageOut_l->CN32_M00_DigitalInput_00h_AU8_DigitalInput;
+    nodeVar_g[2].m_uiInput = pProcessImageOut_l->CN110_M00_DigitalInput_00h_AU8_DigitalInput;
 
     for (i = 0; (i < MAX_NODES) && (iUsedNodeIds_g[i] != 0); i++)
     {
@@ -858,9 +850,9 @@ tEplKernel PUBLIC AppCbSync(void)
         }
     }
 
-    pProcessImageIn_l->CN1_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[0].m_uiLeds;
-    pProcessImageIn_l->CN32_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[1].m_uiLeds;
-    pProcessImageIn_l->CN110_M00_Digital_Ouput_8_Bit_Byte_1 = nodeVar_g[2].m_uiLeds;
+    pProcessImageIn_l->CN1_M00_DigitalOutput_00h_AU8_DigitalOutput = nodeVar_g[0].m_uiLeds;
+    pProcessImageIn_l->CN32_M00_DigitalOutput_00h_AU8_DigitalOutput = nodeVar_g[1].m_uiLeds;
+    pProcessImageIn_l->CN110_M00_DigitalOutput_00h_AU8_DigitalOutput = nodeVar_g[2].m_uiLeds;
 
     EplRet = oplk_exchangeProcessImageIn();
 

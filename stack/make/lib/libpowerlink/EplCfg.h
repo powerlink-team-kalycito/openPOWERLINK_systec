@@ -69,8 +69,6 @@
 // =========================================================================
 // generic defines which for whole EPL Stack
 // =========================================================================
-#define EPL_USE_DELETEINST_FUNC         TRUE
-
 // needed to support datatypes over 32 bit by global.h
 #define USE_VAR64
 
@@ -123,7 +121,7 @@
 #ifdef CONFIG_MN
 
 #if (TARGET_SYSTEM == _LINUX_)
-#define EPL_MODULE_INTEGRATION (EPL_MODULE_OBDK \
+#define EPL_MODULE_INTEGRATION (EPL_MODULE_OBD \
                                | EPL_MODULE_PDOK \
                                | EPL_MODULE_PDOU \
                                | EPL_MODULE_SDOS \
@@ -137,10 +135,9 @@
                                | EPL_MODULE_CFM \
                                | EPL_MODULE_NMT_MN)
 //                               | EPL_MODULE_VETH
-//                               | EPL_MODULE_OBDU
 //                               | EPL_MODULE_SDO_UDP
 #elif (TARGET_SYSTEM == _WIN32_)
-#define EPL_MODULE_INTEGRATION (EPL_MODULE_OBDK \
+#define EPL_MODULE_INTEGRATION (EPL_MODULE_OBD \
                                | EPL_MODULE_PDOK \
                                | EPL_MODULE_PDOU \
                                | EPL_MODULE_SDOS \
@@ -154,12 +151,11 @@
                                | EPL_MODULE_CFM \
                                | EPL_MODULE_NMT_MN)
 //                               | EPL_MODULE_VETH
-//                               | EPL_MODULE_OBDU
 #endif
 
 #else // CONFIG_MN
 
-#define EPL_MODULE_INTEGRATION (EPL_MODULE_OBDK \
+#define EPL_MODULE_INTEGRATION (EPL_MODULE_OBD \
                                | EPL_MODULE_PDOK \
                                | EPL_MODULE_PDOU \
                                | EPL_MODULE_SDOS \
@@ -241,19 +237,17 @@
 
 // switch this define to TRUE if Epl should compare object range
 // automaticly
-#define EPL_OBD_CHECK_OBJECT_RANGE          FALSE
+#define CONFIG_OBD_CHECK_OBJECT_RANGE          FALSE
 
 // set this define to TRUE if there are strings or domains in OD, which
 // may be changed in object size and/or object data pointer by its object
 // callback function (called event kObdEvWrStringDomain)
-#define EPL_OBD_USE_STRING_DOMAIN_IN_RAM    TRUE
-
-#define EPL_OBD_USE_VARIABLE_SUBINDEX_TAB   TRUE
+#define CONFIG_OBD_USE_STRING_DOMAIN_IN_RAM    TRUE
 
 #ifdef CONFIG_CFM
 
-#define EPL_OBD_USE_LOAD_CONCISEDCF         TRUE
-#define EPL_OBD_DEF_CONCISEDCF_FILENAME     "mnobd.cdc"
+#define CONFIG_OBD_USE_LOAD_CONCISEDCF         TRUE
+#define CONFIG_OBD_DEF_CONCISEDCF_FILENAME     "mnobd.cdc"
 
 #define EPL_CFM_CONFIGURE_CYCLE_LENGTH      TRUE
 
@@ -262,14 +256,14 @@
 // openCONFIGURATOR uses this range for mapping
 // objects.
 #ifdef CONFIG_OPENCONFIGURATOR_MAPPING
-#define EPL_OBD_INCLUDE_A000_TO_DEVICE_PART TRUE
+#define CONFIG_OBD_INCLUDE_A000_TO_DEVICE_PART TRUE
 #endif
 
 #else // CONFIG_CFM
 
-#define EPL_OBD_USE_LOAD_CONCISEDCF         FALSE
+#define CONFIG_OBD_USE_LOAD_CONCISEDCF         FALSE
 #define EPL_CFM_CONFIGURE_CYCLE_LENGTH      FALSE
-#define EPL_OBD_INCLUDE_A000_TO_DEVICE_PART FALSE
+#define CONFIG_OBD_INCLUDE_A000_TO_DEVICE_PART FALSE
 
 #endif // CONFIG_CFM
 

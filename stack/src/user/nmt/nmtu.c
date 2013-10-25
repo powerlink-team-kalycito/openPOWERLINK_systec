@@ -41,8 +41,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include "EplInc.h"
+#include "obd.h"
 #include "user/nmtu.h"
-#include "user/EplObdu.h"
 #include "user/EplTimeru.h"
 #include "user/dllucal.h"
 
@@ -314,14 +314,14 @@ static tEplKernel configureDll(void)
 {
     tEplKernel      ret = kEplSuccessful;
     UINT32          nodeCfg;
-    tEplObdSize     obdSize;
+    tObdSize        obdSize;
     tDllNodeInfo    dllNodeInfo;
     UINT            index;
     UINT8           count;
 
     // read number of nodes from object 0x1F81/0
     obdSize = sizeof (count);
-    ret = EplObduReadEntry(0x1F81, 0, &count, &obdSize);
+    ret = obd_readEntry(0x1F81, 0, &count, &obdSize);
     if ((ret == kEplObdIndexNotExist) || (ret == kEplObdSubindexNotExist))
     {
         return kEplSuccessful;
@@ -334,7 +334,7 @@ static tEplKernel configureDll(void)
     for (index = 1; index <= count; index++)
     {
         obdSize = sizeof (nodeCfg);
-        ret = EplObduReadEntry(0x1F81, index, &nodeCfg, &obdSize);
+        ret = obd_readEntry(0x1F81, index, &nodeCfg, &obdSize);
         if (ret == kEplObdSubindexNotExist)
         {   // not all subindexes of object 0x1F81 have to exist
             continue;
@@ -349,7 +349,7 @@ static tEplKernel configureDll(void)
             dllNodeInfo.nodeId = index;
 
             obdSize = sizeof (dllNodeInfo.presPayloadLimit);
-            ret = EplObduReadEntry(0x1F8D, index, &dllNodeInfo.presPayloadLimit, &obdSize);
+            ret = obd_readEntry(0x1F8D, index, &dllNodeInfo.presPayloadLimit, &obdSize);
             if ((ret == kEplObdIndexNotExist) || (ret == kEplObdSubindexNotExist))
             {
                 dllNodeInfo.presPayloadLimit = 0;
@@ -367,12 +367,12 @@ static tEplKernel configureDll(void)
                     )) == EPL_NODEASSIGN_NODE_IS_CN)
             {   // node is CN
                 obdSize = sizeof (dllNodeInfo.preqPayloadLimit);
-                ret = EplObduReadEntry(0x1F8B, index, &dllNodeInfo.preqPayloadLimit, &obdSize);
+                ret = obd_readEntry(0x1F8B, index, &dllNodeInfo.preqPayloadLimit, &obdSize);
                 if (ret != kEplSuccessful)
                     return ret;
 
                 obdSize = sizeof (dllNodeInfo.presTimeoutNs);
-                ret = EplObduReadEntry(0x1F92, index, &dllNodeInfo.presTimeoutNs, &obdSize);
+                ret = obd_readEntry(0x1F92, index, &dllNodeInfo.presTimeoutNs, &obdSize);
                 if (ret != kEplSuccessful)
                     return ret;
             }
@@ -446,8 +446,8 @@ static BOOL processGeneralStateChange(tNmtState newNmtState_p, tEplKernel* pRet_
 #endif // EPL_NMT_MAX_NODE_ID > 0
 
             // get node ID from OD
-#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_OBDU)) != 0) || (EPL_OBD_USE_KERNEL != FALSE)
-            nodeId = EplObduGetNodeId(EPL_MCO_PTR_INSTANCE_PTR);
+#if defined(CONFIG_INCLUDE_OBD)
+            nodeId = obd_getNodeId();
 #else
             nodeId = 0;
 #endif
@@ -496,7 +496,7 @@ static BOOL processMnStateChange(tNmtState newNmtState_p, tEplKernel* pRet_p)
     UINT32              waitTime;
     UINT32              startUp;
     tNmtEvent           timerEvent;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
 
     switch (newNmtState_p)
     {
@@ -505,9 +505,8 @@ static BOOL processMnStateChange(tNmtState newNmtState_p, tEplKernel* pRet_p)
             // create timer to switch automatically to BasicEthernet/PreOp1 if no other MN active in network
             // check NMT_StartUp_U32.Bit13
             obdSize = sizeof(startUp);
-#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_OBDU)) != 0) || (EPL_OBD_USE_KERNEL != FALSE)
-            ret = EplObduReadEntry(EPL_MCO_PTR_INSTANCE_PTR_
-                                    0x1F80, 0x00, &startUp,&obdSize);
+#if defined(CONFIG_INCLUDE_OBD)
+            ret = obd_readEntry(0x1F80, 0x00, &startUp,&obdSize);
 #else
             ret = kEplObdIndexNotExist;
 #endif
@@ -525,9 +524,8 @@ static BOOL processMnStateChange(tNmtState newNmtState_p, tEplKernel* pRet_p)
 
             // read NMT_BootTime_REC.MNWaitNotAct_U32 from OD
             obdSize = sizeof(waitTime);
-#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_OBDU)) != 0) || (EPL_OBD_USE_KERNEL != FALSE)
-            ret = EplObduReadEntry(EPL_MCO_PTR_INSTANCE_PTR_
-                                    0x1F89, 0x01, &waitTime, &obdSize);
+#if defined(CONFIG_INCLUDE_OBD)
+            ret = obd_readEntry(0x1F89, 0x01, &waitTime, &obdSize);
 #else
             ret = kEplObdIndexNotExist;
 #endif
@@ -544,9 +542,8 @@ static BOOL processMnStateChange(tNmtState newNmtState_p, tEplKernel* pRet_p)
 
             // read NMT_BootTime_REC.MNWaitPreOp1_U32 from OD
             obdSize = sizeof(waitTime);
-#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_OBDU)) != 0) || (EPL_OBD_USE_KERNEL != FALSE)
-            ret = EplObduReadEntry(EPL_MCO_PTR_INSTANCE_PTR_
-                                    0x1F89, 0x03, &waitTime, &obdSize);
+#if defined(CONFIG_INCLUDE_OBD)
+            ret = obd_readEntry(0x1F89, 0x03, &waitTime, &obdSize);
             if(ret != kEplSuccessful)
             {
                 // ignore error, because this timeout is optional
@@ -608,7 +605,7 @@ static BOOL processCnStateChange(tNmtState newNmtState_p, tEplKernel* pRet_p)
     tEplKernel          ret = kEplSuccessful;
     BOOL                fHandled = TRUE;
     UINT32              basicEthernetTimeout;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
 
     switch (newNmtState_p)
     {
@@ -617,9 +614,8 @@ static BOOL processCnStateChange(tNmtState newNmtState_p, tEplKernel* pRet_p)
             // create timer to switch automatically to BasicEthernet if no MN available in network
             // read NMT_CNBasicEthernetTimeout_U32 from OD
             obdSize = sizeof(basicEthernetTimeout);
-#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_OBDU)) != 0) || (EPL_OBD_USE_KERNEL != FALSE)
-            ret = EplObduReadEntry(EPL_MCO_PTR_INSTANCE_PTR_
-                                   0x1F99, 0x00, &basicEthernetTimeout, &obdSize);
+#if defined(CONFIG_INCLUDE_OBD)
+            ret = obd_readEntry(0x1F99, 0x00, &basicEthernetTimeout, &obdSize);
 #else
             ret = kEplObdIndexNotExist;
 #endif

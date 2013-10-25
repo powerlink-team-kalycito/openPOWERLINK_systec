@@ -91,9 +91,9 @@ SET (DAEMON_HEADERS
      ${POWERLINK_INCLUDE_DIR}/EplInc.h
      ${POWERLINK_INCLUDE_DIR}/EplInstDef.h
      ${POWERLINK_INCLUDE_DIR}/nmt.h
-     ${POWERLINK_INCLUDE_DIR}/EplObd.h
+     ${POWERLINK_INCLUDE_DIR}/obd.h
      ${POWERLINK_INCLUDE_DIR}/obdcdc.h
-     ${POWERLINK_INCLUDE_DIR}/EplObdMacro.h
+     ${POWERLINK_INCLUDE_DIR}/obdmacro.h
      ${POWERLINK_INCLUDE_DIR}/EplObjDef.h
      ${POWERLINK_INCLUDE_DIR}/pdo.h
      ${POWERLINK_INCLUDE_DIR}/EplSdo.h
@@ -119,7 +119,6 @@ SET (DAEMON_KERNEL_HEADERS
      ${KERNEL_INCLUDE_DIR}/eventk.h
      ${KERNEL_INCLUDE_DIR}/eventkcal.h
      ${KERNEL_INCLUDE_DIR}/nmtk.h
-     ${KERNEL_INCLUDE_DIR}/EplObdk.h
      ${KERNEL_INCLUDE_DIR}/pdok.h
      ${KERNEL_INCLUDE_DIR}/pdokcal.h
      ${KERNEL_INCLUDE_DIR}/EplTimerHighResk.h

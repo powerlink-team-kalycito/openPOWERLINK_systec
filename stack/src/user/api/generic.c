@@ -54,7 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <user/cfmu.h>
 #include <user/ctrlu.h>
 
-#if (EPL_OBD_USE_LOAD_CONCISEDCF != FALSE)
+#if (CONFIG_OBD_USE_LOAD_CONCISEDCF != FALSE)
 #include "obdcdc.h"
 #endif
 
@@ -213,15 +213,15 @@ in the object dictionary (OD).
 */
 //------------------------------------------------------------------------------
 tEplKernel oplk_linkObject(UINT objIndex_p, void* pVar_p, UINT* pVarEntries_p,
-                           tEplObdSize* pEntrySize_p, UINT firstSubindex_p)
+                           tObdSize* pEntrySize_p, UINT firstSubindex_p)
 {
     UINT8           varEntries;
     UINT8           indexEntries;
     UINT8 MEM*      pData;
     UINT            subindex;
-    tEplVarParam    varParam;
-    tEplObdSize     entrySize;
-    tEplObdSize     usedSize;
+    tVarParam       varParam;
+    tObdSize        entrySize;
+    tObdSize        usedSize;
 
     tEplKernel      ret = kEplSuccessful;
 
@@ -233,15 +233,15 @@ tEplKernel oplk_linkObject(UINT objIndex_p, void* pVar_p, UINT* pVarEntries_p,
     usedSize   = 0;
 
     // init varParam structure with default values
-    varParam.m_uiIndex    = objIndex_p;
-    varParam.m_ValidFlag  = kVarValidAll;
+    varParam.index = objIndex_p;
+    varParam.validFlag = kVarValidAll;
 
     if (firstSubindex_p != 0)
     {   // check if object exists by reading subindex 0x00,
         // because user wants to link a variable to a subindex unequal 0x00
         // read number of entries
-        entrySize = (tEplObdSize)sizeof(indexEntries);
-        ret = EplObdReadEntry (objIndex_p, 0x00, (void GENERIC*) &indexEntries, &entrySize );
+        entrySize = (tObdSize)sizeof(indexEntries);
+        ret = obd_readEntry (objIndex_p, 0x00, (void GENERIC*) &indexEntries, &entrySize );
         if ((ret != kEplSuccessful) || (indexEntries == 0x00))
         {
             // Object doesn't exist or invalid entry number
@@ -268,7 +268,7 @@ tEplKernel oplk_linkObject(UINT objIndex_p, void* pVar_p, UINT* pVarEntries_p,
         // if passed entry size is 0, then get size from OD
         if (*pEntrySize_p == 0x00)
         {
-            if ((entrySize = EplObdGetDataSize(objIndex_p, subindex)) == 0x00)
+            if ((entrySize = obd_getDataSize(objIndex_p, subindex)) == 0x00)
             {
                 // invalid entry size (maybe object doesn't exist or entry of type DOMAIN is empty)
                 return kEplObdSubindexNotExist;
@@ -279,14 +279,14 @@ tEplKernel oplk_linkObject(UINT objIndex_p, void* pVar_p, UINT* pVarEntries_p,
             entrySize = *pEntrySize_p;
         }
 
-        varParam.m_uiSubindex = subindex;
-        varParam.m_Size  = entrySize;
-        varParam.m_pData = pData;
+        varParam.subindex = subindex;
+        varParam.size = entrySize;
+        varParam.pData = pData;
 
         usedSize += entrySize;
         pData   += entrySize;
 
-        if ((ret = EplObdDefineVar(&varParam)) != kEplSuccessful)
+        if ((ret = obd_defineVar(&varParam)) != kEplSuccessful)
             break;
     }
 
@@ -331,15 +331,15 @@ tEplKernel oplk_readObject(tEplSdoComConHdl* pSdoComConHdl_p, UINT nodeId_p, UIN
                            tEplSdoType sdoType_p, void* pUserArg_p)
 {
     tEplKernel      ret = kEplSuccessful;
-    tEplObdSize     obdSize;
+    tObdSize        obdSize;
 
     if ((index_p == 0) || (pDstData_le_p == NULL) || (pSize_p == NULL) || (*pSize_p == 0))
         return kEplApiInvalidParam;
 
-    if (nodeId_p == 0 || nodeId_p == EplObdGetNodeId())
+    if (nodeId_p == 0 || nodeId_p == obd_getNodeId())
     {   // local OD access can be performed
-        obdSize = (tEplObdSize) *pSize_p;
-        ret = EplObdReadEntryToLe(index_p, subindex_p, pDstData_le_p, &obdSize);
+        obdSize = (tObdSize) *pSize_p;
+        ret = obd_readEntryToLe(index_p, subindex_p, pDstData_le_p, &obdSize);
         *pSize_p = (UINT) obdSize;
     }
     else
@@ -421,9 +421,9 @@ tEplKernel oplk_writeObject(tEplSdoComConHdl* pSdoComConHdl_p, UINT nodeId_p, UI
     if ((index_p == 0) || (pSrcData_le_p == NULL) || (size_p == 0))
         return kEplApiInvalidParam;
 
-    if (nodeId_p == 0 || nodeId_p == EplObdGetNodeId())
+    if (nodeId_p == 0 || nodeId_p == obd_getNodeId())
     {   // local OD access can be performed
-        ret = EplObdWriteEntryFromLe(index_p, subindex_p, pSrcData_le_p, size_p);
+        ret = obd_writeEntryFromLe(index_p, subindex_p, pSrcData_le_p, size_p);
     }
     else
     {   // perform SDO transfer
@@ -568,10 +568,10 @@ tEplKernel oplk_readLocalObject(UINT index_p, UINT subindex_p, void* pDstData_p,
                                 UINT* pSize_p)
 {
     tEplKernel      ret = kEplSuccessful;
-    tEplObdSize     obdSize;
+    tObdSize        obdSize;
 
-    obdSize = (tEplObdSize)*pSize_p;
-    ret = EplObdReadEntry(index_p, subindex_p, pDstData_p, &obdSize);
+    obdSize = (tObdSize)*pSize_p;
+    ret = obd_readEntry(index_p, subindex_p, pDstData_p, &obdSize);
     *pSize_p = (UINT)obdSize;
 
     return ret;
@@ -597,7 +597,7 @@ The function writes the specified entry to the local object dictionary.
 tEplKernel oplk_writeLocalObject(UINT index_p, UINT subindex_p, void* pSrcData_p,
                                         UINT size_p)
 {
-    return EplObdWriteEntry(index_p, subindex_p, pSrcData_p, (tEplObdSize)size_p);
+    return obd_writeEntry(index_p, subindex_p, pSrcData_p, (tObdSize)size_p);
 }
 
 //------------------------------------------------------------------------------
@@ -766,7 +766,7 @@ the stack to read the configuration.
 //------------------------------------------------------------------------------
 tEplKernel oplk_setCdcBuffer(BYTE* pCdc_p, UINT cdcSize_p)
 {
-#if (EPL_OBD_USE_LOAD_CONCISEDCF != FALSE)
+#if (CONFIG_OBD_USE_LOAD_CONCISEDCF != FALSE)
     obdcdc_setBuffer(pCdc_p, cdcSize_p);
     return kEplSuccessful;
 #else
@@ -791,7 +791,7 @@ the stack to read the configuration.
 //------------------------------------------------------------------------------
 tEplKernel oplk_setCdcFilename(char* pCdcFilename_p)
 {
-#if (EPL_OBD_USE_LOAD_CONCISEDCF != FALSE)
+#if (CONFIG_OBD_USE_LOAD_CONCISEDCF != FALSE)
     obdcdc_setFilename(pCdcFilename_p);
     return kEplSuccessful;
 #else

@@ -71,12 +71,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // global function prototypes
 //------------------------------------------------------------------------------
 
-// This function is the entry point for your object dictionary. It is defined
-// in OBJDICT.C by define EPL_OBD_INIT_RAM_NAME. Use this function name to define
-// this function prototype here. If you want to use more than one Epl
-// instances then the function name of each object dictionary has to differ.
-tEplKernel PUBLIC  EplObdInitRam (tEplObdInitParam MEM* pInitParam_p);
-
 tEplKernel PUBLIC AppCbSync(void);
 tEplKernel PUBLIC AppCbEvent(
     tEplApiEventType        EventType_p,
@@ -101,13 +95,22 @@ tEplKernel PUBLIC AppCbEvent(
 //------------------------------------------------------------------------------
 // local types
 //------------------------------------------------------------------------------
+typedef struct sPiOut
+{
+    BYTE    aByte_m[4];
+} tPiOut;
+
+typedef struct sPiIn
+{
+    BYTE    aByte_m[4];
+} tPiIn;
 
 //------------------------------------------------------------------------------
 // local vars
 //------------------------------------------------------------------------------
 static BYTE        portIsOutput[4];
-static BYTE        digitalIn[4];
-static BYTE        digitalOut[4];
+static tPiIn*      pPiIn_l;
+static tPiOut*     pPiOut_l;
 static BOOL        fShutdown_l = FALSE;
 
 //------------------------------------------------------------------------------
@@ -415,12 +418,12 @@ tEplKernel PUBLIC AppCbSync(void)
         if (portIsOutput[iCnt])
         {
             /* configured as output -> overwrite invalid input values with RPDO mapped variables */
-            ports = (ports & ~(0xff << (iCnt * 8))) | (digitalOut[iCnt] << (iCnt * 8));
+            ports = (ports & ~(0xff << (iCnt * 8))) | (pPiOut_l->aByte_m[iCnt] << (iCnt * 8));
         }
         else
         {
             /* configured as input -> store in TPDO mapped variable */
-            digitalIn[iCnt] = (ports >> (iCnt * 8)) & 0xff;
+            pPiIn_l->aByte_m[iCnt] = (ports >> (iCnt * 8)) & 0xff;
         }
     }
 
@@ -455,7 +458,7 @@ static int openPowerlink(BYTE bNodeId_p)
     DWORD                       ip = IP_ADDR;          ///< ip address
     const BYTE                  abMacAddr[] = {MAC_ADDR};
     static tEplApiInitParam     EplApiInitParam;       ///< epl init parameter
-    tEplObdSize                 ObdSize;               ///< needed for process var
+    tObdSize                    ObdSize;               ///< needed for process var
     tEplKernel                  EplRet;
     unsigned int                uiVarEntries;
 
@@ -476,7 +479,7 @@ static int openPowerlink(BYTE bNodeId_p)
     EplApiInitParam.m_abMacAddress[5] = bNodeId_p;
     EplApiInitParam.m_uiNodeId = bNodeId_p;
     EplApiInitParam.m_dwIpAddress = ip;
-    EplApiInitParam.m_uiIsochrTxMaxPayload = 36;
+    EplApiInitParam.m_uiIsochrTxMaxPayload = 40;
     EplApiInitParam.m_uiIsochrRxMaxPayload = 1490;
     EplApiInitParam.m_dwPresMaxLatency = 2000;
     EplApiInitParam.m_dwAsndMaxLatency = 2000;
@@ -484,7 +487,7 @@ static int openPowerlink(BYTE bNodeId_p)
     EplApiInitParam.m_dwFeatureFlags = -1;
     EplApiInitParam.m_dwCycleLen = CYCLE_LEN;
     EplApiInitParam.m_uiPreqActPayloadLimit = 36;
-    EplApiInitParam.m_uiPresActPayloadLimit = 36;
+    EplApiInitParam.m_uiPresActPayloadLimit = 40;
     EplApiInitParam.m_uiMultiplCycleCnt = 0;
     EplApiInitParam.m_uiAsyncMtu = 300;
     EplApiInitParam.m_uiPrescaler = 2;
@@ -502,7 +505,6 @@ static int openPowerlink(BYTE bNodeId_p)
     EplApiInitParam.m_dwDefaultGateway = 0;
     EplApiInitParam.m_pfnCbEvent = AppCbEvent;
     EplApiInitParam.m_pfnCbSync  = AppCbSync;
-    EplApiInitParam.m_pfnObdInitRam = EplObdInitRam;
 
     PRINTF("\nNode ID is set to: %d\n", EplApiInitParam.m_uiNodeId);
 
@@ -516,21 +518,33 @@ static int openPowerlink(BYTE bNodeId_p)
     }
     PRINTF("init POWERLINK Stack...ok\n\n");
 
-    /* link process variables used by CN to object dictionary */
+    /* link process image to OD */
+    printf("Initializing process image...\n");
+    printf("Size of input process image: %ld\n", sizeof(pPiIn_l));
+    printf("Size of output process image: %ld\n", sizeof (pPiOut_l));
+    EplRet = oplk_allocProcessImage(sizeof(pPiIn_l), sizeof(pPiOut_l));
+    if (EplRet != kEplSuccessful)
+    {
+        goto Exit;
+    }
+
+    pPiIn_l = oplk_getProcessImageIn();
+    pPiOut_l = oplk_getProcessImageOut();
+
     PRINTF("linking process vars:\n");
 
-    ObdSize = sizeof(digitalIn[0]);
+    ObdSize = sizeof(pPiIn_l->aByte_m[0]);
     uiVarEntries = 4;
-    EplRet = oplk_linkObject(0x6000, digitalIn, &uiVarEntries, &ObdSize, 0x01);
+    EplRet = oplk_linkProcessImageObject(0x6000, 1, 0, FALSE, ObdSize, &uiVarEntries);
     if (EplRet != kEplSuccessful)
     {
         printf("linking process vars... error\n\n");
         goto ExitShutdown;
     }
 
-    ObdSize = sizeof(digitalOut[0]);
+    ObdSize = sizeof(pPiOut_l->aByte_m[0]);
     uiVarEntries = 4;
-    EplRet = oplk_linkObject(0x6200, digitalOut, &uiVarEntries, &ObdSize, 0x01);
+    EplRet = oplk_linkProcessImageObject(0x6200, 1, 0, TRUE, ObdSize, &uiVarEntries);
     if (EplRet != kEplSuccessful)
     {
         printf("linking process vars... error\n\n");
@@ -569,8 +583,15 @@ static int openPowerlink(BYTE bNodeId_p)
     }
 
 ExitShutdown:
-    PRINTF("Shutdown EPL Stack\n");
-    oplk_shutdown();       // shutdown node
+    // halt the NMT state machine
+    // so the processing of POWERLINK frames stops
+    EplRet = oplk_execNmtCommand(kNmtEventSwitchOff);
+
+    // delete process image
+    EplRet = oplk_freeProcessImage();
+
+    // delete instance for all modules
+    EplRet = oplk_shutdown();
 
 Exit:
     return EplRet;

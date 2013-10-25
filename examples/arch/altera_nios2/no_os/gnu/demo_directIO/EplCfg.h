@@ -46,8 +46,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // =========================================================================
 // generic defines which for whole EPL Stack
 // =========================================================================
-#define EPL_USE_DELETEINST_FUNC TRUE
-
 // needed to support datatypes over 32 bit by global.h
 #define USE_VAR64
 
@@ -94,7 +92,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // EPL application. Please add or delete modules for your application.
 
 #define EPL_MODULE_INTEGRATION     (0 \
-                                | EPL_MODULE_OBDK \
+                                | EPL_MODULE_OBD \
                                 | EPL_MODULE_PDOU \
                                 | EPL_MODULE_PDOK \
                                 | EPL_MODULE_SDOS \
@@ -184,21 +182,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // OBD specific defines
 // =========================================================================
 
-#define EPL_OBD_USE_KERNEL                TRUE
-
 // switch this define to TRUE if Epl should compare object range
 // automaticly
-#define EPL_OBD_CHECK_OBJECT_RANGE          FALSE
-//#define EPL_OBD_CHECK_OBJECT_RANGE          TRUE
+#define CONFIG_OBD_CHECK_OBJECT_RANGE          FALSE
+//#define CONFIG_OBD_CHECK_OBJECT_RANGE          TRUE
 
 // set this define to TRUE if there are strings or domains in OD, which
 // may be changed in object size and/or object data pointer by its object
 // callback function (called event kObdEvWrStringDomain)
-//#define EPL_OBD_USE_STRING_DOMAIN_IN_RAM    FALSE
-#define EPL_OBD_USE_STRING_DOMAIN_IN_RAM    TRUE
-
-#define EPL_OBD_USE_VARIABLE_SUBINDEX_TAB TRUE
-
+//#define CONFIG_OBD_USE_STRING_DOMAIN_IN_RAM    FALSE
+#define CONFIG_OBD_USE_STRING_DOMAIN_IN_RAM    TRUE
 
 // =========================================================================
 // Timer module specific defines

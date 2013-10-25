@@ -679,10 +679,14 @@ WARN_LOGFILE           =
 
 INPUT                  = ../../stack/src \
                          ../../include \
+                         ../../objdicts \
+                         ../../libs/circbuf \
+                         ../../libs/hostif \
                          calmodules.txt \
                          usermodules.txt \
                          kernelmodules.txt \
                          commonmodules.txt \
+                         libmodules.txt \
                          ../powerlink.md \
                          ../openpowerlink.md \
                          ../platforms.md \
@@ -882,7 +886,7 @@ USE_HTAGS              = NO
 # will generate a verbatim copy of the header file for each class for 
 # which an include is specified. Set to NO to disable this.
 
-VERBATIM_HEADERS       = YES
+VERBATIM_HEADERS       = NO
 
 #---------------------------------------------------------------------------
 # configuration options related to the alphabetical class index
@@ -1638,7 +1642,9 @@ PREDEFINED             = CONFIG_INCLUDE_NMT_MN \
                          EPL_DLL_PRES_CHAINING_CN:=1 \
                          EPL_NMT_MAX_NODE_ID:=255 \
                          EPL_DLL_DISABLE_DEFERRED_RXFRAME_RELEASE:=1 \
-                         EPL_TIMER_USE_HIGHRES:=1
+                         EPL_TIMER_USE_HIGHRES:=1 \
+                         OBD_DEFINE_MACRO \
+                         DOXYGEN_PARSER
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 
@@ -1773,7 +1779,7 @@ COLLABORATION_GRAPH    = YES
 # If the GROUP_GRAPHS and HAVE_DOT tags are set to YES then doxygen 
 # will generate a graph for groups, showing the direct groups dependencies
 
-GROUP_GRAPHS           = YES
+GROUP_GRAPHS           = NO
 
 # If the UML_LOOK tag is set to YES doxygen will generate inheritance and 
 # collaboration diagrams in a style similar to the OMG's Unified Modeling 

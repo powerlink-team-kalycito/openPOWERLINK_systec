@@ -42,7 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // includes
 //------------------------------------------------------------------------------
 #include <EplInc.h>
-#include <EplObd.h>
+#include <obd.h>
 
 //------------------------------------------------------------------------------
 // const defines
@@ -76,7 +76,7 @@ typedef struct
 extern "C" {
 #endif
 
-tEplKernel  cfmu_cbObdAccess(tEplObdCbParam MEM* pParam_p);
+tEplKernel  cfmu_cbObdAccess(tObdCbParam MEM* pParam_p);
 
 #ifdef __cplusplus
 }

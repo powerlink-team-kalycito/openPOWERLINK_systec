@@ -44,12 +44,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _CRT_NONSTDC_NO_WARNINGS    // for MSVC 2005 or higher
 
 #include <EplInc.h>
-#include <EplObd.h>
+#include <obd.h>
 #include <obdcdc.h>
-#include <kernel/EplObdk.h>
 #include <user/eventu.h>
 
-#if (EPL_OBD_USE_LOAD_CONCISEDCF != FALSE)
+#if (CONFIG_OBD_USE_LOAD_CONCISEDCF != FALSE)
 
 #include <sys/stat.h>
 #include <assert.h>
@@ -421,8 +420,8 @@ static tEplKernel processCdc(tObdCdcInfo* pCdcInfo_p)
             return ret;
         }
 
-        ret = EplObdWriteEntryFromLe(objectIndex, objectSubIndex, pCdcInfo_p->pCurBuffer,
-                                     (tEplObdSize) curDataSize);
+        ret = obd_writeEntryFromLe(objectIndex, objectSubIndex, pCdcInfo_p->pCurBuffer,
+                                     (tObdSize) curDataSize);
         if (ret != kEplSuccessful)
         {
             tEplEventObdError       obdError;

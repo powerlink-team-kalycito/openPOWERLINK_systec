@@ -45,6 +45,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "xap.h"
 
+#include <system.h> // Needed to know if there is some Lcd with name 'lcd'.
+
+#ifdef LCD_BASE
+#include <lcd.h>
+#endif
+
+//TODO jz: Print Nmt state on lcd
+
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//
@@ -125,7 +133,6 @@ static APP_NODE_VAR_T       nodeVar_g[MAX_NODES];
 //------------------------------------------------------------------------------
 // local function prototypes
 //------------------------------------------------------------------------------
-tEplKernel PUBLIC  EplObdInitRam (tEplObdInitParam MEM* pInitParam_p);
 tEplKernel PUBLIC AppCbSync(void);
 tEplKernel PUBLIC AppInit(void);
 
@@ -153,6 +160,10 @@ int  main (void)
 
     alt_icache_flush_all();
     alt_dcache_flush_all();
+
+#ifdef LCD_BASE
+    lcd_init();
+#endif
 
     printf("----------------------------------------------------\n");
     printf("openPOWERLINK FPGA MN DEMO application\n");
@@ -196,9 +207,11 @@ int  main (void)
 
     // set callback functions
     EplApiInitParam.m_pfnCbEvent = processEvents;
-    EplApiInitParam.m_pfnObdInitRam = EplObdInitRam;
     EplApiInitParam.m_pfnCbSync  = AppCbSync;
 
+#ifdef LCD_BASE
+    lcd_printNodeId(uiNodeId_g);
+#endif
 
     printf("\n\nHello, I'm a POWERLINK node running as %s!\n  (build: %s / %s)\n\n",
             (uiNodeId_g == EPL_C_ADR_MN_DEF_NODE_ID ?
@@ -284,6 +297,10 @@ ExitShutdown:
     EplRet = oplk_shutdown();
 
 Exit:
+#ifdef LCD_BASE
+    lcd_printError(EplRet);
+#endif
+
     PRINTF("main(): returns 0x%X\n", EplRet);
 
     return 0;

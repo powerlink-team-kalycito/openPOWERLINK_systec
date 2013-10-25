@@ -47,8 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 #include <nmt.h>
 #include <Benchmark.h>
-#include <EplObd.h>
-#include <kernel/EplObdk.h>
+#include <obd.h>
 
 #include <errhnd.h>
 #include <user/errhndu.h>
@@ -211,35 +210,35 @@ PreRead events.
 \return Returns always kEplSuccessful
 */
 //------------------------------------------------------------------------------
-tEplKernel errhndu_cbObdAccess(tEplObdCbParam MEM* pParam_p)
+tEplKernel errhndu_cbObdAccess(tObdCbParam MEM* pParam_p)
 {
-    switch (pParam_p->m_ObdEvent)
+    switch (pParam_p->obdEvent)
     {
-        case kEplObdEvPostWrite:
-        case kEplObdEvPostDefault:
-            switch (pParam_p->m_uiSubIndex)
+        case kObdEvPostWrite:
+        case kObdEvPostDefault:
+            switch (pParam_p->subIndex)
             {
                 // only cumulative counter and threshold will be written by
                 // application
                 case SUBIDX_DLL_ERROR_CUM_CNT:
                 case SUBIDX_DLL_ERROR_THRESHOLD:
-                    errhnducal_writeErrorObject(pParam_p->m_uiIndex,
-                                                pParam_p->m_uiSubIndex,
-                                                (UINT32 *)pParam_p->m_pArg);
+                    errhnducal_writeErrorObject(pParam_p->index,
+                                                pParam_p->subIndex,
+                                                (UINT32 *)pParam_p->pArg);
                     break;
             }
             break;
 
-        case kEplObdEvPreRead:
-            switch (pParam_p->m_uiSubIndex)
+        case kObdEvPreRead:
+            switch (pParam_p->subIndex)
             {
                 // the error handler only modifies the cumulative counter
                 // and threshold counter
                 case SUBIDX_DLL_ERROR_CUM_CNT:
                 case SUBIDX_DLL_ERROR_THR_CNT:
-                    errhnducal_readErrorObject(pParam_p->m_uiIndex,
-                                               pParam_p->m_uiSubIndex,
-                                               (UINT32 *)pParam_p->m_pArg);
+                    errhnducal_readErrorObject(pParam_p->index,
+                                               pParam_p->subIndex,
+                                               (UINT32 *)pParam_p->pArg);
                     break;
             }
             break;
@@ -269,40 +268,40 @@ PreRead objects.
 \ingroup module_errhndu
 */
 //------------------------------------------------------------------------------
-tEplKernel errhndu_mnCnLossPresCbObdAccess(tEplObdCbParam MEM* pParam_p)
+tEplKernel errhndu_mnCnLossPresCbObdAccess(tObdCbParam MEM* pParam_p)
 {
     tEplKernel          ret = kEplSuccessful;
 
-    if (pParam_p->m_uiSubIndex == 0)
+    if (pParam_p->subIndex == 0)
         return kEplSuccessful;
 
-    switch (pParam_p->m_ObdEvent)
+    switch (pParam_p->obdEvent)
     {
-        case kEplObdEvPostWrite:
-        case kEplObdEvPostDefault:
-            switch (pParam_p->m_uiIndex)
+        case kObdEvPostWrite:
+        case kObdEvPostDefault:
+            switch (pParam_p->index)
             {
                 // only cumulative counter and threshold will be written by
                 // application
                 case OID_DLL_MNCN_LOSSPRES_CUMCNT_AU32:
                 case OID_DLL_MNCN_LOSSPRES_THRESHOLD_AU32:
-                    errhnducal_writeErrorObject(pParam_p->m_uiIndex,
-                                                pParam_p->m_uiSubIndex,
-                                                (UINT32 *)pParam_p->m_pArg);
+                    errhnducal_writeErrorObject(pParam_p->index,
+                                                pParam_p->subIndex,
+                                                (UINT32 *)pParam_p->pArg);
                     break;
             }
             break;
 
-        case kEplObdEvPreRead:
-            switch (pParam_p->m_uiIndex)
+        case kObdEvPreRead:
+            switch (pParam_p->index)
             {
                 // the error handler only modifies the cumulative counter
                 // and threshold counter
                 case OID_DLL_MNCN_LOSSPRES_CUMCNT_AU32:
                 case OID_DLL_MNCN_LOSSPRES_THRCNT_AU32:
-                    errhnducal_readErrorObject(pParam_p->m_uiIndex,
-                                               pParam_p->m_uiSubIndex,
-                                               (UINT32 *)pParam_p->m_pArg);
+                    errhnducal_readErrorObject(pParam_p->index,
+                                               pParam_p->subIndex,
+                                               (UINT32 *)pParam_p->pArg);
                     break;
             }
             break;
@@ -337,27 +336,27 @@ directory entry.
 static tEplKernel linkErrorCounter(tErrorObject* pErrorCounter_p, UINT index_p)
 {
     tEplKernel      ret = kEplSuccessful;
-    tEplVarParam    varParam;
+    tVarParam       varParam;
 
-    varParam.m_ValidFlag = kVarValidAll;
-    varParam.m_uiIndex = index_p;
-    varParam.m_Size = sizeof(UINT32);
+    varParam.validFlag = kVarValidAll;
+    varParam.index = index_p;
+    varParam.size = sizeof(UINT32);
 
-    varParam.m_pData = &(pErrorCounter_p->cumulativeCnt);
-    varParam.m_uiSubindex = 0x01;
-    ret = EplObdDefineVar(&varParam);
+    varParam.pData = &(pErrorCounter_p->cumulativeCnt);
+    varParam.subindex = 0x01;
+    ret = obd_defineVar(&varParam);
     if (ret != kEplSuccessful)
         return ret;
 
-    varParam.m_pData = &(pErrorCounter_p->thresholdCnt);
-    varParam.m_uiSubindex = 0x02;
-    ret = EplObdDefineVar(&varParam);
+    varParam.pData = &(pErrorCounter_p->thresholdCnt);
+    varParam.subindex = 0x02;
+    ret = obd_defineVar(&varParam);
     if (ret != kEplSuccessful)
         return ret;
 
-    varParam.m_pData = &(pErrorCounter_p->threshold);
-    varParam.m_uiSubindex = 0x03;
-    ret = EplObdDefineVar(&varParam);
+    varParam.pData = &(pErrorCounter_p->threshold);
+    varParam.subindex = 0x03;
+    ret = obd_defineVar(&varParam);
     return ret;
 }
 
@@ -383,11 +382,11 @@ dictionary.
 static tEplKernel checkErrorObject(UINT index_p, BYTE *pEntries_p)
 {
     tEplKernel      ret = kEplSuccessful;
-    tEplObdSize     entrySize;
+    tObdSize        entrySize;
     BYTE            indexEntries;
 
-    entrySize = (tEplObdSize)  sizeof(indexEntries);
-    ret = EplObdReadEntry ( index_p, 0x00, (void GENERIC*) &indexEntries, &entrySize );
+    entrySize = (tObdSize)  sizeof(indexEntries);
+    ret = obd_readEntry ( index_p, 0x00, (void GENERIC*) &indexEntries, &entrySize );
 
     if ((ret != kEplSuccessful) || (indexEntries == 0x00))
     {
@@ -417,7 +416,7 @@ subindexes for each node ID.
 static tEplKernel linkMnCnLossPresErrors(tErrHndObjects* pError_p)
 {
     tEplKernel      ret = kEplSuccessful;
-    tEplVarParam    varParam;
+    tVarParam       varParam;
     BYTE            indexEntries;
     BYTE            numObjs;
     tErrorObject   *pErrCnt;
@@ -441,31 +440,31 @@ static tEplKernel linkMnCnLossPresErrors(tErrHndObjects* pError_p)
         return kEplObdIndexNotExist;
     numObjs = min(numObjs, indexEntries);
 
-    varParam.m_Size = sizeof(UINT32);
-    varParam.m_ValidFlag = kVarValidAll;
+    varParam.size = sizeof(UINT32);
+    varParam.validFlag = kVarValidAll;
     pErrCnt = &(pError_p->aMnCnLossPres[0]);
 
-    for (varParam.m_uiSubindex = 1; varParam.m_uiSubindex <= numObjs;
-         varParam.m_uiSubindex++)
+    for (varParam.subindex = 1; varParam.subindex <= numObjs;
+         varParam.subindex++)
     {
         // CumulativeCnt
-        varParam.m_uiIndex = OID_DLL_MNCN_LOSSPRES_CUMCNT_AU32;
-        varParam.m_pData = &(pErrCnt->cumulativeCnt);
-        ret = EplObdDefineVar(&varParam);
+        varParam.index = OID_DLL_MNCN_LOSSPRES_CUMCNT_AU32;
+        varParam.pData = &(pErrCnt->cumulativeCnt);
+        ret = obd_defineVar(&varParam);
         if (ret != kEplSuccessful)
             break;
 
         // ThresholdCnt 1C08
-        varParam.m_uiIndex = OID_DLL_MNCN_LOSSPRES_THRCNT_AU32;
-        varParam.m_pData = &(pErrCnt->thresholdCnt);
-        ret = EplObdDefineVar(&varParam);
+        varParam.index = OID_DLL_MNCN_LOSSPRES_THRCNT_AU32;
+        varParam.pData = &(pErrCnt->thresholdCnt);
+        ret = obd_defineVar(&varParam);
         if (ret != kEplSuccessful)
             break;
 
         // Threshold 1C09
-        varParam.m_uiIndex = OID_DLL_MNCN_LOSSPRES_THRESHOLD_AU32;
-        varParam.m_pData = &(pErrCnt->threshold);
-        ret = EplObdDefineVar(&varParam);
+        varParam.index = OID_DLL_MNCN_LOSSPRES_THRESHOLD_AU32;
+        varParam.pData = &(pErrCnt->threshold);
+        ret = obd_defineVar(&varParam);
         if (ret != kEplSuccessful)
             break;
 

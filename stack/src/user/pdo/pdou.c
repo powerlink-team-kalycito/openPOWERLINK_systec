@@ -43,14 +43,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Epl.h>
 #include <EplInc.h>
 #include <user/pdoucal.h>
-#include <user/EplObdu.h>
 #include <user/pdou.h>
-#include <EplSdoAc.h>
 
+#include <EplSdoAc.h>
+#include <obd.h>
 #include <pdo.h>
 
-#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_OBDU)) == 0) && (EPL_OBD_USE_KERNEL == FALSE)
-#error "EPL PDOu module needs EPL module OBDU or OBDK!"
+#if !defined(CONFIG_INCLUDE_OBD)
+#error "PDOu module needs module OBD!"
 #endif
 
 //============================================================================//
@@ -124,7 +124,7 @@ static tEplKernel   checkPdoValidity(UINT mappParamIndex_p, UINT32* pAbortCode_p
 static void         decodeObjectMapping(QWORD objectMapping_p, UINT* pIndex_p,
                                 UINT* pSubIndex_p, UINT* pBitOffset_p,
                                 UINT* pBitSize_p);
-static tEplKernel   checkAndSetObjectMapping(QWORD objectMapping_p, tEplObdAccess neededAccessType_p,
+static tEplKernel   checkAndSetObjectMapping(QWORD objectMapping_p, tObdAccess neededAccessType_p,
                                      tPdoMappObject* pMappObject_p,
                                      DWORD* pAbortCode_p, UINT* pPdoSize_p);
 static tEplKernel   setupMappingObjects(tPdoMappObject* pMappObject_p,
@@ -250,60 +250,60 @@ is accessed which belongs to the PDO module.
 \ingroup module_pdou
 **/
 //------------------------------------------------------------------------------
-tEplKernel PUBLIC pdou_cbObdAccess(tEplObdCbParam MEM* pParam_p)
+tEplKernel PUBLIC pdou_cbObdAccess(tObdCbParam MEM* pParam_p)
 {
     tEplKernel          ret = kEplSuccessful;
     UINT                indexType;
     BYTE                mappObjectCount;
     UINT                curPdoSize;
-    tEplObdAccess       neededAccessType;
+    tObdAccess          neededAccessType;
 
-    pParam_p->m_dwAbortCode = 0;
+    pParam_p->abortCode = 0;
 
-    if (pParam_p->m_ObdEvent != kEplObdEvPreWrite)
+    if (pParam_p->obdEvent != kObdEvPreWrite)
     {   // read accesses, post write events etc. are OK
         return ret;
     }
 
     // fetch object index type
-    indexType = pParam_p->m_uiIndex & PDOU_OBD_IDX_MASK;
+    indexType = pParam_p->index & PDOU_OBD_IDX_MASK;
 
     // check index type
     switch (indexType)
     {
         case PDOU_OBD_IDX_RX_COMM_PARAM:
         case PDOU_OBD_IDX_TX_COMM_PARAM:
-            ret = checkPdoValidity((PDOU_OBD_IDX_MAPP_PARAM | pParam_p->m_uiIndex),
-                                   &pParam_p->m_dwAbortCode);
+            ret = checkPdoValidity((PDOU_OBD_IDX_MAPP_PARAM | pParam_p->index),
+                                   &pParam_p->abortCode);
             return ret;
             break;
 
         case PDOU_OBD_IDX_RX_MAPP_PARAM:
             // RPDO mapping parameter accessed
-            neededAccessType = kEplObdAccWrite;
+            neededAccessType = kObdAccWrite;
             break;
 
         case PDOU_OBD_IDX_TX_MAPP_PARAM:
             // TPDO mapping parameter accessed
-            neededAccessType = kEplObdAccRead;
+            neededAccessType = kObdAccRead;
             break;
 
         default:
             // this callback function is only for PDO mapping and communication
             // parameters therfore we shouldn't come here!
-            pParam_p->m_dwAbortCode = EPL_SDOAC_GENERAL_ERROR;
+            pParam_p->abortCode = EPL_SDOAC_GENERAL_ERROR;
             ret = kEplPdoInvalidObjIndex;
             return ret;
             break;
     }
 
     // RPDO and TPDO mapping parameter accessed
-    if (pParam_p->m_uiSubIndex == 0)
+    if (pParam_p->subIndex == 0)
     {   // object mapping count accessed
         // PDO is enabled or disabled
-        mappObjectCount = *((BYTE*) pParam_p->m_pArg);
-        ret = checkAndConfigurePdo(pParam_p->m_uiIndex, mappObjectCount,
-                                   &pParam_p->m_dwAbortCode);
+        mappObjectCount = *((BYTE*) pParam_p->pArg);
+        ret = checkAndConfigurePdo(pParam_p->index, mappObjectCount,
+                                   &pParam_p->abortCode);
         if (ret != kEplSuccessful)
             return ret;
     }
@@ -313,16 +313,16 @@ tEplKernel PUBLIC pdou_cbObdAccess(tEplObdCbParam MEM* pParam_p)
         tPdoMappObject      mappObject;     // temporary object for check
         QWORD               objectMapping;
 
-        ret = checkPdoValidity(pParam_p->m_uiIndex, &pParam_p->m_dwAbortCode);
+        ret = checkPdoValidity(pParam_p->index, &pParam_p->abortCode);
         if (ret != kEplSuccessful)
         {   // PDO is valid or does not exist
             return ret;
         }
 
         // check existence of object and validity of object length
-        objectMapping = *((QWORD*) pParam_p->m_pArg);
+        objectMapping = *((QWORD*) pParam_p->pArg);
         ret = checkAndSetObjectMapping(objectMapping, neededAccessType, &mappObject,
-                                       &pParam_p->m_dwAbortCode, &curPdoSize);
+                                       &pParam_p->abortCode, &curPdoSize);
     }
 
     return ret;
@@ -478,7 +478,7 @@ static tEplKernel setupRxPdoChannelTables(
                        UINT* pCountChannelIdRx_p)
 {
     tEplKernel              ret = kEplSuccessful;
-    tEplObdSize             obdSize;
+    tObdSize                obdSize;
     BYTE                    nodeId;
     UINT                    pdoId;
     UINT                    commParamIndex;
@@ -496,7 +496,7 @@ static tEplKernel setupRxPdoChannelTables(
     {
         // read node ID from OD (ID:0x14XX Sub:1)
         obdSize = sizeof (nodeId);
-        ret = EplObduReadEntry(commParamIndex, 0x01, &nodeId, &obdSize);
+        ret = obd_readEntry(commParamIndex, 0x01, &nodeId, &obdSize);
         switch (ret)
         {
             case kEplObdIndexNotExist:
@@ -549,7 +549,7 @@ static tEplKernel setupTxPdoChannelTables(
                         UINT* pCountChannelIdTx_p)
 {
     tEplKernel              ret = kEplSuccessful;
-    tEplObdSize             obdSize;
+    tObdSize                obdSize;
     BYTE                    bNodeId;
     UINT                    pdoId;
     UINT                    commParamIndex;
@@ -571,7 +571,7 @@ static tEplKernel setupTxPdoChannelTables(
     {
         obdSize = sizeof (bNodeId);
         // read node ID from OD (ID:0x18XX Sub:1)
-        ret = EplObduReadEntry(commParamIndex, 0x01, &bNodeId, &obdSize);
+        ret = obd_readEntry(commParamIndex, 0x01, &bNodeId, &obdSize);
         switch (ret)
         {
             case kEplObdIndexNotExist:
@@ -756,7 +756,7 @@ static tEplKernel freePdoChannels(void)
 
 //------------------------------------------------------------------------------
 /**
-\brief	configure all PDOs in Pdok module
+\brief    configure all PDOs in Pdok module
 
 The function configures the whole PDO mapping information in the Pdok module.
 
@@ -833,7 +833,7 @@ static tEplKernel checkAndConfigurePdos(UINT16 mappParamIndex_p, UINT channelCou
 {
     tEplKernel          ret = kEplSuccessful;
     UINT                index;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
     BYTE                mappObjectCount;
     UINT                mappParamIndex;
 
@@ -844,7 +844,7 @@ static tEplKernel checkAndConfigurePdos(UINT16 mappParamIndex_p, UINT channelCou
 
         obdSize = sizeof (mappObjectCount);
         // read mapping object count from OD
-        ret = EplObduReadEntry(mappParamIndex, 0x00, &mappObjectCount, &obdSize);
+        ret = obd_readEntry(mappParamIndex, 0x00, &mappObjectCount, &obdSize);
         if (ret != kEplSuccessful)
             return ret;
 
@@ -874,7 +874,7 @@ static tEplKernel checkAndConfigurePdo(UINT16 mappParamIndex_p,
     tEplKernel          ret = kEplSuccessful;
     UINT16              pdoId;
     UINT16              commParamIndex;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
     BYTE                nodeId;
     WORD                maxPdoSize;
     tPdoChannelConf     pdoChannelConf;
@@ -932,7 +932,7 @@ static tEplKernel checkAndConfigurePdo(UINT16 mappParamIndex_p,
 
     // read node ID from OD
     obdSize = sizeof (nodeId);
-    ret = EplObduReadEntry(commParamIndex, 0x01, &nodeId, &obdSize);
+    ret = obd_readEntry(commParamIndex, 0x01, &nodeId, &obdSize);
     if (ret != kEplSuccessful)
     {   // fatal error occurred
         goto Exit;
@@ -941,7 +941,7 @@ static tEplKernel checkAndConfigurePdo(UINT16 mappParamIndex_p,
 
     obdSize = sizeof (pdoChannelConf.pdoChannel.mappingVersion);
     // read PDO mapping version
-    ret = EplObdReadEntry(commParamIndex, 0x02,
+    ret = obd_readEntry(commParamIndex, 0x02,
                           &pdoChannelConf.pdoChannel.mappingVersion, &obdSize);
     if (ret != kEplSuccessful)
     {   // other fatal error occurred
@@ -1036,7 +1036,7 @@ static tEplKernel getMaxPdoSize(BYTE nodeId_p, BOOL fTxPdo_p,
                          UINT16 *pMaxPdoSize_p, UINT32* pAbortCode_p)
 {
     tEplKernel          ret = kEplSuccessful;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
     WORD                maxPdoSize;
     UINT                payloadLimitIndex;
     UINT                payloadLimitSubIndex;
@@ -1071,7 +1071,7 @@ static tEplKernel getMaxPdoSize(BYTE nodeId_p, BOOL fTxPdo_p,
 
     // fetch maximum PDO size from OD
     obdSize = sizeof (maxPdoSize);
-    ret = EplObduReadEntry(payloadLimitIndex, payloadLimitSubIndex,
+    ret = obd_readEntry(payloadLimitIndex, payloadLimitSubIndex,
                            &maxPdoSize, &obdSize);
     if (ret != kEplSuccessful)
     {   // other fatal error occurred
@@ -1137,7 +1137,7 @@ configured or if the mapping of this POD is disabled.
 static tEplKernel checkPdoValidity(UINT mappParamIndex_p, UINT32* pAbortCode_p)
 {
     tEplKernel          ret = kEplSuccessful;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
     BYTE                mappObjectCount;
 
     if (pdouInstance_g.fRunning)
@@ -1145,7 +1145,7 @@ static tEplKernel checkPdoValidity(UINT mappParamIndex_p, UINT32* pAbortCode_p)
         // outside from NMT reset states the PDO should have been disabled before changing it
         obdSize = sizeof (mappObjectCount);
         // read number of mapped objects from OD; this indicates if the PDO is valid
-        ret = EplObduReadEntry(mappParamIndex_p, 0x00, &mappObjectCount, &obdSize);
+        ret = obd_readEntry(mappParamIndex_p, 0x00, &mappObjectCount, &obdSize);
         if (ret != kEplSuccessful)
         {   // other fatal error occurred
             *pAbortCode_p = EPL_SDOAC_GEN_INTERNAL_INCOMPATIBILITY;
@@ -1182,20 +1182,20 @@ static tEplKernel checkPdoValidity(UINT mappParamIndex_p, UINT32* pAbortCode_p)
 */
 //------------------------------------------------------------------------------
 static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
-                                   tEplObdAccess neededAccessType_p,
+                                   tObdAccess neededAccessType_p,
                                    tPdoMappObject* pMappObject_p,
                                    DWORD* pAbortCode_p, UINT* pPdoSize_p)
 {
     tEplKernel          ret = kEplSuccessful;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
     UINT                index;
     UINT                subIndex;
     UINT                bitOffset;
     UINT                bitSize;
     UINT                byteSize;
-    tEplObdAccess       accessType;
+    tObdAccess          accessType;
     BOOL                fNumerical;
-    tEplObdType         obdType;
+    tObdType            obdType;
     void*               pVar;
 
     if (objectMapping_p == 0)
@@ -1214,7 +1214,7 @@ static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
         goto Exit;
     }
 
-    ret = EplObduGetType(index, subIndex, &obdType);
+    ret = obd_getType(index, subIndex, &obdType);
     if (ret != kEplSuccessful)
     {   // entry doesn't exist
         *pAbortCode_p = EPL_SDOAC_OBJECT_NOT_EXIST;
@@ -1223,7 +1223,7 @@ static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
     }
 
     if (((bitSize & 0x7) != 0x0) &&
-        ((bitSize != 1) || (obdType != kEplObdTypBool)))
+        ((bitSize != 1) || (obdType != kObdTypeBool)))
     {   // bit mapping is not supported, except for BOOLEAN objects on byte boundaries
         *pAbortCode_p = EPL_SDOAC_GENERAL_ERROR;
         ret = kEplPdoGranularityMismatch;
@@ -1231,7 +1231,7 @@ static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
     }
 
     // check access type
-    ret = EplObduGetAccessType(index, subIndex, &accessType);
+    ret = obd_getAccessType(index, subIndex, &accessType);
     if (ret != kEplSuccessful)
     {   // entry doesn't exist
         *pAbortCode_p = EPL_SDOAC_OBJECT_NOT_EXIST;
@@ -1239,7 +1239,7 @@ static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
         goto Exit;
     }
 
-    if ((accessType & kEplObdAccPdo) == 0)
+    if ((accessType & kObdAccPdo) == 0)
     {   // object is not mappable
         *pAbortCode_p = EPL_SDOAC_OBJECT_NOT_MAPPABLE;
         ret = kEplPdoVarNotMappable;
@@ -1253,7 +1253,7 @@ static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
         goto Exit;
     }
 
-    if (obdType == kEplObdTypBool)
+    if (obdType == kObdTypeBool)
     {   // bit size of BOOLEAN object was checked above
         byteSize = 1;
     }
@@ -1262,7 +1262,7 @@ static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
         byteSize = (bitSize >> 3);
     }
 
-    obdSize = EplObduGetDataSize(index, subIndex);
+    obdSize = obd_getDataSize(index, subIndex);
     if (obdSize < byteSize)
     {   // object does not exist or has smaller size
         *pAbortCode_p = EPL_SDOAC_GENERAL_ERROR;
@@ -1270,7 +1270,7 @@ static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
         // todo really don't want to exit here?
     }
 
-    ret = EplObduIsNumerical(index, subIndex, &fNumerical);
+    ret = obd_isNumerical(index, subIndex, &fNumerical);
     if (ret != kEplSuccessful)
     {   // entry doesn't exist
         *pAbortCode_p = EPL_SDOAC_OBJECT_NOT_EXIST;
@@ -1286,7 +1286,7 @@ static tEplKernel checkAndSetObjectMapping(QWORD objectMapping_p,
         goto Exit;
     }
 
-    pVar = EplObduGetObjectDataPtr(index, subIndex);
+    pVar = obd_getObjectDataPtr(index, subIndex);
     if (pVar == NULL)
     {   // entry doesn't exist
         *pAbortCode_p = EPL_SDOAC_OBJECT_NOT_EXIST;
@@ -1331,14 +1331,14 @@ static tEplKernel setupMappingObjects(tPdoMappObject* pMappObject_p,
                                       UINT* pCalcPdoSize_p, UINT* pCount_p)
 {
     tEplKernel          ret;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
     QWORD               objectMapping;
     UINT                count;
     BYTE                mappSubindex;
     BYTE                mappObjectCount;
     UINT                curPdoSize;
     WORD                calcPdoSize = 0;
-    tEplObdAccess       neededAccessType;
+    tObdAccess          neededAccessType;
 
     mappObjectCount = mappObjectCount_p;
     count = 0;
@@ -1347,7 +1347,7 @@ static tEplKernel setupMappingObjects(tPdoMappObject* pMappObject_p,
     {
         // read object mapping from OD
         obdSize = sizeof (objectMapping); //&pdouInstance_g.pRxPdoChannel[0] QWORD
-        ret = EplObduReadEntry(mappParamIndex_p, mappSubindex, &objectMapping,
+        ret = obd_readEntry(mappParamIndex_p, mappSubindex, &objectMapping,
                                &obdSize);
         if (ret != kEplSuccessful)
         {   // other fatal error occurred
@@ -1356,9 +1356,9 @@ static tEplKernel setupMappingObjects(tPdoMappObject* pMappObject_p,
         }
 
         if (mappParamIndex_p >= PDOU_OBD_IDX_TX_MAPP_PARAM)
-            neededAccessType = kEplObdAccRead;
+            neededAccessType = kObdAccRead;
         else
-            neededAccessType = kEplObdAccWrite;
+            neededAccessType = kObdAccWrite;
 
         ret = checkAndSetObjectMapping(objectMapping, neededAccessType, pMappObject_p,
                                pAbortCode_p, &curPdoSize);
@@ -1446,9 +1446,9 @@ static tEplKernel copyVarToPdo(BYTE* pPayload_p, tPdoMappObject* pMappObject_p)
     {
         //-----------------------------------------------
         // types without ami
-        case kEplObdTypVString:
-        case kEplObdTypOString:
-        case kEplObdTypDomain:
+        case kObdTypeVString:
+        case kObdTypeOString:
+        case kObdTypeDomain:
         default:
             // read value from object
             EPL_MEMCPY (pPayload_p, pVar, PDO_MAPPOBJECT_GET_BYTESIZE(pMappObject_p));
@@ -1457,59 +1457,59 @@ static tEplKernel copyVarToPdo(BYTE* pPayload_p, tPdoMappObject* pMappObject_p)
         //-----------------------------------------------
         // numerical type which needs ami-write
         // 8 bit or smaller values
-        case kEplObdTypBool:
-        case kEplObdTypInt8:
-        case kEplObdTypUInt8:
+        case kObdTypeBool:
+        case kObdTypeInt8:
+        case kObdTypeUInt8:
             AmiSetByteToLe(pPayload_p, *((BYTE*)pVar));
             break;
 
         // 16 bit values
-        case kEplObdTypInt16:
-        case kEplObdTypUInt16:
+        case kObdTypeInt16:
+        case kObdTypeUInt16:
             AmiSetWordToLe(pPayload_p, *((WORD*)pVar));
             break;
 
         // 24 bit values
-        case kEplObdTypInt24:
-        case kEplObdTypUInt24:
+        case kObdTypeInt24:
+        case kObdTypeUInt24:
             AmiSetDword24ToLe(pPayload_p, *((DWORD*)pVar));
             break;
 
         // 32 bit values
-        case kEplObdTypInt32:
-        case kEplObdTypUInt32:
-        case kEplObdTypReal32:
+        case kObdTypeInt32:
+        case kObdTypeUInt32:
+        case kObdTypeReal32:
             AmiSetDwordToLe(pPayload_p, *((DWORD*)pVar));
             break;
 
         // 40 bit values
-        case kEplObdTypInt40:
-        case kEplObdTypUInt40:
+        case kObdTypeInt40:
+        case kObdTypeUInt40:
             AmiSetQword40ToLe(pPayload_p, *((QWORD*)pVar));
             break;
 
         // 48 bit values
-        case kEplObdTypInt48:
-        case kEplObdTypUInt48:
+        case kObdTypeInt48:
+        case kObdTypeUInt48:
             AmiSetQword48ToLe(pPayload_p, *((QWORD*)pVar));
             break;
 
         // 56 bit values
-        case kEplObdTypInt56:
-        case kEplObdTypUInt56:
+        case kObdTypeInt56:
+        case kObdTypeUInt56:
             AmiSetQword56ToLe(pPayload_p, *((QWORD*)pVar));
             break;
 
         // 64 bit values
-        case kEplObdTypInt64:
-        case kEplObdTypUInt64:
-        case kEplObdTypReal64:
+        case kObdTypeInt64:
+        case kObdTypeUInt64:
+        case kObdTypeReal64:
             AmiSetQword64ToLe(pPayload_p, *((QWORD*)pVar));
             break;
 
         // time of day
-        case kEplObdTypTimeOfDay:
-        case kEplObdTypTimeDiff:
+        case kObdTypeTimeOfDay:
+        case kObdTypeTimeDiff:
             AmiSetTimeOfDay(pPayload_p, ((tTimeOfDay*)pVar));
             break;
     }
@@ -1544,9 +1544,9 @@ static tEplKernel copyVarFromPdo(BYTE* pPayload_p, tPdoMappObject* pMappObject_p
     {
         //-----------------------------------------------
         // types without ami
-        case kEplObdTypVString:
-        case kEplObdTypOString:
-        case kEplObdTypDomain:
+        case kObdTypeVString:
+        case kObdTypeOString:
+        case kObdTypeDomain:
         default:
             // read value from object
             EPL_MEMCPY (pVar, pPayload_p, PDO_MAPPOBJECT_GET_BYTESIZE(pMappObject_p));
@@ -1555,59 +1555,59 @@ static tEplKernel copyVarFromPdo(BYTE* pPayload_p, tPdoMappObject* pMappObject_p
         //-----------------------------------------------
         // numerical type which needs ami-write
         // 8 bit or smaller values
-        case kEplObdTypBool:
-        case kEplObdTypInt8:
-        case kEplObdTypUInt8:
+        case kObdTypeBool:
+        case kObdTypeInt8:
+        case kObdTypeUInt8:
             *((BYTE*)pVar) = AmiGetByteFromLe(pPayload_p);
             break;
 
         // 16 bit values
-        case kEplObdTypInt16:
-        case kEplObdTypUInt16:
+        case kObdTypeInt16:
+        case kObdTypeUInt16:
             *((WORD*)pVar) = AmiGetWordFromLe(pPayload_p);
             break;
 
         // 24 bit values
-        case kEplObdTypInt24:
-        case kEplObdTypUInt24:
+        case kObdTypeInt24:
+        case kObdTypeUInt24:
             *((DWORD*)pVar) = AmiGetDword24FromLe(pPayload_p);
             break;
 
         // 32 bit values
-        case kEplObdTypInt32:
-        case kEplObdTypUInt32:
-        case kEplObdTypReal32:
+        case kObdTypeInt32:
+        case kObdTypeUInt32:
+        case kObdTypeReal32:
             *((DWORD*)pVar) = AmiGetDwordFromLe(pPayload_p);
             break;
 
         // 40 bit values
-        case kEplObdTypInt40:
-        case kEplObdTypUInt40:
+        case kObdTypeInt40:
+        case kObdTypeUInt40:
             *((QWORD*)pVar) = AmiGetQword40FromLe(pPayload_p);
             break;
 
         // 48 bit values
-        case kEplObdTypInt48:
-        case kEplObdTypUInt48:
+        case kObdTypeInt48:
+        case kObdTypeUInt48:
             *((QWORD*)pVar) = AmiGetQword48FromLe(pPayload_p);
             break;
 
         // 56 bit values
-        case kEplObdTypInt56:
-        case kEplObdTypUInt56:
+        case kObdTypeInt56:
+        case kObdTypeUInt56:
             *((QWORD*)pVar) = AmiGetQword56FromLe(pPayload_p);
             break;
 
         // 64 bit values
-        case kEplObdTypInt64:
-        case kEplObdTypUInt64:
-        case kEplObdTypReal64:
+        case kObdTypeInt64:
+        case kObdTypeUInt64:
+        case kObdTypeReal64:
             *((QWORD*)pVar) = AmiGetQword64FromLe(pPayload_p);
             break;
 
         // time of day
-        case kEplObdTypTimeOfDay:
-        case kEplObdTypTimeDiff:
+        case kObdTypeTimeOfDay:
+        case kObdTypeTimeDiff:
             AmiGetTimeOfDay(pVar, ((tTimeOfDay*)pPayload_p));
             break;
     }

@@ -81,7 +81,6 @@ tEplKernel selectPcapDevice(char *pDevName_p);
 int getopt(int, char * const [], const char *);
 
 void initEvents (BOOL* pfGsOff_p);
-tEplKernel PUBLIC EplObdInitRam (tEplObdInitParam MEM* pIniEPL_C_ADR_INVALIDtParam_p);
 tEplKernel PUBLIC processEvents(tEplApiEventType EventType_p, tEplApiEventArg* pEventArg_p, void GENERIC* pUserArg_p);
 
 //============================================================================//
@@ -247,8 +246,6 @@ static tEplKernel initPowerlink(UINT32 cycleLen_p, char *pszCdcFileName_p,
     initParam.m_pfnCbSync  =    NULL;
 #endif
 
-    initParam.m_pfnObdInitRam = EplObdInitRam;
-
     // initialize POWERLINK stack
     ret = oplk_init(&initParam);
     if(ret != kEplSuccessful)
@@ -333,6 +330,12 @@ static void loopMain(void)
                 default:
                     break;
             }
+        }
+
+        if( system_getTermSignalState() == TRUE )
+        {
+            fExit = TRUE;
+            PRINTF("Received termination signal, exiting...\n");
         }
 
         if (oplk_checkKernelStack() == FALSE)

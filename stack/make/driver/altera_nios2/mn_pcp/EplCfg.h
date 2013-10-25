@@ -52,14 +52,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The generic defines are valid for the whole openPOWERLINK stack.
 */
 /**@{*/
-#define EPL_USE_DELETEINST_FUNC             TRUE
     ///< use delete instance functions
 #define USE_VAR64
     ///< data type support higher 32 bit
 #define EPL_MAX_INSTANCES                   1
     ///< number of EPL instances
 #define EPL_MODULE_INTEGRATION              (0 \
-                                            | EPL_MODULE_OBDK \
+                                            | EPL_MODULE_OBD \
                                             | EPL_MODULE_PDOK \
                                             | EPL_MODULE_SDOS \
                                             | EPL_MODULE_SDOC \

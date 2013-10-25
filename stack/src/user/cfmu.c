@@ -47,20 +47,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <user/cfmu.h>
 #include <EplSdoAc.h>
 #include <user/identu.h>
-#include <user/EplObdu.h>
+#include <obd.h>
 #include <user/EplSdoComu.h>
 #include <user/nmtu.h>
 
-#if (((EPL_MODULE_INTEGRATION) & (EPL_MODULE_OBDU)) == 0) && (EPL_OBD_USE_KERNEL == FALSE)
-#error "CFM module needs openPOWERLINK module OBDU or OBDK!"
+#if !defined(CONFIG_INCLUDE_OBD)
+#error "CFM module needs openPOWERLINK module OBD!"
 #endif
 
 #if !defined(CONFIG_INCLUDE_SDOC)
 #error "CFM module needs openPOWERLINK module SDO client!"
 #endif
 
-#if (EPL_OBD_USE_STRING_DOMAIN_IN_RAM == FALSE)
-#error "CFM module needs define EPL_OBD_USE_STRING_DOMAIN_IN_RAM == TRUE"
+#if (CONFIG_OBD_USE_STRING_DOMAIN_IN_RAM == FALSE)
+#error "CFM module needs define CONFIG_OBD_USE_STRING_DOMAIN_IN_RAM == TRUE"
 #endif
 
 //============================================================================//
@@ -189,7 +189,7 @@ tEplKernel cfmu_init(tCfmCbEventCnProgress pfnCbEventCnProgress_p,
 {
     tEplKernel      ret = kEplSuccessful;
     UINT            subindex;
-    tEplVarParam    varParam;
+    tVarParam       varParam;
 
     EPL_MEMSET(&cfmInstance_g, 0, sizeof(tCfmInstance));
 
@@ -197,14 +197,14 @@ tEplKernel cfmu_init(tCfmCbEventCnProgress pfnCbEventCnProgress_p,
     cfmInstance_g.pfnCbEventCnResult = pfnCbEventCnResult_p;
 
     // link domain with 4 zero-bytes to object 0x1F22 CFM_ConciseDcfList_ADOM
-    varParam.m_pData = &cfmInstance_g.leDomainSizeNull;
-    varParam.m_Size = sizeof(cfmInstance_g.leDomainSizeNull);
-    varParam.m_uiIndex = 0x1F22;    // CFM_ConciseDcfList_ADOM
+    varParam.pData = &cfmInstance_g.leDomainSizeNull;
+    varParam.size = sizeof(cfmInstance_g.leDomainSizeNull);
+    varParam.index = 0x1F22;    // CFM_ConciseDcfList_ADOM
     for (subindex = 1; subindex <= EPL_NMT_MAX_NODE_ID; subindex++)
     {
-        varParam.m_uiSubindex = subindex;
-        varParam.m_ValidFlag = kVarValidAll;
-        ret = EplObdDefineVar(&varParam);
+        varParam.subindex = subindex;
+        varParam.validFlag = kVarValidAll;
+        ret = obd_defineVar(&varParam);
         if ((ret != kEplSuccessful) &&
             (ret != kEplObdIndexNotExist) &&
             (ret != kEplObdSubindexNotExist))
@@ -229,14 +229,14 @@ The function deinitializes the CFM module.
 tEplKernel cfmu_exit(void)
 {
     UINT                nodeId;
-    tEplVarParam        varParam;
+    tVarParam           varParam;
     UINT8*              pBuffer;
     tCfmNodeInfo*       pNodeInfo;
 
     // free domain for object 0x1F22 CFM_ConciseDcfList_ADOM
-    varParam.m_pData = NULL;
-    varParam.m_Size = 0;
-    varParam.m_uiIndex = 0x1F22;    //CFM_ConciseDcfList_ADOM
+    varParam.pData = NULL;
+    varParam.size = 0;
+    varParam.index = 0x1F22;    //CFM_ConciseDcfList_ADOM
     for (nodeId = 1; nodeId <= EPL_NMT_MAX_NODE_ID; nodeId++)
     {
         pNodeInfo = CFM_GET_NODEINFO(nodeId);
@@ -250,9 +250,9 @@ tEplKernel cfmu_exit(void)
             pBuffer = pNodeInfo->pObdBufferConciseDcf;
             if (pBuffer != NULL)
             {
-                varParam.m_uiSubindex = nodeId;
-                varParam.m_ValidFlag = kVarValidAll;
-                EplObdDefineVar(&varParam);
+                varParam.subindex = nodeId;
+                varParam.validFlag = kVarValidAll;
+                obd_defineVar(&varParam);
                 // ignore return code, because buffer has to be freed anyway
 
                 EPL_FREE(pBuffer);
@@ -289,7 +289,7 @@ tEplKernel cfmu_processNodeEvent(UINT nodeId_p, tNmtNodeEvent nodeEvent_p)
     tEplKernel          ret = kEplSuccessful;
     static UINT32       leSignature;
     tCfmNodeInfo*       pNodeInfo = NULL;
-    tEplObdSize         obdSize;
+    tObdSize            obdSize;
     UINT32              expConfTime = 0;
     UINT32              expConfDate = 0;
     tEplIdentResponse*  pIdentResponse = NULL;
@@ -323,11 +323,11 @@ tEplKernel cfmu_processNodeEvent(UINT nodeId_p, tNmtNodeEvent nodeEvent_p)
 
     // fetch pointer to ConciseDCF from object 0x1F22
     // (this allows the application to link its own memory to this object)
-    pNodeInfo->pDataConciseDcf = EplObduGetObjectDataPtr(0x1F22, nodeId_p);
+    pNodeInfo->pDataConciseDcf = obd_getObjectDataPtr(0x1F22, nodeId_p);
     if (pNodeInfo->pDataConciseDcf == NULL)
         return kEplCfmNoConfigData;
 
-    obdSize = EplObduGetDataSize(0x1F22, nodeId_p);
+    obdSize = obd_getDataSize(0x1F22, nodeId_p);
     pNodeInfo->bytesRemaining = (UINT32) obdSize;
     pNodeInfo->eventCnProgress.totalNumberOfBytes = pNodeInfo->bytesRemaining;
 #if (EPL_CFM_CONFIGURE_CYCLE_LENGTH != FALSE)
@@ -358,13 +358,13 @@ tEplKernel cfmu_processNodeEvent(UINT nodeId_p, tNmtNodeEvent nodeEvent_p)
     else
     {
         obdSize = sizeof (expConfDate);
-        ret = EplObduReadEntry(0x1F26, nodeId_p, &expConfDate, &obdSize);
+        ret = obd_readEntry(0x1F26, nodeId_p, &expConfDate, &obdSize);
         if (ret != kEplSuccessful)
         {
             EPL_DBGLVL_CFM_TRACE("CN%x Error Reading 0x1F26 returns 0x%X\n", uiNodeId_p, ret);
         }
         obdSize = sizeof (expConfTime);
-        ret = EplObduReadEntry(0x1F27, nodeId_p, &expConfTime, &obdSize);
+        ret = obd_readEntry(0x1F27, nodeId_p, &expConfTime, &obdSize);
         if (ret != kEplSuccessful)
         {
             EPL_DBGLVL_CFM_TRACE("CN%x Error Reading 0x1F27 returns 0x%X\n", uiNodeId_p, ret);
@@ -389,7 +389,7 @@ tEplKernel cfmu_processNodeEvent(UINT nodeId_p, tNmtNodeEvent nodeEvent_p)
 
 #if (EPL_CFM_CONFIGURE_CYCLE_LENGTH != FALSE)
     obdSize = sizeof(cfmInstance_g.leCycleLength);
-    ret = EplObduReadEntryToLe(0x1006, 0x00, &cfmInstance_g.leCycleLength, &obdSize);
+    ret = obd_readEntryToLe(0x1006, 0x00, &cfmInstance_g.leCycleLength, &obdSize);
     if (ret != kEplSuccessful)
     {   // local OD access failed
         EPL_DBGLVL_CFM_TRACE("Local OBD read failed %d\n", ret);
@@ -493,33 +493,33 @@ The function implements the callback function which is called on OD accesses.
 \ingroup module_cfmu
 */
 //------------------------------------------------------------------------------
-tEplKernel cfmu_cbObdAccess(tEplObdCbParam MEM* pParam_p)
+tEplKernel cfmu_cbObdAccess(tObdCbParam MEM* pParam_p)
 {
     tEplKernel              ret = kEplSuccessful;
-    tEplObdVStringDomain*   pMemVStringDomain;
+    tObdVStringDomain*      pMemVStringDomain;
     tCfmNodeInfo*           pNodeInfo = NULL;
     UINT8*                  pBuffer;
 
-    pParam_p->m_dwAbortCode = 0;
+    pParam_p->abortCode = 0;
 
-    if ((pParam_p->m_uiIndex != 0x1F22) || (pParam_p->m_ObdEvent != kEplObdEvWrStringDomain))
+    if ((pParam_p->index != 0x1F22) || (pParam_p->obdEvent != kObdEvWrStringDomain))
         return ret;
 
     // abort any running SDO transfer
-    pNodeInfo = CFM_GET_NODEINFO(pParam_p->m_uiSubIndex);
+    pNodeInfo = CFM_GET_NODEINFO(pParam_p->subIndex);
     if ((pNodeInfo != NULL) && (pNodeInfo->sdoComConHdl != UINT_MAX))
     {
         ret = EplSdoComSdoAbort(pNodeInfo->sdoComConHdl, EPL_SDOAC_DATA_NOT_TRANSF_DUE_DEVICE_STATE);
     }
 
-    pMemVStringDomain = pParam_p->m_pArg;
-    if ((pMemVStringDomain->m_ObjSize != pMemVStringDomain->m_DownloadSize) ||
-        (pMemVStringDomain->m_pData == NULL))
+    pMemVStringDomain = pParam_p->pArg;
+    if ((pMemVStringDomain->objSize != pMemVStringDomain->downloadSize) ||
+        (pMemVStringDomain->pData == NULL))
     {
-        pNodeInfo = allocNodeInfo(pParam_p->m_uiSubIndex);
+        pNodeInfo = allocNodeInfo(pParam_p->subIndex);
         if (pNodeInfo == NULL)
         {
-            pParam_p->m_dwAbortCode = EPL_SDOAC_OUT_OF_MEMORY;
+            pParam_p->abortCode = EPL_SDOAC_OUT_OF_MEMORY;
             return kEplNoResource;
         }
 
@@ -529,15 +529,15 @@ tEplKernel cfmu_cbObdAccess(tEplObdCbParam MEM* pParam_p)
             EPL_FREE(pBuffer);
             pNodeInfo->pObdBufferConciseDcf = NULL;
         }
-        pBuffer = EPL_MALLOC(pMemVStringDomain->m_DownloadSize);
+        pBuffer = EPL_MALLOC(pMemVStringDomain->downloadSize);
         if (pBuffer == NULL)
         {
-            pParam_p->m_dwAbortCode = EPL_SDOAC_OUT_OF_MEMORY;
+            pParam_p->abortCode = EPL_SDOAC_OUT_OF_MEMORY;
             return kEplNoResource;
         }
         pNodeInfo->pObdBufferConciseDcf = pBuffer;
-        pMemVStringDomain->m_pData = pBuffer;
-        pMemVStringDomain->m_ObjSize = pMemVStringDomain->m_DownloadSize;
+        pMemVStringDomain->pData = pBuffer;
+        pMemVStringDomain->objSize = pMemVStringDomain->downloadSize;
     }
 
     return ret;

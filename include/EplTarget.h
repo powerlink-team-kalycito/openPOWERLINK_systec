@@ -184,8 +184,17 @@
 
         #define OPLK_ATOMIC_T    u8
         #define OPLK_ATOMIC_EXCHANGE(address, newval, oldval) \
-                                oldval = Xil_In8(address); \
-                                Xil_Out8(address, newval)
+                                oldval = Xil_In8((UINT32)address); \
+                                Xil_Out8((UINT32)address, newval)
+
+            #define TARGET_FLUSH_DCACHE(base, range)        \
+                     microblaze_flush_dcache_range((UINT32)base, (UINT32)range);
+
+            #define TARGET_INVALIDATE_DCACHE(base, range)   \
+                     microblaze_invalidate_dcache_range((UINT32)base,(UINT32)range);
+
+    #endif
+
     #if (DEV_SYSTEM == _DEV_ARM_)
         //////////////////////////////////////////////////////////////////////
         //FIXME: Rework ATOMIC_EXCHANGE logic !!!

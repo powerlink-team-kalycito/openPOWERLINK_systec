@@ -66,7 +66,10 @@ void console_printlog(char *fmt, ...)
     struct tm           *p_timeVal;
     char                timeStr[20];
 
+#ifndef __ZYNQ__
     time(&timeStamp);
+#endif
+
     p_timeVal = localtime(&timeStamp);
     strftime(timeStr, 20, "%Y/%m/%d %H:%M:%S", p_timeVal);
 

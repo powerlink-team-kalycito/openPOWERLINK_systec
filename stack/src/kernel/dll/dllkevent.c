@@ -936,6 +936,7 @@ static tEplKernel processSyncMn(tNmtState nmtState_p, BOOL fReadyFlag_p)
 
     // Set SoC relative time
     AmiSetQword64ToLe( &pTxFrame->m_Data.m_Soc.m_le_RelativeTime, dllkInstance_g.relativeTime);
+    AmiSetByteToLe( &pTxFrame->m_Data.m_Soc.m_le_bFlag1, dllkInstance_g.mnFlag1 & (EPL_FRAME_FLAG1_PS | EPL_FRAME_FLAG1_MC));
     dllkInstance_g.relativeTime += dllkInstance_g.dllConfigParam.cycleLen;
 
     if (dllkInstance_g.ppTxBufferList == NULL)

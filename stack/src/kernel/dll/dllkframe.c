@@ -2074,9 +2074,11 @@ static tEplKernel processReceivedAsnd(tFrameInfo* pFrameInfo_p, tEdrvRxBuffer* p
     tEplFrame*      pFrame;
     UINT            asndServiceId;
     UINT            nodeId;
+    tDllkNodeInfo*   pIntNodeInfo;
 
 #if defined(CONFIG_INCLUDE_NMT_MN)
     UINT8           flag1;
+    UINT8           flag2;
 #endif
 
     UNUSED_PARAMETER(nmtState_p);
@@ -2100,6 +2102,8 @@ static tEplKernel processReceivedAsnd(tFrameInfo* pFrameInfo_p, tEdrvRxBuffer* p
             case kDllAsndSyncResponse:
 #endif
                 nodeId = AmiGetByteFromLe(&pFrame->m_le_bSrcNodeId);
+                pIntNodeInfo = dllk_getNodeInfo(nodeId);
+
                 if ((dllkInstance_g.aLastReqServiceId[dllkInstance_g.curLastSoaReq] == ((tDllReqServiceId) asndServiceId)) &&
                     (nodeId == dllkInstance_g.aLastTargetNodeId[dllkInstance_g.curLastSoaReq]))
                 {   // mark request as responded
@@ -2108,9 +2112,7 @@ static tEplKernel processReceivedAsnd(tFrameInfo* pFrameInfo_p, tEdrvRxBuffer* p
 
                 if (((tDllAsndServiceId) asndServiceId) == kDllAsndIdentResponse)
                 {   // memorize MAC address of CN for PReq
-                    tDllkNodeInfo*   pIntNodeInfo;
 
-                    pIntNodeInfo = dllk_getNodeInfo(nodeId);
                     if (pIntNodeInfo == NULL)
                     {   // no node info structure available
                         ret = kEplDllNoNodeInfo;
@@ -2125,6 +2127,78 @@ static tEplKernel processReceivedAsnd(tFrameInfo* pFrameInfo_p, tEdrvRxBuffer* p
                 else if (((tDllAsndServiceId) asndServiceId) == kDllAsndSyncResponse)
                 {
                     break;
+                }
+                else if (((tDllAsndServiceId) asndServiceId) == kDllAsndStatusResponse)
+                {
+                    if (pIntNodeInfo == NULL )
+                    { // no node info structure available
+                        ret = kEplDllNoNodeInfo;
+                        goto Exit;
+                    }
+                    else
+                    {
+                        BOOL sendRequest = FALSE;
+                        tEplEvent event;
+                        tDllCalIssueRequest issueReq;
+
+                        // extract flag1 for error signaling
+                        flag2 = AmiGetByteFromLe(&pFrame->m_Data.m_Asnd.m_Payload.m_StatusResponse.m_le_bFlag1);
+
+                        if (!(flag2 & EPL_FRAME_FLAG1_EC) == !(pIntNodeInfo->soaFlag1 & EPL_FRAME_FLAG1_ER))
+                        {
+
+                            if ((pIntNodeInfo->soaFlag1 & EPL_FRAME_FLAG1_ER))
+                            {
+                                // wait for one cycle to update the EC bit
+                                pIntNodeInfo->errSigCount = 0;
+                                sendRequest = TRUE;
+                            }
+                            else
+                            {
+                                pIntNodeInfo->errSigCount = 1;
+
+                            }
+                            pIntNodeInfo->soaFlag1 &= ~EPL_FRAME_FLAG1_ER;
+
+                        }
+                        else
+                        {
+                            if (!pIntNodeInfo->errSigCount)
+                            {
+                                if ((pIntNodeInfo->soaFlag1 & EPL_FRAME_FLAG1_ER))
+                                {
+                                    pIntNodeInfo->errSigCount = 0;
+                                    sendRequest = TRUE;
+                                }
+                                else
+                                {
+                                    pIntNodeInfo->errSigCount = 1;
+
+                                }
+                                pIntNodeInfo->soaFlag1 &= ~EPL_FRAME_FLAG1_ER;
+
+                            }
+                            else
+                            {
+                                // initializing failed on CN
+                                pIntNodeInfo->soaFlag1 |= EPL_FRAME_FLAG1_ER;
+                                sendRequest = TRUE;
+                            }
+
+                        }
+
+                        if (sendRequest)
+                        {
+                            event.m_EventSink = kEplEventSinkDllkCal;
+                            event.m_EventType = kEplEventTypeDllkIssueReq;
+                            issueReq.service = kDllReqServiceStatus;
+                            issueReq.nodeId = pIntNodeInfo->nodeId;
+                            issueReq.soaFlag1 = pIntNodeInfo->soaFlag1;
+                            event.m_pArg = &issueReq;
+                            event.m_uiSize = sizeof(tDllCalIssueRequest);
+                            ret = eventk_postEvent(&event);
+                        }
+                    }
                 }
 #endif
                 // forward Flag2 to asynchronous scheduler

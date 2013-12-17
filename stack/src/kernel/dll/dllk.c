@@ -145,6 +145,8 @@ tEplKernel dllk_addInstance(tDllkInitParam* pInitParam_p)
     for (index = 0; index < tabentries (dllkInstance_g.aNodeInfo); index++)
     {
         dllkInstance_g.aNodeInfo[index].nodeId = index + 1;
+        dllkInstance_g.aNodeInfo[index].soaFlag1 |= EPL_FRAME_FLAG1_ER;
+        dllkInstance_g.aNodeInfo[index].errSigCount = 1;
     }
 #endif
 
@@ -536,7 +538,7 @@ tEplKernel dllk_configNode(tDllNodeInfo * pNodeInfo_p)
         pIntNodeInfo->preqPayloadLimit = pNodeInfo_p->preqPayloadLimit;
 
     // initialize elements of internal node info structure
-    pIntNodeInfo->soaFlag1 = 0;
+    pIntNodeInfo->soaFlag1 |= EPL_FRAME_FLAG1_ER;
     pIntNodeInfo->fSoftDelete = FALSE;
     pIntNodeInfo->dllErrorEvents = 0L;
     pIntNodeInfo->nmtState = kNmtCsNotActive;

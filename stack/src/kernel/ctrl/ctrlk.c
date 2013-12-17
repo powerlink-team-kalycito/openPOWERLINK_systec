@@ -390,6 +390,7 @@ static tEplKernel initStack(void)
 #endif
 
     ret = errhndk_init();
+    ret = errsigk_init();
 
     return ret;
 }
@@ -426,6 +427,7 @@ static tEplKernel shutdownStack(void)
 
     eventk_exit();
     errhndk_exit();
+    errsigk_exit();
 
     return kEplSuccessful;
 }

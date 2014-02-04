@@ -22,6 +22,7 @@
 							<targetPlatform binaryParser="com.xilinx.sdk.managedbuilder.XELF.mb" id="xilinx.mb.target.gnu.base.1697897671" isAbstract="false" name="Debug Platform" superClass="xilinx.mb.target.gnu.base"/>
 							<builder id="xilinx.gnu.mb.toolchain.builder.1856708301" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="GNU make" superClass="xilinx.gnu.mb.toolchain.builder"/>
 							<tool id="xilinx.gnu.mb.c.toolchain.assembler.658960892" name="MicroBlaze gcc assembler" superClass="xilinx.gnu.mb.c.toolchain.assembler">
+								<option id="xilinx.gnu.mb.assembler.usele.1464486771" superClass="xilinx.gnu.mb.assembler.usele" value="true" valueType="boolean"/>
 								<inputType id="xilinx.gnu.assembler.input.879268988" superClass="xilinx.gnu.assembler.input"/>
 							</tool>
 							<tool id="xilinx.gnu.mb.c.toolchain.compiler.1929987335" name="MicroBlaze gcc compiler" superClass="xilinx.gnu.mb.c.toolchain.compiler">
@@ -37,18 +38,66 @@
 									<listOptionValue builtIn="false" value="../../../../../stack/include/target"/>
 									<listOptionValue builtIn="false" value="../../../../../stack/src/arch/xilinx_microblaze"/>
 								</option>
+								<option id="xilinx.gnu.mb.compiler.inferred.mbversion.1031736678" superClass="xilinx.gnu.mb.compiler.inferred.mbversion" value="8.50.c" valueType="string"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.norelax.799343145" superClass="xilinx.gnu.mb.compiler.inferred.norelax" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.garbage.280377640" superClass="xilinx.gnu.mb.compiler.inferred.garbage" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.usele.1867934283" superClass="xilinx.gnu.mb.compiler.inferred.usele" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.usebarrel.1410351280" superClass="xilinx.gnu.mb.compiler.inferred.usebarrel" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.usepcmp.389913517" superClass="xilinx.gnu.mb.compiler.inferred.usepcmp" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.mul.1031281402" superClass="xilinx.gnu.mb.compiler.inferred.mul" value="xilinx.gnu.mb.compiler.inferred.mul.32bit" valueType="enumerated"/>
+								<option id="xilinx.gnu.compiler.inferred.swplatform.includes.2055075521" superClass="xilinx.gnu.compiler.inferred.swplatform.includes" valueType="includePath">
+									<listOptionValue builtIn="false" value="J:/Xilinx-MB-Project/GIT/xilinx-dual-processor-v1.1/workspace/standalone_bsp_pcp/pcp/include"/>
+								</option>
 								<inputType id="xilinx.gnu.compiler.input.1441124292" name="C source files" superClass="xilinx.gnu.compiler.input"/>
 							</tool>
-							<tool id="xilinx.gnu.mb.cxx.toolchain.compiler.1375558522" name="MicroBlaze g++ compiler" superClass="xilinx.gnu.mb.cxx.toolchain.compiler"/>
+							<tool id="xilinx.gnu.mb.cxx.toolchain.compiler.1375558522" name="MicroBlaze g++ compiler" superClass="xilinx.gnu.mb.cxx.toolchain.compiler">
+								<option id="xilinx.gnu.mb.compiler.inferred.mbversion.1100616122" superClass="xilinx.gnu.mb.compiler.inferred.mbversion" value="8.50.c" valueType="string"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.norelax.1641928885" superClass="xilinx.gnu.mb.compiler.inferred.norelax" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.garbage.132266438" superClass="xilinx.gnu.mb.compiler.inferred.garbage" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.usele.985054484" superClass="xilinx.gnu.mb.compiler.inferred.usele" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.usebarrel.1062427304" superClass="xilinx.gnu.mb.compiler.inferred.usebarrel" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.usepcmp.1865410711" superClass="xilinx.gnu.mb.compiler.inferred.usepcmp" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.compiler.inferred.mul.898066530" superClass="xilinx.gnu.mb.compiler.inferred.mul" value="xilinx.gnu.mb.compiler.inferred.mul.32bit" valueType="enumerated"/>
+								<option id="xilinx.gnu.compiler.inferred.swplatform.includes.1213170398" superClass="xilinx.gnu.compiler.inferred.swplatform.includes" valueType="includePath">
+									<listOptionValue builtIn="false" value="J:/Xilinx-MB-Project/GIT/xilinx-dual-processor-v1.1/workspace/standalone_bsp_pcp/pcp/include"/>
+								</option>
+							</tool>
 							<tool id="xilinx.gnu.mb.toolchain.archiver.840891507" name="MicroBlaze archiver" superClass="xilinx.gnu.mb.toolchain.archiver"/>
 							<tool id="xilinx.gnu.mb.c.toolchain.linker.1717576599" name="MicroBlaze gcc linker" superClass="xilinx.gnu.mb.c.toolchain.linker">
+								<option id="xilinx.gnu.mb.linker.inferred.mbversion.190173951" superClass="xilinx.gnu.mb.linker.inferred.mbversion" value="8.50.c" valueType="string"/>
+								<option id="xilinx.gnu.mb.linker.inferred.norelax.799439758" superClass="xilinx.gnu.mb.linker.inferred.norelax" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.garbage.1968873466" superClass="xilinx.gnu.mb.linker.inferred.garbage" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.usele.1247011528" superClass="xilinx.gnu.mb.linker.inferred.usele" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.usebarrel.1306392490" superClass="xilinx.gnu.mb.linker.inferred.usebarrel" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.usepcmp.1187561447" superClass="xilinx.gnu.mb.linker.inferred.usepcmp" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.mul.1729536748" superClass="xilinx.gnu.mb.linker.inferred.mul" value="xilinx.gnu.mb.linker.inferred.mul.32bit" valueType="enumerated"/>
+								<option id="xilinx.gnu.linker.inferred.swplatform.lpath.212778127" superClass="xilinx.gnu.linker.inferred.swplatform.lpath" valueType="libPaths">
+									<listOptionValue builtIn="false" value="J:/Xilinx-MB-Project/GIT/xilinx-dual-processor-v1.1/workspace/standalone_bsp_pcp/pcp/lib"/>
+								</option>
+								<option id="xilinx.gnu.linker.inferred.swplatform.flags.1961636951" superClass="xilinx.gnu.linker.inferred.swplatform.flags" valueType="libs">
+									<listOptionValue builtIn="false" value="-Wl,--start-group,-lxil,-lgcc,-lc,--end-group"/>
+								</option>
 								<inputType id="xilinx.gnu.linker.input.1615787660" superClass="xilinx.gnu.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
 								</inputType>
 								<inputType id="xilinx.gnu.linker.input.lscript.1560059354" name="Linker Script" superClass="xilinx.gnu.linker.input.lscript"/>
 							</tool>
-							<tool id="xilinx.gnu.mb.cxx.toolchain.linker.1907747857" name="MicroBlaze g++ linker" superClass="xilinx.gnu.mb.cxx.toolchain.linker"/>
+							<tool id="xilinx.gnu.mb.cxx.toolchain.linker.1907747857" name="MicroBlaze g++ linker" superClass="xilinx.gnu.mb.cxx.toolchain.linker">
+								<option id="xilinx.gnu.mb.linker.inferred.mbversion.1392652076" superClass="xilinx.gnu.mb.linker.inferred.mbversion" value="8.50.c" valueType="string"/>
+								<option id="xilinx.gnu.mb.linker.inferred.norelax.1972099370" superClass="xilinx.gnu.mb.linker.inferred.norelax" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.garbage.1908592520" superClass="xilinx.gnu.mb.linker.inferred.garbage" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.usele.1286630693" superClass="xilinx.gnu.mb.linker.inferred.usele" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.usebarrel.1291434418" superClass="xilinx.gnu.mb.linker.inferred.usebarrel" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.usepcmp.793971735" superClass="xilinx.gnu.mb.linker.inferred.usepcmp" value="true" valueType="boolean"/>
+								<option id="xilinx.gnu.mb.linker.inferred.mul.528298851" superClass="xilinx.gnu.mb.linker.inferred.mul" value="xilinx.gnu.mb.linker.inferred.mul.32bit" valueType="enumerated"/>
+								<option id="xilinx.gnu.linker.inferred.swplatform.lpath.2003558193" superClass="xilinx.gnu.linker.inferred.swplatform.lpath" valueType="libPaths">
+									<listOptionValue builtIn="false" value="J:/Xilinx-MB-Project/GIT/xilinx-dual-processor-v1.1/workspace/standalone_bsp_pcp/pcp/lib"/>
+								</option>
+								<option id="xilinx.gnu.linker.inferred.swplatform.flags.67338578" superClass="xilinx.gnu.linker.inferred.swplatform.flags" valueType="libs">
+									<listOptionValue builtIn="false" value="-Wl,--start-group,-lxil,-lgcc,-lc,--end-group"/>
+								</option>
+							</tool>
 						</toolChain>
 					</folderInfo>
 				</configuration>

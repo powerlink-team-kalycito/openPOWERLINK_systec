@@ -3,6 +3,7 @@
 	<name>mn_pcp</name>
 	<comment></comment>
 	<projects>
+		<project>standalone_bsp_pcp</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

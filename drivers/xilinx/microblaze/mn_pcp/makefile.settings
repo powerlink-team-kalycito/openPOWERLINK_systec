@@ -72,3 +72,4 @@ DEF_DEBUG_LVL=0xEC000000L
 # Note: Set this to -g3 when you are debugging. (Increases code size)
 #       Set this to -g0 to disable debugging.
 DEBUG_FLAG=-g0
+VERIFY_ELF =false

@@ -145,7 +145,7 @@
     #ifndef NDEBUG
         #define PRINTF(...)                 printf(__VA_ARGS__)
     #else // !NDEBUG
-        #define PRINTF(...)
+        #define PRINTF(...)                 printf(__VA_ARGS__)
     #endif // !NDEBUG
 
     #if (DEV_SYSTEM == _DEV_NIOS2_)
@@ -177,6 +177,7 @@
         #include <xil_types.h>
         #include <xil_io.h>
         #include <lock.h>
+        #include <xil_cache.h>
 
         #define OPLK_ATOMIC_T    u8
         #define OPLK_LOCK_T      LOCK_T
@@ -188,6 +189,10 @@
                                 oldval = Xil_In8(address); \
                                 Xil_Out8(address, newval); \
                                 target_unlock()
+        #define OPLK_TARGET_FLUSH_DCACHE(base,size) \
+                                Xil_DCacheFlushRange((UINT32)base,(UINT32)size)
+        #define OPLK_TARGET_INVALIDATE_DCACHE(base,size) \
+                                Xil_DCacheInvalidateRange((UINT32)base,(UINT32)size)
     #endif
 
 #elif (TARGET_SYSTEM == _LINUX_)

@@ -57,6 +57,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 #define TGTCONIO_MS_IN_US(x)    (x*1000U)
 
+#if(XPAR_CPU_ID == 0)
+    #define TGT_INTC_BASE           XPAR_HOST_INTC_BASEADDR
+#else
+    #define TGT_INTC_BASE           XPAR_PCP_INTC_BASEADDR
+#endif
 //------------------------------------------------------------------------------
 // module global vars
 //------------------------------------------------------------------------------
@@ -167,7 +172,7 @@ UINT8 PUBLIC EplTgtIsInterruptContext (void)
 
     UINT32 glIntEn;
 
-    glIntEn = Xil_In32(XPAR_PCP_INTC_BASEADDR + XIN_MER_OFFSET) & \
+    glIntEn = Xil_In32(TGT_INTC_BASE + XIN_MER_OFFSET) & \
             XIN_INT_MASTER_ENABLE_MASK;
 
     if(glIntEn == 0)
@@ -203,6 +208,7 @@ tEplKernel target_init(void)
 #if XPAR_MICROBLAZE_USE_DCACHE
     microblaze_invalidate_dcache();
     microblaze_enable_dcache();
+    microblaze_disable_dcache();
 #endif
 
     //enable microblaze interrupts
@@ -281,7 +287,7 @@ void target_msleep (UINT32 milliSecond_p)
 static void enableInterruptMaster(void)
 {
     //enable global interrupt master
-    XIntc_MasterEnable(XPAR_PCP_INTC_BASEADDR);
+    XIntc_MasterEnable(TGT_INTC_BASE);
 }
 
 //------------------------------------------------------------------------------
@@ -294,6 +300,6 @@ static void enableInterruptMaster(void)
 static void disableInterruptMaster(void)
 {
     //disable global interrupt master
-    XIntc_MasterDisable(XPAR_PCP_INTC_BASEADDR);
+    XIntc_MasterDisable(TGT_INTC_BASE);
 }
 ///\}

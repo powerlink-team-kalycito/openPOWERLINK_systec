@@ -45,8 +45,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "gpio.h"
 
 #include <xparameters.h>
+#ifdef USE_GPIO
+//TODO : include Gpios later
 #include "xgpio_l.h"
-
+#endif
 //============================================================================//
 //            G L O B A L   D E F I N I T I O N S                             //
 //============================================================================//

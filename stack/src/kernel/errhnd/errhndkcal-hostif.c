@@ -196,6 +196,7 @@ tErrHndObjects* errhndkcal_getMemPtr(void)
 void errhndkcal_getCnLossSocError(UINT32 *pCumulativeCnt_p, UINT32 *pThresholdCnt_p,
                                 UINT32 *pThreshold_p)
 {
+     OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->cnLossSoc,sizeof(tErrorObject));
     *pCumulativeCnt_p = pErrHnd_l->cnLossSoc.cumulativeCnt;
     *pThresholdCnt_p = pErrHnd_l->cnLossSoc.thresholdCnt;
     *pThreshold_p = pErrHnd_l->cnLossSoc.threshold;
@@ -213,6 +214,7 @@ void errhndkcal_getCnLossSocError(UINT32 *pCumulativeCnt_p, UINT32 *pThresholdCn
 void errhndkcal_getCnLossPreqError(UINT32 *pCumulativeCnt_p, UINT32 *pThresholdCnt_p,
                                  UINT32 *pThreshold_p)
 {
+     OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->cnLossPreq,sizeof(tErrorObject));
     *pCumulativeCnt_p = pErrHnd_l->cnLossPreq.cumulativeCnt;
     *pThresholdCnt_p = pErrHnd_l->cnLossPreq.thresholdCnt;
     *pThreshold_p = pErrHnd_l->cnLossPreq.threshold;
@@ -231,6 +233,7 @@ void errhndkcal_getCnCrcError(UINT32 *pCumulativeCnt_p, UINT32 *pThresholdCnt_p,
                               UINT32 *pThreshold_p)
 
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->cnCrcErr,sizeof(tErrorObject));
     *pCumulativeCnt_p = pErrHnd_l->cnCrcErr.cumulativeCnt;
     *pThresholdCnt_p = pErrHnd_l->cnCrcErr.thresholdCnt;
     *pThreshold_p = pErrHnd_l->cnCrcErr.threshold;
@@ -249,6 +252,7 @@ void errhndkcal_getCnCrcError(UINT32 *pCumulativeCnt_p, UINT32 *pThresholdCnt_p,
 void errhndkcal_getMnCrcError(UINT32 *pCumulativeCnt_p, UINT32 *pThresholdCnt_p,
                               UINT32 *pThreshold_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->mnCrcErr,sizeof(tErrorObject));
     *pCumulativeCnt_p = pErrHnd_l->mnCrcErr.cumulativeCnt;
     *pThresholdCnt_p = pErrHnd_l->mnCrcErr.thresholdCnt;
     *pThreshold_p = pErrHnd_l->mnCrcErr.threshold;
@@ -266,6 +270,8 @@ void errhndkcal_getMnCrcError(UINT32 *pCumulativeCnt_p, UINT32 *pThresholdCnt_p,
 void errhndkcal_getMnCycTimeExceedError(UINT32 *pCumulativeCnt_p,
                            UINT32 *pThresholdCnt_p, UINT32 *pThreshold_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->mnCycTimeExceed,  \
+                                  sizeof(tErrorObject));
     *pCumulativeCnt_p = pErrHnd_l->mnCycTimeExceed.cumulativeCnt;
     *pThresholdCnt_p = pErrHnd_l->mnCycTimeExceed.thresholdCnt;
     *pThreshold_p = pErrHnd_l->mnCycTimeExceed.threshold;
@@ -284,6 +290,8 @@ void errhndkcal_getMnCycTimeExceedError(UINT32 *pCumulativeCnt_p,
 void errhndkcal_getMnCnLossPresError(UINT nodeIdx_p, UINT32 *pCumulativeCnt_p,
                                 UINT32 *pThresholdCnt_p, UINT32 *pThreshold_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->aMnCnLossPres[nodeIdx_p],  \
+                                  sizeof(tErrorObject));
     *pCumulativeCnt_p = pErrHnd_l->aMnCnLossPres[nodeIdx_p].cumulativeCnt;
     *pThresholdCnt_p = pErrHnd_l->aMnCnLossPres[nodeIdx_p].thresholdCnt;
     *pThreshold_p = pErrHnd_l->aMnCnLossPres[nodeIdx_p].threshold;
@@ -299,6 +307,8 @@ void errhndkcal_getMnCnLossPresError(UINT nodeIdx_p, UINT32 *pCumulativeCnt_p,
 //------------------------------------------------------------------------------
 void errhndkcal_getLossSocThresholdCnt(UINT32 *pThresholdCnt_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->cnLossSoc.thresholdCnt, \
+                                  sizeof(UINT32));
     *pThresholdCnt_p = pErrHnd_l->cnLossSoc.thresholdCnt;
 }
 //------------------------------------------------------------------------------
@@ -310,6 +320,8 @@ void errhndkcal_getLossSocThresholdCnt(UINT32 *pThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_getLossPreqThresholdCnt(UINT32 *pThresholdCnt_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->cnLossPreq.thresholdCnt, \
+                                  sizeof(UINT32));
     *pThresholdCnt_p = pErrHnd_l->cnLossPreq.thresholdCnt;
 }
 //------------------------------------------------------------------------------
@@ -321,6 +333,8 @@ void errhndkcal_getLossPreqThresholdCnt(UINT32 *pThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_getCnCrcThresholdCnt(UINT32 *pThresholdCnt_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->cnCrcErr.thresholdCnt, \
+                                  sizeof(UINT32));
     *pThresholdCnt_p = pErrHnd_l->cnCrcErr.thresholdCnt;
 }
 
@@ -334,6 +348,8 @@ void errhndkcal_getCnCrcThresholdCnt(UINT32 *pThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_getMnCrcThresholdCnt(UINT32 *pThresholdCnt_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->mnCrcErr.thresholdCnt, \
+                                  sizeof(UINT32));
     *pThresholdCnt_p = pErrHnd_l->mnCrcErr.thresholdCnt;
 }
 //------------------------------------------------------------------------------
@@ -345,6 +361,8 @@ void errhndkcal_getMnCrcThresholdCnt(UINT32 *pThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_getMnCycTimeExceedThresholdCnt(UINT32 *pThresholdCnt_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->mnCycTimeExceed.thresholdCnt, \
+                                 sizeof(UINT32));
     *pThresholdCnt_p = pErrHnd_l->mnCycTimeExceed.thresholdCnt;
 }
 
@@ -358,6 +376,8 @@ void errhndkcal_getMnCycTimeExceedThresholdCnt(UINT32 *pThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_getMnCnLossPresThresholdCnt(UINT nodeIdx_p, UINT32 *pThresholdCnt_p)
 {
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)&pErrHnd_l->aMnCnLossPres[nodeIdx_p].thresholdCnt, \
+                                  sizeof(UINT32));
     *pThresholdCnt_p = pErrHnd_l->aMnCnLossPres[nodeIdx_p].thresholdCnt;
 }
 #endif
@@ -372,6 +392,7 @@ void errhndkcal_getMnCnLossPresThresholdCnt(UINT nodeIdx_p, UINT32 *pThresholdCn
 //------------------------------------------------------------------------------
 void errhndkcal_setCnLossSocCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->cnLossSoc,sizeof(tErrorObject));
     pErrHnd_l->cnLossSoc.cumulativeCnt = dwCumulativeCnt_p;
     pErrHnd_l->cnLossSoc.thresholdCnt = dwThresholdCnt_p;
 }
@@ -386,6 +407,7 @@ void errhndkcal_setCnLossSocCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThreshol
 //------------------------------------------------------------------------------
 void errhndkcal_setCnLossPreqCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->cnLossPreq,sizeof(tErrorObject));
     pErrHnd_l->cnLossPreq.cumulativeCnt = dwCumulativeCnt_p;
     pErrHnd_l->cnLossPreq.thresholdCnt = dwThresholdCnt_p;
 }
@@ -400,6 +422,7 @@ void errhndkcal_setCnLossPreqCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThresho
 //------------------------------------------------------------------------------
 void errhndkcal_setCnCrcCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->cnCrcErr,sizeof(tErrorObject));
     pErrHnd_l->cnCrcErr.cumulativeCnt = dwCumulativeCnt_p;
     pErrHnd_l->cnCrcErr.thresholdCnt = dwThresholdCnt_p;
 }
@@ -415,6 +438,7 @@ void errhndkcal_setCnCrcCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThresholdCnt
 //------------------------------------------------------------------------------
 void errhndkcal_setMnCrcCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->mnCrcErr,sizeof(tErrorObject));
     pErrHnd_l->mnCrcErr.cumulativeCnt = dwCumulativeCnt_p;
     pErrHnd_l->mnCrcErr.thresholdCnt = dwThresholdCnt_p;
 }
@@ -429,6 +453,7 @@ void errhndkcal_setMnCrcCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThresholdCnt
 //------------------------------------------------------------------------------
 void errhndkcal_setMnCycTimeExceedCounters(UINT32 dwCumulativeCnt_p, UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->mnCycTimeExceed,sizeof(tErrorObject));
     pErrHnd_l->mnCycTimeExceed.cumulativeCnt = dwCumulativeCnt_p;
     pErrHnd_l->mnCycTimeExceed.thresholdCnt = dwThresholdCnt_p;
 }
@@ -445,6 +470,7 @@ void errhndkcal_setMnCycTimeExceedCounters(UINT32 dwCumulativeCnt_p, UINT32 dwTh
 void errhndkcal_setMnCnLossPresCounters(UINT nodeIdx_p, UINT32 dwCumulativeCnt_p,
                                         UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->aMnCnLossPres[nodeIdx_p],sizeof(tErrorObject));
     pErrHnd_l->aMnCnLossPres[nodeIdx_p].cumulativeCnt = dwCumulativeCnt_p;
     pErrHnd_l->aMnCnLossPres[nodeIdx_p].thresholdCnt = dwThresholdCnt_p;
 }
@@ -459,6 +485,7 @@ void errhndkcal_setMnCnLossPresCounters(UINT nodeIdx_p, UINT32 dwCumulativeCnt_p
 //------------------------------------------------------------------------------
 void errhndkcal_setLossSocThresholdCnt(UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->cnLossSoc.thresholdCnt,sizeof(UINT32));
     pErrHnd_l->cnLossSoc.thresholdCnt = dwThresholdCnt_p;
 }
 
@@ -471,6 +498,7 @@ void errhndkcal_setLossSocThresholdCnt(UINT32 dwThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_setLossPreqThresholdCnt(UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->cnLossPreq.thresholdCnt,sizeof(UINT32));
     pErrHnd_l->cnLossPreq.thresholdCnt = dwThresholdCnt_p;
 }
 
@@ -483,6 +511,7 @@ void errhndkcal_setLossPreqThresholdCnt(UINT32 dwThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_setCnCrcThresholdCnt(UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->cnCrcErr.thresholdCnt,sizeof(UINT32));
     pErrHnd_l->cnCrcErr.thresholdCnt = dwThresholdCnt_p;
 }
 
@@ -496,6 +525,8 @@ void errhndkcal_setCnCrcThresholdCnt(UINT32 dwThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_setMnCrcThresholdCnt(UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->mnCrcErr.thresholdCnt, \
+                            sizeof(UINT32));
     pErrHnd_l->mnCrcErr.thresholdCnt = dwThresholdCnt_p;
 }
 
@@ -508,6 +539,8 @@ void errhndkcal_setMnCrcThresholdCnt(UINT32 dwThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_setMnCycTimeExceedThresholdCnt(UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->mnCycTimeExceed.thresholdCnt, \
+                             sizeof(UINT32));
     pErrHnd_l->mnCycTimeExceed.thresholdCnt = dwThresholdCnt_p;
 }
 
@@ -521,6 +554,8 @@ void errhndkcal_setMnCycTimeExceedThresholdCnt(UINT32 dwThresholdCnt_p)
 //------------------------------------------------------------------------------
 void errhndkcal_setMnCnLossPresThresholdCnt(UINT nodeIdx_p, UINT32 dwThresholdCnt_p)
 {
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)&pErrHnd_l->aMnCnLossPres[nodeIdx_p].thresholdCnt, \
+                             sizeof(UINT32));
     pErrHnd_l->aMnCnLossPres[nodeIdx_p].thresholdCnt = dwThresholdCnt_p;
 }
 #endif

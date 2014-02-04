@@ -376,7 +376,9 @@ void ctrlucal_storeInitParam(tCtrlInitParam* pInitParam_p)
 
     if(pDst != NULL)
         EPL_MEMCPY(pDst, pInitParam_p, sizeof(tCtrlInitParam));
-
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_FLUSH_DCACHE((UINT32)pDst, sizeof(tCtrlInitParam));
+#endif
     memInitParamFreeDynBuff();
 }
 
@@ -400,7 +402,9 @@ tEplKernel ctrlucal_readInitParam(tCtrlInitParam* pInitParam_p)
 
     if(pSrc == NULL)
         return kEplNoResource;
-
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_INVALIDATE_DCACHE((UINT32)(pSrc), sizeof(tCtrlInitParam));
+#endif
     EPL_MEMCPY(pInitParam_p, pSrc, sizeof(tCtrlInitParam));
 
     memInitParamFreeDynBuff();

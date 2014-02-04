@@ -186,6 +186,9 @@ BYTE *pdoucal_getTxPdoAdrs(UINT channelId_p)
 {
     OPLK_ATOMIC_T    wi;
     BYTE*            pPdo;
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_INVALIDATE_DCACHE((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
 
     wi = pPdoMem_l->txChannelInfo[channelId_p].writeBuf;
     //TRACE ("%s() channelId:%d wi:%d\n", __func__, channelId_p, wi);
@@ -212,17 +215,26 @@ tEplKernel pdoucal_setTxPdo(UINT channelId_p, BYTE* pPdo_p,  WORD pdoSize_p)
 {
     OPLK_ATOMIC_T    temp;
 
-    UNUSED_PARAMETER(pPdo_p);
-    UNUSED_PARAMETER(pdoSize_p);
+    // UNUSED_PARAMETER(pPdo_p);
+    // UNUSED_PARAMETER(pdoSize_p);
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_FLUSH_DCACHE((u32)pPdo_p, pdoSize_p);
+#endif
 
     //TRACE ("%s() chan:%d wi:%d\n", __func__, channelId_p, pPdoMem_l->txChannelInfo[channelId_p].writeBuf);
 
     //shmWriterSpinlock(&pPdoMem_l->txSpinlock);
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_INVALIDATE_DCACHE((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
     temp = pPdoMem_l->txChannelInfo[channelId_p].writeBuf;
     OPLK_ATOMIC_EXCHANGE(&pPdoMem_l->txChannelInfo[channelId_p].cleanBuf,
                     temp,
                     pPdoMem_l->txChannelInfo[channelId_p].writeBuf);
     pPdoMem_l->txChannelInfo[channelId_p].newData = 1;
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_FLUSH_DCACHE((u32)&pPdoMem_l->txChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
     //shmWriterSpinUnlock(&pPdoMem_l->txSpinlock);
 
     //TRACE ("%s() chan:%d new wi:%d\n", __func__, channelId_p, pPdoMem_l->txChannelInfo[channelId_p].writeBuf);
@@ -249,7 +261,10 @@ tEplKernel pdoucal_getRxPdo(BYTE** ppPdo_p, UINT channelId_p, WORD pdoSize_p)
 {
     OPLK_ATOMIC_T    readBuf;
 
-    UNUSED_PARAMETER(pdoSize_p);
+    //UNUSED_PARAMETER(pdoSize_p);
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_INVALIDATE_DCACHE((u32)&pPdoMem_l->rxChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
 
     if (pPdoMem_l->rxChannelInfo[channelId_p].newData)
     {
@@ -259,9 +274,15 @@ tEplKernel pdoucal_getRxPdo(BYTE** ppPdo_p, UINT channelId_p, WORD pdoSize_p)
                         pPdoMem_l->rxChannelInfo[channelId_p].readBuf);
         pPdoMem_l->rxChannelInfo[channelId_p].newData = 0;
     }
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_FLUSH_DCACHE((u32)&pPdoMem_l->rxChannelInfo[channelId_p], sizeof(tPdoBufferInfo));
+#endif
 
     readBuf = pPdoMem_l->rxChannelInfo[channelId_p].readBuf;
     *ppPdo_p =  pTripleBuf_l[readBuf] + pPdoMem_l->rxChannelInfo[channelId_p].channelOffset;
+#if (HOSTIF_SYNC_DCACHE != FALSE)
+    OPLK_TARGET_INVALIDATE_DCACHE((u32)*ppPdo_p, pdoSize_p);
+#endif
 
     return kEplSuccessful;
 }

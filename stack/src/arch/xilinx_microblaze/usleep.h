@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 // includes
 //------------------------------------------------------------------------------
-
+#include <sys/types.h>
 //------------------------------------------------------------------------------
 // const defines
 //------------------------------------------------------------------------------
@@ -58,8 +58,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void usleep(unsigned long int usecs_p);
+int usleep(useconds_t __useconds);
+//void usleep(unsigned long int usecs_p);
 
 #ifdef __cplusplus
 }

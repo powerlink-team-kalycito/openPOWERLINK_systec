@@ -2330,6 +2330,7 @@ static tHostifReturn setDynBuffers (tHostif *pHostif_p)
         pAddr = pHostif_p->pDynBufTbl[i].pBase;
 
         pHostif_p->pDynBufTbl[i].pfnSetDynBuf(pHostif_p->pBase, (UINT32)pAddr);
+        printf("Index %d Addr %x\n",i,pAddr);
     }
 
     return Ret;

@@ -195,7 +195,7 @@ tEplKernel processSync(void)
     {
         /* Running Leds */
         /* period for LED flashing determined by inputs */
-        nodeVar_l[i].period = (nodeVar_l[i].input == 0) ? 1 : (nodeVar_l[i].input * 20);
+        nodeVar_l[i].period = (nodeVar_l[i].input == 0) ? 20 : (nodeVar_l[i].input * 20);
         if (cnt_l % nodeVar_l[i].period == 0)
         {
             if (nodeVar_l[i].leds == 0x00)

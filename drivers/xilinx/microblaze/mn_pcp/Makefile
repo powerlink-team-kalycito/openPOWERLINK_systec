@@ -206,7 +206,8 @@ header:
 	@echo "Change 'makefile.setting' to configure the build system"
 
 .PHONY: all
-all: bitstream app
+#all: bitstream app
+all: app
 
 ####################################################
 # A P P L I C A T I O N

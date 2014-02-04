@@ -93,7 +93,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // local function prototypes
 //------------------------------------------------------------------------------
 
-void usleep(u32 usecs_p) __attribute__((section(".local_memory")));
+int usleep(useconds_t __useconds) __attribute__((section(".local_memory")));
 
 //============================================================================//
 //            P U B L I C   F U N C T I O N S                                 //
@@ -108,7 +108,7 @@ void usleep(u32 usecs_p) __attribute__((section(".local_memory")));
 \ingroup module_target
 */
 //------------------------------------------------------------------------------
-void usleep(u32 usecs_p)
+int usleep(useconds_t __useconds)
 {
     u16 smallLoop = SMALL_LOOP_SPEED;
 
@@ -122,7 +122,7 @@ void usleep(u32 usecs_p)
       "       add %1, r0, %2           \n\t"
       "       bnei %0, outerLoop       \n\t"
           : /* no output registers */
-          : "r"(usecs_p), "r"(smallLoop), "r"(smallLoop)
+          : "r"(__useconds), "r"(smallLoop), "r"(smallLoop)
           : "r11"
     );
 }

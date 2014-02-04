@@ -1,0 +1,74 @@
+#  (c) Kalycito Infotech Private Limited
+#
+# Project       : POWERLINK Xilinx Examples
+# Module        : build system settings file
+# Autor         : gaurav
+# Date          : 18.11.2013
+# File          : Makefile
+# contents      : Settings file for the build system
+################################################################################
+
+##################################
+#Path to the openPOWERLINK root directory
+STACKROOT_DIR=../../../../../../
+
+##################################
+#Path to the XPS project
+XPS_DIR=$(STACKROOT_DIR)/hardware/boards/avnet_lx150t/mn-dual-hostif-gpio
+
+##################################
+# Board name: [lx150t, lx9, s6plkeb]
+BOARD_NAME=lx150t
+
+##################################
+# Bus interface: [plb, axi]
+# Note: This sets correct endian and linker script
+BUS_INTERFACE=axi
+
+##################################
+# Processor name: [host,pcp]
+PROCESSOR_NAME=host
+
+##################################
+# Two processors in bitstream: [yes, no]
+# Note: Only Dual processor design available 
+DUAL_PROCESSOR=yes
+
+####################################
+# Processor features Microblaze: (more information in the "Embedded Systems Tools Reference Manual")
+# Processor endian: [ -mlittle-endian (axi bus), -mbig-endian (plb bus)]
+# Hardware multiplier: [ -mno-xl-soft-mul = available, -mxl-soft-mul = not available ]
+# Hardware divider: [ -mno-xl-soft-div = available, -mxl-soft-div = not available ]
+# Barel shifter: [ -mno-xl-barrel-shift = available, -mxl-barrel-shift = not available ]
+# Pattern compare instructions: [-mno-xl-pattern-compare = don't use them, -mxl-pattern-compare = use them ]
+# Bootstrap option: [-xl-mode-bootstrap = needed when a bootloader is used]
+PROC_FEATURES=-mcpu=v8.50.c -mno-xl-pattern-compare -mno-xl-barrel-shift -mxl-soft-mul -mxl-soft-div
+
+##################################
+# Settings for Debugging
+# [_DEBUG=debug enabled, NDEBUG=debug disabled]
+#DBG_MODE=_DEBUG
+#OPT_LEVEL=-O0
+
+##################################
+# Settings for Debugging with optimized compilation
+DBG_MODE=_DEBUG
+OPT_LEVEL=-O2
+
+##################################
+# Settings for Release
+#DBG_MODE=NDEBUG
+#OPT_LEVEL=-O2
+
+##################################
+# DEF_DEBUG_LVL = [
+# 0x20000000L DEBUG_LVL_ASSERT
+# 0x40000000L DEBUG_LVL_ERROR
+# 0x80000000L DEBUG_LVL_ALWAYS ]
+DEF_DEBUG_LVL=0xEC000000L
+
+##################################
+#Debug flag
+# Note: Set this to -g3 when you are debugging. (Increases code size)
+#       Set this to -g0 to disable debugging.
+DEBUG_FLAG=-g0
